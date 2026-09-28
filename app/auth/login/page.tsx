@@ -1,5 +1,6 @@
 'use client';
 
+import PasswordInput from '@/components/password-input';
 import React, { useState, useEffect, Suspense } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -194,8 +195,7 @@ function LoginForm() {
                   Mot de passe oublié ?
                 </Link>
               </div>
-              <input
-                type="password"
+              <PasswordInput
                 required
                 className="w-full px-4 py-2.5 rounded-xl bg-muted border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="••••••••"

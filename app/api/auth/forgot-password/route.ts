@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
+import { sendEmail } from '@/lib/email';
 
 /**
  * POST: Demander un code / token de réinitialisation de mot de passe
@@ -29,10 +30,10 @@ export async function POST(request: NextRequest) {
     });
     if (!user) return genericResponse;
 
-    // Générer un code sécurisé à 6 chiffres et un token hex
-    const resetCode = crypto.randomInt(100000, 1000000).toString();
-    const token = crypto.randomBytes(24).toString('hex');
-    const combinedToken = `${resetCode}-${token.substring(0, 8)}`;
+    // Code à 8 caractères (sans caractères ambigus), valable 1 heure
+    const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+    const bytes = crypto.randomBytes(8);
+    const combinedToken = Array.from(bytes, (b) => ALPHABET[b % ALPHABET.length]).join('');
     const expiry = new Date(Date.now() + 60 * 60 * 1000); // 1 heure
 
     await prisma.user.update({
@@ -43,10 +44,13 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // SÉCURITÉ : le code n'est JAMAIS renvoyé au navigateur.
-    // TODO : l'envoyer par email (Resend, SendGrid, Gmail API…). En attendant,
-    // l'administrateur peut réinitialiser le mot de passe depuis /admin/users.
-    void combinedToken;
+    // Le code est envoyé UNIQUEMENT par email, jamais renvoyé au navigateur.
+    await sendEmail({
+      to: user.email,
+      subject: 'Votre code de réinitialisation',
+      text: `Bonjour,\n\nVotre code de réinitialisation est : ${combinedToken}\nIl est valable 1 heure.\n\nSi vous n'êtes pas à l'origine de cette demande, ignorez cet email.`,
+      html: `<p>Bonjour,</p><p>Votre code de réinitialisation est :</p><p style="font-size:24px;font-weight:bold;letter-spacing:4px;font-family:monospace">${combinedToken}</p><p>Il est valable 1 heure.</p><p style="color:#666">Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.</p>`,
+    });
     return genericResponse;
   } catch (error: any) {
     console.error('Forgot password error:', error);
@@ -72,9 +76,9 @@ export async function PUT(request: NextRequest) {
     }
 
     const rawPassword = String(newPassword);
-    if (rawPassword.length < 6) {
+    if (rawPassword.length < 10) {
       return NextResponse.json(
-        { error: 'Le mot de passe doit contenir au moins 6 caractères.' },
+        { error: 'Le mot de passe doit contenir au moins 10 caractères.' },
         { status: 400 }
       );
     }
@@ -107,7 +111,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const inputToken = String(token).trim();
+    const inputToken = String(token).trim().toUpperCase();
     const tokenMatches =
       !!inputToken && user.resetToken === inputToken;
 
@@ -118,7 +122,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const hashedPassword = await bcrypt.hash(rawPassword, 10);
+    const hashedPassword = await bcrypt.hash(rawPassword, 12);
 
     await prisma.user.update({
       where: { id: user.id },
@@ -136,7 +140,7 @@ export async function PUT(request: NextRequest) {
   } catch (error: any) {
     console.error('Reset password error:', error);
     return NextResponse.json(
-      { error: error?.message || 'Erreur lors de la réinitialisation du mot de passe.' },
+      { error: 'Erreur lors de la réinitialisation du mot de passe.' },
       { status: 500 }
     );
   }

@@ -1,5 +1,6 @@
 'use client';
 
+import PasswordInput from '@/components/password-input';
 import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, BookOpen, KeyRound, CheckCircle2, AlertCircle, ShieldCheck, RefreshCw } from 'lucide-react';
@@ -8,7 +9,6 @@ export default function ForgotPasswordPage() {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [email, setEmail] = useState('');
   const [resetCode, setResetCode] = useState('');
-  const [tokenReceived, setTokenReceived] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -34,9 +34,8 @@ export default function ForgotPasswordPage() {
         return;
       }
 
-      setTokenReceived(data.token || data.code);
-      setResetCode(data.code || '');
-      setSuccessMsg(data.message || 'Code de réinitialisation généré.');
+      setResetCode('');
+      setSuccessMsg(data.message || 'Si un compte existe, un code vous a été envoyé par email.');
       setStep(2);
     } catch {
       setError('Impossible de joindre le serveur. Vérifiez votre connexion.');
@@ -50,8 +49,8 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     setError('');
 
-    if (newPassword.length < 6) {
-      setError('Le mot de passe doit contenir au moins 6 caractères.');
+    if (newPassword.length < 10) {
+      setError('Le mot de passe doit contenir au moins 10 caractères.');
       return;
     }
 
@@ -68,7 +67,7 @@ export default function ForgotPasswordPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: email.trim().toLowerCase(),
-          token: tokenReceived || resetCode,
+          token: resetCode.trim().toUpperCase(),
           newPassword,
           confirmPassword,
         }),
@@ -165,13 +164,10 @@ export default function ForgotPasswordPage() {
         {/* ÉTAPE 2 : Saisie du code + Nouveau mot de passe avec confirmation */}
         {step === 2 && (
           <form onSubmit={handleResetPassword} className="space-y-4">
-            {resetCode && (
-              <div className="p-3 bg-primary/10 border border-primary/20 rounded-xl text-center">
-                <p className="text-xs text-primary font-medium">Votre code de réinitialisation sécurisé :</p>
-                <p className="text-2xl font-mono font-black text-primary tracking-widest mt-1">{resetCode}</p>
-                <p className="text-[11px] text-muted-foreground mt-1">Valable pendant 1 heure</p>
-              </div>
-            )}
+            <div className="p-3 bg-primary/10 border border-primary/20 rounded-xl text-center">
+              <p className="text-xs text-primary font-medium">Consultez votre boîte email (et les courriers indésirables).</p>
+              <p className="text-[11px] text-muted-foreground mt-1">Le code de 8 caractères est valable 1 heure.</p>
+            </div>
 
             <div>
               <label className="block text-sm font-semibold text-foreground mb-1.5">
@@ -181,7 +177,7 @@ export default function ForgotPasswordPage() {
                 type="text"
                 required
                 className="w-full px-4 py-2.5 rounded-xl bg-muted border border-border text-foreground text-sm font-mono tracking-widest text-center focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="6 chiffres"
+                placeholder="Code reçu par email"
                 value={resetCode}
                 onChange={(e) => setResetCode(e.target.value)}
               />
@@ -191,11 +187,10 @@ export default function ForgotPasswordPage() {
               <label className="block text-sm font-semibold text-foreground mb-1.5">
                 Nouveau mot de passe
               </label>
-              <input
-                type="password"
+              <PasswordInput
                 required
                 className="w-full px-4 py-2.5 rounded-xl bg-muted border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="6 caractères minimum"
+                placeholder="10 caractères minimum"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
               />
@@ -205,8 +200,7 @@ export default function ForgotPasswordPage() {
               <label className="block text-sm font-semibold text-foreground mb-1.5">
                 Confirmer le nouveau mot de passe
               </label>
-              <input
-                type="password"
+              <PasswordInput
                 required
                 className={`w-full px-4 py-2.5 rounded-xl bg-muted border text-foreground text-sm focus:outline-none focus:ring-2 ${
                   confirmPassword && newPassword === confirmPassword
