@@ -76,7 +76,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           id: user.id,
           email: user.email,
           name: user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Utilisateur',
-          image: user.image || user.photoUrl,
+          // Jamais la photo webcam (data URL de plusieurs centaines de Ko) dans le cookie de session :
+          // elle faisait dépasser la taille maximale des en-têtes (erreur 494).
+          image: user.image && !String(user.image).startsWith('data:') && String(user.image).length < 500 ? user.image : null,
           role: user.role,
         };
       },
@@ -105,6 +107,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.id = user.id;
         token.role = (user as any).role ?? 'STUDENT';
+      }
+      // Garde-fou : aucune image volumineuse dans le jeton
+      if (typeof token.picture === 'string' && (token.picture.startsWith('data:') || token.picture.length > 500)) {
+        delete token.picture;
       }
       return token;
     },
