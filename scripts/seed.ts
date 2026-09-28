@@ -89,37 +89,20 @@ const QUIZZES = [
 async function main() {
   console.log('🌱 Début du seed...');
 
-  // --- Admin test account ---
-  const hashedPassword = await bcrypt.hash('jcC*vvgD2s', 12);
-  await prisma.user.upsert({
-    where: { email: 'abacus-a5283be7@example.com' },
-    update: { password: hashedPassword, role: 'ADMIN', status: 'ACTIVE' },
-    create: {
-      email: 'abacus-a5283be7@example.com',
-      name: 'Admin CS50',
-      password: hashedPassword,
-      role: 'ADMIN',
-      status: 'ACTIVE',
-    },
-  });
-  console.log('✅ Admin account seeded');
-
-  // --- Super Admin account ---
-  const superAdminPassword = await bcrypt.hash('@Popote23', 12);
-  await prisma.user.upsert({
-    where: { email: 'gmuntusip@gmail.com' },
-    update: { password: superAdminPassword, role: 'ADMIN', status: 'ACTIVE', name: 'Ghislain Muntu', firstName: 'Ghislain', lastName: 'Muntu' },
-    create: {
-      email: 'gmuntusip@gmail.com',
-      name: 'Ghislain Muntu',
-      firstName: 'Ghislain',
-      lastName: 'Muntu',
-      password: superAdminPassword,
-      role: 'ADMIN',
-      status: 'ACTIVE',
-    },
-  });
-  console.log('✅ Super Admin account seeded');
+  // --- Super Admin : identifiants lus dans l'environnement, jamais dans le code ---
+  const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  if (adminEmail && adminPassword && adminPassword.length >= 14) {
+    const hashed = await bcrypt.hash(adminPassword, 12);
+    await prisma.user.upsert({
+      where: { email: adminEmail },
+      update: { password: hashed, role: 'ADMIN', status: 'ACTIVE' },
+      create: { email: adminEmail, name: 'Administrateur', password: hashed, role: 'ADMIN', status: 'ACTIVE' },
+    });
+    console.log('✅ Compte administrateur prêt :', adminEmail);
+  } else {
+    console.log('ℹ️  ADMIN_EMAIL / ADMIN_PASSWORD (14 caractères min.) absents : aucun admin créé.');
+  }
 
   // --- Course ---
   const course = await prisma.course.upsert({

@@ -19,11 +19,10 @@ export async function POST(request: Request) {
       phone,
       dossierNumber,
       photoUrl,
-      facialVerificationStatus,
       studentType,
       university,
       paymentMethod,
-      paymentAmount,
+      partnerCode,
       academicHonorCodeAccepted,
     } = body ?? {};
 
@@ -61,8 +60,8 @@ export async function POST(request: Request) {
     if (!rawPassword) {
       causes.push("Mot de passe manquant : Veuillez choisir un mot de passe pour sécuriser votre compte.");
       if (!errorField) errorField = 'password';
-    } else if (rawPassword.length < 6) {
-      causes.push("Mot de passe trop court : Le mot de passe doit comporter au moins 6 caractères.");
+    } else if (rawPassword.length < 10) {
+      causes.push("Mot de passe trop court : Le mot de passe doit comporter au moins 10 caractères.");
       if (!errorField) errorField = 'password';
     }
 
@@ -91,6 +90,20 @@ export async function POST(request: Request) {
       if (!errorField) errorField = 'university';
     }
 
+    // 5b. Code de convention : seuls les étudiants munis d'un code valide sont exemptés.
+    // PARTNER_ACCESS_CODES (Vercel) : liste de codes séparés par des virgules.
+    if (resolvedType === 'UNIVERSITAIRE') {
+      const validCodes = String(process.env.PARTNER_ACCESS_CODES || '')
+        .split(',')
+        .map((c) => c.trim())
+        .filter(Boolean);
+      const submitted = String(partnerCode || '').trim();
+      if (!submitted || !validCodes.includes(submitted)) {
+        causes.push("Code de convention invalide : demandez le code officiel à votre université partenaire.");
+        if (!errorField) errorField = 'partnerCode';
+      }
+    }
+
     // 6. Charte d'intégrité académique et anti-plagiat
     if (academicHonorCodeAccepted === false) {
       causes.push("Charte d'intégrité académique obligatoire : Vous devez souscrire à la charte anti-plagiat pour être admis.");
@@ -117,9 +130,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const hashedPassword = await bcrypt.hash(rawPassword, 10);
+    const hashedPassword = await bcrypt.hash(rawPassword, 12);
     const resolvedPaymentStatus = resolvedType === 'UNIVERSITAIRE' ? 'EXEMPTED' : 'PENDING';
-    const resolvedPaymentAmount = resolvedType === 'UNIVERSITAIRE' ? 0 : (typeof paymentAmount === 'number' ? paymentAmount : 500);
+    // Montant fixé par le serveur, jamais par le navigateur
+    const resolvedPaymentAmount = resolvedType === 'UNIVERSITAIRE' ? 0 : Number(process.env.COURSE_PRICE_USD || 500);
 
     const user = await prisma.user.create({
       data: {
@@ -129,14 +143,16 @@ export async function POST(request: Request) {
         firstName: trimmedFirst || null,
         lastName: trimmedLast || null,
         role: 'STUDENT',
-        status: 'ACTIVE',
+        // Candidat libre : compte en attente jusqu'à la validation du paiement par l'administration
+        status: resolvedType === 'UNIVERSITAIRE' ? 'ACTIVE' : 'PENDING',
         birthDate: parsedBirthDate,
         countryCode: countryCode ? String(countryCode) : null,
         dialCode: dialCode ? String(dialCode) : null,
         phone: phone ? String(phone).trim() : null,
         dossierNumber: validDossier,
         photoUrl: photoUrl ? String(photoUrl) : null,
-        facialVerificationStatus: photoUrl ? 'VERIFIED' : (facialVerificationStatus ? String(facialVerificationStatus) : 'PENDING'),
+        // La photo est vérifiée manuellement par l'administration (jamais automatiquement)
+        facialVerificationStatus: 'PENDING',
         studentType: resolvedType,
         university: resolvedUniversity,
         paymentStatus: resolvedPaymentStatus,
@@ -165,7 +181,7 @@ export async function POST(request: Request) {
       causes.push("Conflit de données : Cette adresse email ou ce numéro de dossier est déjà utilisé.");
       errorField = 'email';
     } else {
-      causes.push(error?.message || "Une erreur technique imprévue est survenue lors de l'enregistrement de votre compte.");
+      causes.push("Une erreur technique imprévue est survenue lors de l'enregistrement de votre compte.");
     }
 
     return NextResponse.json(

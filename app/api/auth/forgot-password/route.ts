@@ -21,15 +21,16 @@ export async function POST(request: NextRequest) {
       where: { email: normalizedEmail },
     });
 
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Aucun compte associé à cette adresse email.' },
-        { status: 404 }
-      );
-    }
+    // Réponse identique que le compte existe ou non (ne révèle pas les emails inscrits)
+    const genericResponse = NextResponse.json({
+      success: true,
+      message:
+        "Si un compte existe pour cette adresse, un code de réinitialisation vous sera transmis par email ou par l'administration.",
+    });
+    if (!user) return genericResponse;
 
     // Générer un code sécurisé à 6 chiffres et un token hex
-    const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const resetCode = crypto.randomInt(100000, 1000000).toString();
     const token = crypto.randomBytes(24).toString('hex');
     const combinedToken = `${resetCode}-${token.substring(0, 8)}`;
     const expiry = new Date(Date.now() + 60 * 60 * 1000); // 1 heure
@@ -42,17 +43,15 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({
-      success: true,
-      message: 'Un code de réinitialisation a été généré avec succès.',
-      code: resetCode,
-      token: combinedToken,
-      expiresIn: '1 heure',
-    });
+    // SÉCURITÉ : le code n'est JAMAIS renvoyé au navigateur.
+    // TODO : l'envoyer par email (Resend, SendGrid, Gmail API…). En attendant,
+    // l'administrateur peut réinitialiser le mot de passe depuis /admin/users.
+    void combinedToken;
+    return genericResponse;
   } catch (error: any) {
     console.error('Forgot password error:', error);
     return NextResponse.json(
-      { error: error?.message || 'Erreur lors du traitement de la demande.' },
+      { error: 'Erreur lors du traitement de la demande.' },
       { status: 500 }
     );
   }
@@ -110,9 +109,7 @@ export async function PUT(request: NextRequest) {
 
     const inputToken = String(token).trim();
     const tokenMatches =
-      user.resetToken === inputToken ||
-      user.resetToken.startsWith(inputToken) ||
-      user.resetToken.split('-')[0] === inputToken;
+      !!inputToken && user.resetToken === inputToken;
 
     if (!tokenMatches) {
       return NextResponse.json(

@@ -17,7 +17,8 @@ if (typeof process !== 'undefined' && process.env) {
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || 'jDB1YeccommFLMi/VCwcXDzwSWxgUbk6uS4ADESidk0=',
+  // Aucune clé par défaut : AUTH_SECRET doit être défini dans Vercel.
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
   adapter: PrismaAdapter(prisma),
   trustHost: true,
   session: { strategy: 'jwt' },
@@ -31,42 +32,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       credentials: {
         email: { label: 'Email', type: 'email' },
         password: { label: 'Mot de passe', type: 'password' },
-        isGoogleDirect: { label: 'Google Direct', type: 'text' },
       },
       async authorize(credentials) {
         if (!credentials?.email) return null;
         const normalizedEmail = (credentials.email as string).trim().toLowerCase();
 
-        // Mode connexion directe Google (quand OAuth n'est pas encore configuré dans .env)
-        if (credentials.isGoogleDirect === 'true') {
-          let user = await prisma.user.findUnique({
-            where: { email: normalizedEmail },
-          });
-          if (!user) {
-            user = await prisma.user.create({
-              data: {
-                email: normalizedEmail,
-                name: normalizedEmail.split('@')[0],
-                role: 'STUDENT',
-                status: 'ACTIVE',
-              },
-            });
-          }
-          if (user.status === 'SUSPENDED') return null;
-          return { id: user.id, email: user.email, name: user.name, image: user.image, role: user.role };
-        }
-
         // Connexion standard Email + Mot de passe
         if (!credentials?.password) return null;
         const candidatePassword = String(credentials.password);
 
-        // Alias Super Admin : gmuntusip@gmail.com ou admin@cs50x-francophone.com
         const queryEmails = [normalizedEmail];
-        if (normalizedEmail === 'admin@cs50x-francophone.com') {
-          queryEmails.push('gmuntusip@gmail.com');
-        } else if (normalizedEmail === 'gmuntusip@gmail.com') {
-          queryEmails.push('admin@cs50x-francophone.com');
-        }
 
         // Requête avec retry pour pallier les cold starts Neon PostgreSQL
         let user: any = null;
@@ -84,19 +59,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           }
         }
 
-        // Fallback d'urgence pour le Super Admin en cas de cold start ou indisponibilité DB
-        if (!user && (normalizedEmail === 'gmuntusip@gmail.com' || normalizedEmail === 'admin@cs50x-francophone.com')) {
-          if (candidatePassword === '@Popote23' || candidatePassword.trim() === '@Popote23' || candidatePassword === 'Admin123#') {
-            console.log('[auth] Super Admin authentifié via fallback de secours résilient');
-            return {
-              id: 'cmtuy9u3r0001d0f7jjm9hc0f',
-              email: 'gmuntusip@gmail.com',
-              name: 'Ghislain Muntu',
-              role: 'ADMIN',
-            };
-          }
-        }
-
         if (!user || !user.password) return null;
 
         // Comparaison robuste (avec et sans trim)
@@ -105,16 +67,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           isValid = await bcrypt.compare(candidatePassword.trim(), user.password);
         }
 
-        // Sécurité spéciale Super Admin : vérification directe si nécessaire
-        const isSuperAdminAccount = user.email === 'gmuntusip@gmail.com' || user.email === 'admin@cs50x-francophone.com';
-        if (!isValid && isSuperAdminAccount) {
-          if (candidatePassword === '@Popote23' || candidatePassword.trim() === '@Popote23' || candidatePassword === 'Admin123#') {
-            isValid = true;
-          }
-        }
-
         if (!isValid) return null;
         if (user.status === 'SUSPENDED') return null;
+        // Candidat libre : accès seulement après validation du paiement par l'administration
+        if (user.status === 'PENDING' && user.role !== 'ADMIN') return null;
 
         return {
           id: user.id,

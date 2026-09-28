@@ -219,22 +219,6 @@ function LoginForm() {
             </button>
           </form>
 
-          {/* Raccourcis rapides de connexion pour développement */}
-          <div className="mt-6 pt-4 border-t border-border">
-            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-primary" /> Raccourcis de connexion rapide :
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => fillCredentials('gmuntusip@gmail.com', '@Popote23')}
-                className="text-xs px-3 py-1.5 rounded-lg bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition shadow-sm flex items-center gap-1.5"
-              >
-                👑 Ghislain Muntu (Super Admin)
-              </button>
-            </div>
-          </div>
-
           <p className="text-center text-sm text-muted-foreground mt-6">
             Pas encore de compte ?{' '}
             <Link href="/auth/signup" className="text-primary font-bold hover:underline">

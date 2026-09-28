@@ -19,7 +19,7 @@ export default function LandingPage() {
   const features = [
     { icon: BookOpen, title: 'Cours en Français', desc: 'Tous les contenus du CS50 traduits et adaptés en français pour une compréhension optimale.' },
     { icon: Brain, title: 'Tuteur Socrate IA', desc: 'Un guide pédagogique IA utilisant la méthode socratique pour développer votre raisonnement.' },
-    { icon: Award, title: 'Certificat Reconnu', desc: 'Obtenez un certificat reconnu par l\'université Harvard à la fin du parcours CS50.' },
+    { icon: Award, title: 'Certificat CS50x', desc: 'Nous vous accompagnons jusqu\'au certificat gratuit délivré par CS50 (sans crédit universitaire Harvard).' },
     { icon: Shield, title: 'Quiz Interactifs', desc: 'Des QCMs de haut niveau cognitif pour valider chaque concept à chaque étape.' },
   ];
 
@@ -48,7 +48,7 @@ export default function LandingPage() {
             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-xs sm:text-sm font-bold mb-8 border border-primary/20 shadow-sm"
           >
             <GraduationCap className="w-4 h-4" />
-            Certificat reconnu par Harvard University
+            Accompagnement indépendant vers le certificat CS50x
           </motion.div>
 
           <motion.h1
@@ -259,10 +259,10 @@ export default function LandingPage() {
             Prêt à Décrocher votre Certificat CS50 ?
           </h2>
           <p className="text-base sm:text-lg text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
-            CS50X est le cours d'introduction à l'informatique le plus populaire au monde, avec un certificat reconnu par l'université Harvard. Maintenant disponible en français.
+            CS50X est le cours d'introduction à l'informatique le plus populaire au monde, proposé gratuitement par l'Université Harvard. Savoiria vous accompagne en français pour le réussir.
           </p>
           <div className="flex flex-wrap justify-center gap-3.5 mb-10">
-            {['Contenu du CS50 de Harvard', 'Certificat Reconnu', 'Accès Permanent']?.map?.((label: string) => (
+            {['Accompagnement en français', 'Tuteur Socrate', 'Accès Permanent']?.map?.((label: string) => (
               <div key={label} className="flex items-center gap-2.5 bg-card rounded-xl px-5 py-3 border border-border/80 shadow-sm">
                 <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
                 <span className="font-semibold text-foreground text-xs sm:text-sm">{label}</span>
