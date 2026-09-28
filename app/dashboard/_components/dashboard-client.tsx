@@ -144,7 +144,7 @@ export default function DashboardClient({ user }: Props) {
           <div className="flex items-center gap-2 self-start sm:self-auto">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold border border-primary/20">
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              Parcours Officiel CS50x
+              Parcours CS50x
             </div>
           </div>
         </motion.div>

@@ -47,6 +47,7 @@ export default function SignupPage() {
     university: PARTNER_UNIVERSITIES[0],
     customUniversity: '',
     studentMatricule: '',
+    partnerCode: '',
     paymentMethod: 'MPESA',
     mobileMoneyPhone: '',
     paymentAmount: 500,
@@ -60,6 +61,21 @@ export default function SignupPage() {
     hasGoogleOAuth: false,
     hasGithubOAuth: false,
   });
+
+  // Établissements partenaires gérés dans /admin/partners (repli : liste statique)
+  const [partnerOptions, setPartnerOptions] = useState<string[]>(PARTNER_UNIVERSITIES);
+  useEffect(() => {
+    fetch('/api/partners')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        const names: string[] = (d?.institutions ?? []).map((i: any) => i.name);
+        if (names.length > 0) {
+          setPartnerOptions([...names, 'Autre université (saisie libre)']);
+          setFormData((prev: any) => ({ ...prev, university: names[0] }));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     fetch('/api/auth/providers-status')
@@ -157,9 +173,9 @@ export default function SignupPage() {
         localFieldErrors.email = "Format d'email invalide.";
       }
 
-      if ((formData.password?.length ?? 0) < 6) {
-        stepCauses.push("Mot de passe trop court : Au moins 6 caractères requis.");
-        localFieldErrors.password = "Au moins 6 caractères.";
+      if ((formData.password?.length ?? 0) < 10) {
+        stepCauses.push("Mot de passe trop court : Au moins 10 caractères requis.");
+        localFieldErrors.password = "Au moins 10 caractères.";
       }
 
       if (formData.password !== formData.confirmPassword) {
@@ -221,7 +237,7 @@ export default function SignupPage() {
           phone: `${formData.dialCode} ${formData.phone.trim()}`,
           dossierNumber: formData.dossierNumber,
           photoUrl: formData.photoUrl || null,
-          facialVerificationStatus: formData.photoUrl ? 'VERIFIED' : 'PENDING',
+          partnerCode: formData.studentType === 'UNIVERSITAIRE' ? formData.partnerCode.trim() : undefined,
           studentType: formData.studentType,
           university: resolvedUniversity,
           paymentMethod: formData.studentType === 'UNIVERSITAIRE' ? 'EXEMPT_UNIVERSITY' : formData.paymentMethod,
@@ -299,13 +315,13 @@ export default function SignupPage() {
             </div>
             <div>
               <span className="text-base font-extrabold tracking-tight">CS50X <span className="text-primary">Francophone</span></span>
-              <p className="text-[10px] text-muted-foreground font-semibold">Portail d'Admission Officiel</p>
+              <p className="text-[10px] text-muted-foreground font-semibold">Portail d'Admission Savoiria</p>
             </div>
           </Link>
 
           <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold border border-primary/20">
             <GraduationCap className="w-3.5 h-3.5" />
-            Certificat Harvard University
+            Accompagnement vers le certificat CS50x
           </div>
         </div>
       </header>
@@ -631,7 +647,7 @@ export default function SignupPage() {
                   <div className="flex items-center gap-2">
                     <Shield className="w-4 h-4 text-primary" />
                     <h3 className="text-xs font-bold text-foreground uppercase tracking-wider">
-                      Charte d'Intégrité Académique de Harvard CS50
+                      Charte d'intégrité académique (inspirée de la politique d'honnêteté académique de CS50)
                     </h3>
                   </div>
 
@@ -709,7 +725,7 @@ export default function SignupPage() {
                       </div>
                       <h3 className="font-bold text-sm text-foreground">Candidat Libre</h3>
                       <p className="text-xs text-muted-foreground leading-relaxed">
-                        Accès permanent aux 11 modules CS50, tuteur Socrate IA illimité, correction de devoirs et délivrance du certificat officiel.
+                        Accès permanent aux 11 modules CS50, tuteur Socrate IA illimité, correction de devoirs et accompagnement jusqu'au certificat CS50x (délivré gratuitement par CS50).
                       </p>
                     </div>
 
@@ -769,7 +785,7 @@ export default function SignupPage() {
                         onChange={(e) => updateField('university', e.target.value)}
                         className="w-full px-4 py-3 rounded-xl bg-background border border-border text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500"
                       >
-                        {PARTNER_UNIVERSITIES.map((u) => (
+                        {partnerOptions.map((u) => (
                           <option key={u} value={u}>{u}</option>
                         ))}
                       </select>
@@ -789,6 +805,20 @@ export default function SignupPage() {
                         />
                       </div>
                     )}
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-foreground">
+                        Code de convention fourni par votre université <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.partnerCode}
+                        onChange={(e) => updateField('partnerCode', e.target.value)}
+                        placeholder="Ex : UOM-CS50X-S1-2027-7Q4K9X"
+                        autoComplete="off"
+                        className="w-full px-4 py-3 rounded-xl bg-background border border-border text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      />
+                    </div>
 
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold text-foreground">
@@ -945,7 +975,7 @@ export default function SignupPage() {
                     type="password"
                     value={formData.password}
                     onChange={(e) => updateField('password', e.target.value)}
-                    placeholder="Minimum 6 caractères"
+                    placeholder="Minimum 10 caractères"
                     className={`w-full px-4 py-3 rounded-xl bg-background border text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary ${
                       fieldErrors.password ? 'border-rose-500 bg-rose-500/5 ring-1 ring-rose-500' : 'border-border'
                     }`}

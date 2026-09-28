@@ -73,6 +73,11 @@ model User {
   quizAttempts            QuizAttempt[]
   submissions             Submission[]
   progress                Progress[]
+  // Établissement partenaire et session (promotion) auxquels l'étudiant est rattaché
+  institutionId           String?
+  institution             Institution?   @relation(fields: [institutionId], references: [id], onDelete: SetNull)
+  courseSessionId         String?
+  courseSession           CourseSession? @relation(fields: [courseSessionId], references: [id], onDelete: SetNull)
 }
 
 model Account {
@@ -130,6 +135,10 @@ model Course {
   isPublished Boolean  @default(false)
   order       Int      @default(0)
   lessons     Lesson[]
+  // Calendrier : durée d'une session et pause entre deux sessions (en semaines)
+  durationWeeks Int     @default(11)
+  breakWeeks    Int     @default(2)
+  sessions    CourseSession[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -281,4 +290,50 @@ model Conversation {
   messages  Json
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Partenariats : établissements, sessions (promotions) et codes d'accès
+// ---------------------------------------------------------------------------
+
+model Institution {
+  id           String       @id @default(cuid())
+  name         String       @unique
+  acronym      String?
+  country      String?
+  type         String       @default("UNIVERSITY") // UNIVERSITY | INSTITUTE
+  active       Boolean      @default(true)
+  contactEmail String?
+  codes        AccessCode[]
+  students     User[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model CourseSession {
+  id        String       @id @default(cuid())
+  courseId  String
+  course    Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  year      Int
+  number    Int
+  startDate DateTime
+  endDate   DateTime
+  codes     AccessCode[]
+  students  User[]
+  createdAt DateTime     @default(now())
+
+  @@unique([courseId, year, number])
+}
+
+model AccessCode {
+  id            String        @id @default(cuid())
+  code          String        @unique
+  institutionId String
+  institution   Institution   @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  sessionId     String
+  session       CourseSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  active        Boolean       @default(true)
+  createdAt     DateTime      @default(now())
+
+  @@unique([institutionId, sessionId])
 }

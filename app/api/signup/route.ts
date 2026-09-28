@@ -19,11 +19,10 @@ export async function POST(request: Request) {
       phone,
       dossierNumber,
       photoUrl,
-      facialVerificationStatus,
       studentType,
       university,
       paymentMethod,
-      paymentAmount,
+      partnerCode,
       academicHonorCodeAccepted,
     } = body ?? {};
 
@@ -61,8 +60,8 @@ export async function POST(request: Request) {
     if (!rawPassword) {
       causes.push("Mot de passe manquant : Veuillez choisir un mot de passe pour sécuriser votre compte.");
       if (!errorField) errorField = 'password';
-    } else if (rawPassword.length < 6) {
-      causes.push("Mot de passe trop court : Le mot de passe doit comporter au moins 6 caractères.");
+    } else if (rawPassword.length < 10) {
+      causes.push("Mot de passe trop court : Le mot de passe doit comporter au moins 10 caractères.");
       if (!errorField) errorField = 'password';
     }
 
@@ -91,6 +90,30 @@ export async function POST(request: Request) {
       if (!errorField) errorField = 'university';
     }
 
+    // 5b. Code de convention : il identifie l'établissement ET la session (promotion).
+    // Codes gérés dans /admin/partners ; un code expire à la fin de sa session.
+    let partnerInstitutionId: string | null = null;
+    let partnerSessionId: string | null = null;
+    if (resolvedType === 'UNIVERSITAIRE') {
+      const submitted = String(partnerCode || '').trim().toUpperCase();
+      const access = submitted
+        ? await prisma.accessCode.findUnique({
+            where: { code: submitted },
+            include: { institution: true, session: true },
+          })
+        : null;
+      const valid =
+        !!access && access.active && access.institution.active && access.session.endDate >= new Date();
+      if (!valid) {
+        causes.push("Code de convention invalide ou expiré : demandez le code de la session en cours à votre établissement.");
+        if (!errorField) errorField = 'partnerCode';
+      } else {
+        partnerInstitutionId = access.institutionId;
+        partnerSessionId = access.sessionId;
+        resolvedUniversity = access.institution.name; // l'établissement est celui du code
+      }
+    }
+
     // 6. Charte d'intégrité académique et anti-plagiat
     if (academicHonorCodeAccepted === false) {
       causes.push("Charte d'intégrité académique obligatoire : Vous devez souscrire à la charte anti-plagiat pour être admis.");
@@ -117,9 +140,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const hashedPassword = await bcrypt.hash(rawPassword, 10);
+    const hashedPassword = await bcrypt.hash(rawPassword, 12);
     const resolvedPaymentStatus = resolvedType === 'UNIVERSITAIRE' ? 'EXEMPTED' : 'PENDING';
-    const resolvedPaymentAmount = resolvedType === 'UNIVERSITAIRE' ? 0 : (typeof paymentAmount === 'number' ? paymentAmount : 500);
+    // Montant fixé par le serveur, jamais par le navigateur
+    const resolvedPaymentAmount = resolvedType === 'UNIVERSITAIRE' ? 0 : Number(process.env.COURSE_PRICE_USD || 500);
 
     const user = await prisma.user.create({
       data: {
@@ -129,14 +153,19 @@ export async function POST(request: Request) {
         firstName: trimmedFirst || null,
         lastName: trimmedLast || null,
         role: 'STUDENT',
-        status: 'ACTIVE',
+        // Tous les nouveaux comptes attendent une validation de l'administration :
+        // paiement vérifié (candidat libre) ou présence sur la liste de l'établissement (partenaire).
+        status: 'PENDING',
+        institutionId: partnerInstitutionId,
+        courseSessionId: partnerSessionId,
         birthDate: parsedBirthDate,
         countryCode: countryCode ? String(countryCode) : null,
         dialCode: dialCode ? String(dialCode) : null,
         phone: phone ? String(phone).trim() : null,
         dossierNumber: validDossier,
         photoUrl: photoUrl ? String(photoUrl) : null,
-        facialVerificationStatus: photoUrl ? 'VERIFIED' : (facialVerificationStatus ? String(facialVerificationStatus) : 'PENDING'),
+        // La photo est vérifiée manuellement par l'administration (jamais automatiquement)
+        facialVerificationStatus: 'PENDING',
         studentType: resolvedType,
         university: resolvedUniversity,
         paymentStatus: resolvedPaymentStatus,
@@ -165,7 +194,7 @@ export async function POST(request: Request) {
       causes.push("Conflit de données : Cette adresse email ou ce numéro de dossier est déjà utilisé.");
       errorField = 'email';
     } else {
-      causes.push(error?.message || "Une erreur technique imprévue est survenue lors de l'enregistrement de votre compte.");
+      causes.push("Une erreur technique imprévue est survenue lors de l'enregistrement de votre compte.");
     }
 
     return NextResponse.json(

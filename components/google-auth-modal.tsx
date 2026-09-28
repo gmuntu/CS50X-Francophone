@@ -32,17 +32,8 @@ export default function GoogleAuthModal({ isOpen, onClose, defaultEmail = '' }: 
     setLoading(true);
 
     try {
-      const res = await signIn('credentials', {
-        email: email.trim().toLowerCase(),
-        isGoogleDirect: 'true',
-        redirect: false,
-      });
-
-      if (res?.error) {
-        setError('Impossible de se connecter avec cette adresse.');
-      } else {
-        window.location.href = '/dashboard';
-      }
+      // Connexion Google réelle (OAuth). Nécessite GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET.
+      await signIn('google', { callbackUrl: '/dashboard' });
     } catch {
       setError('Une erreur est survenue lors de la connexion.');
     } finally {

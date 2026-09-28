@@ -20,6 +20,10 @@ export default function Footer() {
           <p className="text-xs text-muted-foreground font-medium">
             © 2026 SavoirIA · Plateforme CS50X Francophone
           </p>
+          <p className="text-[11px] text-muted-foreground max-w-xl">
+            Savoiria n&apos;est pas affilié à l&apos;Université Harvard ni à CS50, et n&apos;est pas approuvé par eux.
+            CS50 est une marque de Harvard. Le certificat CS50x est délivré gratuitement par CS50.
+          </p>
         </div>
       </div>
     </footer>
