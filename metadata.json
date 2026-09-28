@@ -1,8 +1,0 @@
-{
-  "name": "CS50X Francophone",
-  "description": "CS50X Francophone platform with courses, lectures, workshops, and resources.",
-  "requestFramePermissions": [],
-  "majorCapabilities": [
-    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
-  ]
-}

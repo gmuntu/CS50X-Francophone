@@ -1,11 +1,78 @@
-
-generator client {
-    provider = "prisma-client-js"
-}
-
 datasource db {
     provider = "postgresql"
     url      = env("DATABASE_URL")
+}
+
+generator client {
+    provider = "prisma-client-js"
+    binaryTargets = ["native", "rhel-openssl-3.0.x", "rhel-openssl-1.0.x", "debian-openssl-3.0.x", "linux-arm64-openssl-3.0.x"]
+}
+
+enum Role {
+  STUDENT
+  INSTRUCTOR
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  PENDING
+}
+
+enum DayOfWeek {
+  MONDAY
+  WEDNESDAY
+  FRIDAY
+}
+
+enum SubmissionStatus {
+  PENDING
+  REVIEWED
+  APPROVED
+  REJECTED
+}
+
+enum ProgressStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+model User {
+  id                      String     @id @default(cuid())
+  name                    String?
+  firstName               String?
+  lastName                String?
+  email                   String     @unique
+  emailVerified           DateTime?
+  image                   String?
+  password                String?
+  role                    Role       @default(STUDENT)
+  status                  UserStatus @default(ACTIVE)
+  phone                   String?
+  countryCode             String?
+  dialCode                String?
+  dossierNumber           String?    @unique
+  birthDate               DateTime?
+  photoUrl                String?    @db.Text
+  facialVerificationStatus String    @default("PENDING")
+  studentType             String     @default("LIBRE")
+  university              String?
+  paymentStatus           String     @default("PENDING")
+  paymentMethod           String?
+  paymentAmount           Float?     @default(500)
+  resetToken              String?
+  resetTokenExpiry        DateTime?
+  createdAt               DateTime   @default(now())
+  updatedAt               DateTime   @updatedAt
+  accounts                Account[]
+  sessions                Session[]
+  enrollment              Enrollment?
+  conversations           Conversation[]
+  quizAttempts            QuizAttempt[]
+  submissions             Submission[]
+  progress                Progress[]
 }
 
 model Account {
@@ -21,9 +88,7 @@ model Account {
   scope             String?
   id_token          String? @db.Text
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@unique([provider, providerAccountId])
 }
 
@@ -35,50 +100,185 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  emailVerified DateTime?
-  password      String
-  image         String?
-  role          String    @default("user") // "user" or "admin"
-  status        String    @default("active") // "active", "suspended", "pending"
-  accounts      Account[]
-  sessions      Session[]
-  enrollment    Enrollment?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-}
-
 model VerificationToken {
   identifier String
   token      String   @unique
   expires    DateTime
-
   @@unique([identifier, token])
 }
 
 model Enrollment {
-  id                String   @id @default(cuid())
-  userId            String   @unique
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  enrollmentType    String   // "university" or "independent"
-  university        String?  // Nom de l'université si type = university
-  accessCode        String?  // Code d'accès si type = university
-  paymentStatus     String   @default("pending") // "pending", "completed", "failed"
-  stripeSessionId   String?
-  stripePaymentId   String?
-  hasAccess         Boolean  @default(false)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  enrollmentType String   @default("independent")
+  university     String?
+  accessCode     String?
+  paymentStatus  String   @default("pending")
+  hasAccess      Boolean  @default(false)
+  stripeSessionId String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
-model University {
+model Course {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  description String?  @db.Text
+  imageUrl    String?
+  isPublished Boolean  @default(false)
+  order       Int      @default(0)
+  lessons     Lesson[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Lesson {
+  id           Int       @id
+  courseId     String
+  course       Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title        String
+  slug         String    @unique
+  description  String?   @db.Text
+  videoUrl     String?
+  order        Int       @default(0)
+  isPublished  Boolean   @default(false)
+  videoSummary VideoSummary?
+  audioScripts AudioScript[]
+  quizzes      Quiz[]
+  exercises    Exercise[]
+  progress     Progress[]
+  conversations Conversation[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model VideoSummary {
+  id                  String   @id @default(cuid())
+  lessonId            Int      @unique
+  lesson              Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  title               String
+  overview            String   @db.Text
+  keyConcepts         Json
+  timelineBreakdown   Json
+  codeExamples        Json?
+  pedagogicalTakeaway String   @db.Text
+  fullMarkdown        String   @db.Text
+  generatedAt         DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model AudioScript {
+  id                    String    @id @default(cuid())
+  lessonId              Int
+  lesson                Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  dayOfWeek             DayOfWeek
+  title                 String
+  pedagogicalObjective  String    @db.Text
+  targetDurationMinutes Int       @default(5)
+  dialogue              Json
+  cleanTtsText          String    @db.Text
+  audioUrl              String?
+  quizzes               Quiz[]
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  @@unique([lessonId, dayOfWeek])
+}
+
+model Quiz {
+  id            String         @id @default(cuid())
+  lessonId      Int
+  lesson        Lesson         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  audioScriptId String?
+  audioScript   AudioScript?   @relation(fields: [audioScriptId], references: [id], onDelete: SetNull)
+  dayOfWeek     DayOfWeek
+  title         String
+  description   String?        @db.Text
+  questions     QuizQuestion[]
+  attempts      QuizAttempt[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  @@unique([lessonId, dayOfWeek])
+}
+
+model QuizQuestion {
+  id            String   @id @default(cuid())
+  quizId        String
+  quiz          Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  order         Int
+  question      String   @db.Text
+  options       Json
+  correctOption String
+  explanation   String   @db.Text
+  conceptTested String
+  createdAt     DateTime @default(now())
+}
+
+model QuizAttempt {
   id        String   @id @default(cuid())
-  name      String   @unique
-  code      String   @unique
-  active    Boolean  @default(true)
+  quizId    String
+  quiz      Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  answers   Json
+  score     Int
+  total     Int
+  passed    Boolean
+  createdAt DateTime @default(now())
+}
+
+model Exercise {
+  id           String       @id @default(cuid())
+  lessonId     Int
+  lesson       Lesson       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  title        String
+  description  String       @db.Text
+  instructions String       @db.Text
+  difficulty   String       @default("medium")
+  order        Int          @default(0)
+  submissions  Submission[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model Submission {
+  id         String           @id @default(cuid())
+  exerciseId String
+  exercise   Exercise         @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content    String           @db.Text
+  fileUrl    String?
+  status     SubmissionStatus @default(PENDING)
+  score      Int?
+  feedback   String?          @db.Text
+  reviewedBy String?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+}
+
+model Progress {
+  id          String         @id @default(cuid())
+  userId      String
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId    Int
+  lesson      Lesson         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  status      ProgressStatus @default(NOT_STARTED)
+  score       Int?
+  completedAt DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  @@unique([userId, lessonId])
+}
+
+model Conversation {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId  Int
+  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  messages  Json
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

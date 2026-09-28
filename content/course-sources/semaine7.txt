@@ -1,0 +1,367 @@
+Voici la version traduite, structurée et éditée du cours de la Semaine 7 pour **Savoir IA**. Le contenu a été adapté pour être fluide, hautement pédagogique et directement accessible aux étudiants de l'Afrique francophone subsaharienne, tout en conservant l'intégralité de la rigueur technique du cours original de Harvard.
+
+---
+
+# Semaine 7 : Les Bases de données et SQL
+
+## Table des matières
+1. [Bienvenue !](#bienvenue-)
+2. [Bases de données à fichiers plats (Flat-File Databases)](#1-bases-de-données-à-fichiers-plats-flat-file-databases)
+3. [Bases de données relationnelles & SQL](#2-bases-de-données-relationnelles--sql)
+4. [Étude de cas : Base de données de séries TV (Shows)](#3-étude-de-cas--base-de-données-de-séries-tv-shows)
+5. [Les Jointures (JOINs)](#4-les-jointures-joins)
+6. [Les Index (Indexes)](#5-les-index-indexes)
+7. [Utiliser SQL avec Python](#6-utiliser-sql-avec-python)
+8. [Conditions de concurrence (Race Conditions)](#7-conditions-de-concurrence-race-conditions)
+9. [Attaques par Injection SQL (SQL Injection)](#8-attaques-par-injection-sql-sql-injection)
+10. [Résumé](#9-résumé)
+
+---
+
+## Bienvenue !
+
+Au cours des semaines précédentes, nous avons découvert **Python**, un langage de programmation de haut niveau utilisant les mêmes concepts fondamentaux que le langage **C**. Cependant, nous n'apprenons pas un nouveau langage juste pour accumuler des compétences : nous le faisons parce que **chaque outil est adapté à un besoin précis**.
+
+Cette semaine, nous allons :
+- Poursuivre notre apprentissage de la syntaxe Python.
+- Apprendre à manipuler et structurer des volumes de données plus importants.
+- Découvrir **SQL** (*Structured Query Language*), le langage standard de gestion de bases de données.
+
+L'objectif global de **Savoir IA** est de vous apprendre à **penser en programmeur**, au-delà des spécificités d'un seul langage.
+
+---
+
+## 1. Bases de données à fichiers plats (Flat-File Databases)
+
+Dans la vie courante, les données sont souvent organisées en lignes et en colonnes. Les tableurs comme Microsoft Excel ou Google Sheets permettent d'exporter ces données sous forme de fichiers **CSV** (*Comma-Separated Values* ou valeurs séparées par des virgules).
+
+Un fichier CSV est appelé une **base de données à fichier plat** (*flat-file database*) car toutes les données sont stockées à plat dans un seul tableau représenté par un fichier texte.
+
+Python intègre nativement un module pour manipuler les fichiers CSV.
+
+### Étape 1 : Télécharger et lire un fichier CSV
+Téléchargez le fichier `favorites.csv` et déposez-le dans votre environnement de développement. Créez ensuite un fichier `favorites.py` :
+
+```python
+# Affiche tous les favoris du fichier CSV avec csv.reader
+import csv
+
+# Ouvrir le fichier CSV
+with open("favorites.csv", "r") as file:
+    # Créer le lecteur CSV
+    reader = csv.reader(file)
+    # Sauter la ligne d'en-tête (headers)
+    next(reader)
+    # Parcourir chaque ligne du fichier
+    for row in reader:
+        print(row[1])
+```
+
+> **Explication :** Le module `csv` est importé. La fonction `csv.reader(file)` lit chaque ligne. `row[1]` affiche la deuxième colonne (le langage préféré).
+
+### Étape 2 : Utiliser `csv.DictReader`
+Accéder aux colonnes par un index numérique (comme `row[1]`) est risqué : si l'ordre des colonnes change dans le fichier, le code plante. Il est préférable d'accéder aux données par le nom de la colonne grâce à `csv.DictReader` :
+
+```python
+# Affiche tous les favoris avec csv.DictReader
+import csv
+
+with open("favorites.csv", "r") as file:
+    reader = csv.DictReader(file)
+    for row in reader:
+        print(row["language"])
+```
+
+### Étape 3 : Compter les occurrences
+Pour compter combien de personnes préfèrent quel langage, nous pouvons utiliser un dictionnaire Python :
+
+```python
+# Compte les favoris à l'aide d'un dictionnaire
+import csv
+
+with open("favorites.csv", "r") as file:
+    reader = csv.DictReader(file)
+    counts = {}
+
+    for row in reader:
+        favorite = row["language"]
+        if favorite in counts:
+            counts[favorite] += 1
+        else:
+            counts[favorite] = 1
+
+# Affichage des résultats triés par nom de langage
+for favorite in sorted(counts):
+    print(f"{favorite}: {counts[favorite]}")
+```
+
+Pour trier par **valeur** (du plus populaire au moins populaire), nous pouvons passer des arguments supplémentaires à la fonction `sorted()` :
+
+```python
+# Trie les favoris par nombre de votes (ordre décroissant)
+for favorite in sorted(counts, key=counts.get, reverse=True):
+    print(f"{favorite}: {counts[favorite]}")
+```
+
+### Étape 4 : Utiliser le module `collections.Counter`
+Python possède des bibliothèques très puissantes. Le composant `Counter` du module `collections` simplifie encore plus notre code :
+
+```python
+import csv
+from collections import Counter
+
+with open("favorites.csv", "r") as file:
+    reader = csv.DictReader(file)
+    counts = Counter()
+
+    for row in reader:
+        favorite = row["language"]
+        counts[favorite] += 1
+
+# most_common() trie automatiquement par valeur décroissante
+for favorite, count in counts.most_common():
+    print(f"{favorite}: {count}")
+```
+
+---
+
+## 2. Bases de données relationnelles & SQL
+
+Des entreprises mondiales comme Google, Meta ou MTN utilisent des **bases de données relationnelles** pour gérer d'immenses volumes de données.
+
+Les bases de données relationnelles organisent les données dans plusieurs tableaux (appelés **tables**) reliés entre eux.
+
+### Le modèle CRUD
+SQL repose sur 4 opérations fondamentales appelées **CRUD** :
+- **C**reate (*Créer*)
+- **R**ead (*Lire / Consulter*)
+- **U**pdate (*Mettre à jour*)
+- **D**elete (*Supprimer*)
+
+### Premier contact avec SQLite
+Dans le terminal, vous pouvez créer ou ouvrir une base de données avec SQLite3 :
+```bash
+sqlite3 favorites.db
+```
+
+Commandes utiles dans l'interface SQLite :
+- `.mode csv` : Active le mode d'affichage CSV.
+- `.import favorites.csv favorites` : Importe les données du CSV dans une table nommée `favorites`.
+- `.schema` : Affiche la structure (le schéma) de la base de données.
+
+### Les requêtes d'interrogation (SELECT)
+Pour lire les données, on utilise la syntaxe `SELECT columns FROM table;`.
+
+Examples :
+```sql
+-- Lire toutes les colonnes et toutes les lignes
+SELECT * FROM favorites;
+
+-- Lire uniquement la colonne language
+SELECT language FROM favorites;
+```
+
+#### Fonctions d'agrégation SQL :
+- `COUNT()` : Compte le nombre de lignes.
+- `DISTINCT()` : Élimine les doublons.
+- `AVG()`, `MAX()`, `MIN()`, `SUM()`.
+- `LOWER()`, `UPPER()` : Modifie la casse.
+
+```sql
+-- Compter le nombre de langages uniques
+SELECT COUNT(DISTINCT(language)) FROM favorites;
+```
+
+#### Filtrer et grouper :
+- `WHERE` : Ajoute une condition booléenne.
+- `LIKE` : Recherche approximative.
+- `ORDER BY` : Trie les résultats.
+- `GROUP BY` : Regroupe les lignes ayant des valeurs communes.
+- `LIMIT` : Limite le nombre de résultats.
+
+> **Note :** En SQL, les commentaires commencent par `--`.
+
+```sql
+-- Compter les soumissions pour C
+SELECT COUNT(*) FROM favorites WHERE language = 'C';
+
+-- Compter et grouper par langage, trié par popularité
+SELECT language, COUNT(*) FROM favorites GROUP BY language ORDER BY COUNT(*) DESC;
+```
+
+### Modifier la base de données (INSERT, UPDATE, DELETE)
+
+1. **Insertion :**
+```sql
+INSERT INTO favorites (language, problem) VALUES ('SQL', 'Fiftyville');
+```
+
+2. **Mise à jour :**
+```sql
+UPDATE favorites SET language = 'SQL' WHERE language = 'C';
+```
+
+3. **Suppression :**
+```sql
+DELETE FROM favorites WHERE Timestamp IS NULL;
+```
+
+---
+
+## 3. Étude de cas : Base de données de séries TV (Shows)
+
+Imaginons une base de données pour répertorier des séries télévisées. Mettre toutes les informations dans un seul fichier plat (Titre, Acteur 1, Acteur 2, etc.) entraînerait un énorme gaspillage d'espace et beaucoup de redondance.
+
+La solution consiste à séparer les données en plusieurs tables (ex: `shows`, `people`, `ratings`, `genres`, `stars`).
+
+### Clés primaires et clés étrangères
+- **Clé primaire (*Primary Key*)** : Un champ unique qui identifie de façon exclusive une ligne dans une table (ex: `id` dans la table `shows`).
+- **Clé étrangère (*Foreign Key*)** : Un champ dans une table qui fait référence à la clé primaire d'une autre table (ex: `show_id` dans la table `genres`).
+
+### Types de données en SQLite
+1. `BLOB` : Données binaire brutes (images, fichiers).
+2. `INTEGER` : Nombre entier.
+3. `NUMERIC` : Nombres sous formats spéciaux (ex: dates).
+4. `REAL` : Nombre à virgule flottante (*float*).
+5. `TEXT` : Chaîne de caractères.
+
+#### Contraintes usuelles :
+- `NOT NULL` : La colonne ne peut pas être vide.
+- `UNIQUE` : Chaque valeur de la colonne doit être unique.
+
+### Requêtes imbriquées (*Subqueries*)
+Nous pouvons combiner plusieurs requêtes pour obtenir une information précise :
+
+```sql
+-- Trouver les titres des séries ayant une note >= 6.0 (limité à 10)
+SELECT title FROM shows WHERE id IN (
+    SELECT show_id FROM ratings WHERE rating >= 6.0 LIMIT 10
+);
+```
+
+---
+
+## 4. Les Jointures (JOINs)
+
+Plutôt que d'imbriquer des requêtes, nous pouvons fusionner temporairement plusieurs tables sur la base de leurs clés communes grâce à la commande `JOIN`.
+
+### Jointure simple (Relations 1 à 1)
+```sql
+SELECT title, rating 
+FROM shows 
+JOIN ratings ON shows.id = ratings.show_id 
+WHERE rating >= 6.0 
+LIMIT 10;
+```
+
+### Relations "Un-à-Plusieurs" (One-to-Many) et "Plusieurs-à-Plusieurs" (Many-to-Many)
+Une série peut avoir plusieurs genres (Relation 1 à N). Plusieurs acteurs peuvent jouer dans plusieurs séries (Relation N à N).
+
+Pour retrouver tous les acteurs de la série *The Office* (sorte en 2005) :
+
+```sql
+SELECT name FROM people 
+WHERE id IN (
+    SELECT person_id FROM stars 
+    WHERE show_id = (
+        SELECT id FROM shows 
+        WHERE title = 'The Office' AND year = 2005
+    )
+);
+```
+
+#### Utiliser le caractère joker `%` avec `LIKE`
+Pour chercher des noms commençant par "Steve C" :
+```sql
+SELECT * FROM people WHERE name LIKE 'Steve C%';
+```
+
+---
+
+## 5. Les Index (Indexes)
+
+Au fur et à mesure que les bases de données grandissent, parcourir chaque ligne (*Table Scan*) devient très lent. Pour accélérer les recherches, on crée des **index**.
+
+Dans SQLite, activez le chronomètre pour mesurer la vitesse :
+```sql
+.timer on
+SELECT * FROM shows WHERE title = 'The Office';
+```
+
+### Créer un index
+```sql
+CREATE INDEX title_index ON shows (title);
+```
+
+Un index utilise une structure de données appelée **Arbre B** (*B-Tree*). 
+
+> **Compromis (Trade-off) :** L'indexation accélère considérablement la lecture (`SELECT`), mais consomme plus d'espace disque et ralentit légèrement les écritures (`INSERT`, `UPDATE`).
+
+---
+
+## 6. Utiliser SQL avec Python
+
+La bibliothèque CS50 simplifie l'exécution des requêtes SQL directement depuis Python :
+
+```python
+from cs50 import SQL
+
+# Se connecter à la base de données SQLite
+db = SQL("sqlite:///favorites.db")
+
+# Demander une saisie à l'utilisateur
+favorite = input("Série favorite : ")
+
+# Exécuter une requête SQL
+# Le symbole ? remplace proprement la variable
+rows = db.execute("SELECT COUNT(*) AS n FROM favorites WHERE problem LIKE ?", favorite)
+
+# Les résultats sont retournés sous forme de liste de dictionnaires
+row = rows[0]
+print(f"Nombre de votes : {row['n']}")
+```
+
+---
+
+## 7. Conditions de concurrence (Race Conditions)
+
+Lorsque plusieurs utilisateurs ou processus modifient la même base de données en même temps, des conflits appelés **conditions de concurrence** (*Race Conditions*) peuvent survenir, entraînant une corruption de données.
+
+**Solution : Les Transactions SQL**
+Pour s'assurer qu'un groupe de requêtes s'exécute intégralement ou pas du tout (atomicité), on utilise :
+- `BEGIN TRANSACTION` : Démarre le bloc d'opérations.
+- `COMMIT` : Valide définitivement les changements.
+- `ROLLBACK` : Annule tout en cas d'erreur.
+
+---
+
+## 8. Attaques par Injection SQL (SQL Injection)
+
+Si un programmeur insère directement des entrées utilisateur dans une requête SQL via du formatage de texte (`f"SELECT... {user_input}"`), un hacker peut injecter du code SQL malveillant.
+
+### Exemple de vulnérabilité :
+Un champ de connexion recevant `' OR '1'='1` pourrait contourner un mot de passe.
+
+### La Solution : Préparation des requêtes
+N'utilisez **jamais** de chaînes formatées (`f-strings`) pour construire des requêtes SQL. Utilisez toujours des arguments paramétrés avec le caractère `?` :
+
+```python
+# Sécurisé contre les injections SQL
+rows = db.execute("SELECT * FROM users WHERE username = ? AND password = ?", username, password)
+```
+La bibliothèque gère alors le nettoyage (*sanitization*) des données utilisateur avant l'exécution.
+
+---
+
+## 9. Résumé
+
+Dans ce cours, nous avons vu :
+- La différence entre **fichiers plats** (CSV) et **bases de données relationnelles**.
+- La syntaxe du langage **SQL** et les opérations **CRUD**.
+- La structuration des tables à l'aide de **clés primaires** et **clés étrangères**.
+- Les **jointures** (`JOIN`) pour associer plusieurs tables.
+- L'optimisation des requêtes par les **index**.
+- L'intégration de SQL dans **Python** via la bibliothèque `cs50`.
+- Les notions de sécurité essentielles : **Conditions de concurrence** et **Injections SQL**.
+
+*À très bientôt pour la prochaine session sur Savoir IA !*

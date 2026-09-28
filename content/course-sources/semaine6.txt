@@ -1,0 +1,551 @@
+Voici la version révisée, traduite et structurée des notes de cours pour **Savoir IA**.
+
+---
+
+# Cours 6 : Python
+
+## Bienvenue !
+Ces dernières semaines, vous avez appris les bases fondamentales de la programmation à travers un langage de bas niveau : le **C**. 
+
+Aujourd'hui, nous passons à un langage de programmation de plus haut niveau : **Python**. En apprenant ce nouveau langage, vous constaterez qu'il devient de plus en plus facile pour vous d'apprendre par vous-même d'autres langages de programmation à l'avenir.
+
+---
+
+## 1. Pourquoi Python ?
+
+Au fil des décennies, les informaticiens ont cherché à améliorer les choix de conception des anciens langages. Python s'appuie directement sur les concepts que vous avez déjà assimilés en C.
+
+La différence majeure est que, contrairement au C, **Python est un langage interprété**. Vous n'avez pas besoin de compiler explicitement votre programme avant de l'exécuter. Vous lancez directement votre code dans l'**Interpréteur Python**.
+
+---
+
+## 2. Premier programme : "Hello, World"
+
+Rappelez-vous la structure d'un programme de base en C :
+
+```c
+// Un programme qui dit bonjour au monde
+#include <stdio.h>
+
+int main(void)
+{
+    printf("hello, world\n");
+}
+```
+
+En Python, l'écriture et l'exécution du code sont considérablement simplifiées :
+
+```python
+# Un programme qui dit bonjour au monde
+print("hello, world")
+```
+
+**Remarques :**
+* Les points-virgules `;` ont disparu.
+* Il n'est plus nécessaire d'inclure de bibliothèques de base (`#include <stdio.h>`).
+* La fonction `main()` n'est pas obligatoirement requise pour un code simple.
+
+---
+
+## 3. Simplification du code : Exemples concrets
+
+### A. Speller (Gestion du dictionnaire)
+En C, implémenter un dictionnaire pour vérifier l'orthographe nécessitait une gestion complexe de la mémoire, des pointeurs et des tables de hachage.
+
+Voyons comment écrire cela en Python dans un fichier `dictionary.py` :
+
+```python
+# Mots du dictionnaire
+words = set()
+
+def check(word):
+    """Retourne True si le mot est dans le dictionnaire, sinon False"""
+    return word.lower() in words
+
+def load(dictionary):
+    """Charge le dictionnaire en mémoire, retourne True si réussi"""
+    with open(dictionary) as file:
+        words.update(file.read().splitlines())
+    return True
+
+def size():
+    """Retourne le nombre de mots dans le dictionnaire"""
+    return len(words)
+
+def unload():
+    """Libère la mémoire (retourne True automatiquement)"""
+    return True
+```
+
+* **Explications :**
+  * `check()` : Vérifie si un mot est présent dans l'ensemble `words`.
+  * `load()` : Ouvre le fichier et lit chaque ligne en enlevant les sauts de ligne.
+  * `size()` : Utilise la fonction native `len()` pour compter les mots.
+  * `unload()` : Se contente de retourner `True` car Python gère automatiquement la mémoire (*Garbage Collector*).
+
+> **Le compromis Vitesse vs Simplicité :**
+> Les langages de haut niveau existent pour simplifier la vie du développeur. Cependant, le C permet un contrôle direct de la mémoire et s'exécute souvent plus rapidement. Python exécute du code supplémentaire en arrière-plan ("sous le capot") pour offrir cette simplicité.
+
+---
+
+### B. Filter (Traitement d'images)
+En Python, des tâches complexes comme le floutage ou la détection de visages se font en quelques lignes grâce aux bibliothèques.
+
+**Flouter une image (`blur.py`) :**
+```python
+from PIL import Image, ImageFilter
+
+before = Image.open("bridge.bmp")
+after = before.filter(ImageFilter.BoxBlur(1))
+after.save("out.bmp")
+```
+
+**Détecter les contours (`edges.py`) :**
+```python
+from PIL import Image, ImageFilter
+
+before = Image.open("bridge.bmp")
+after = before.filter(ImageFilter.FIND_EDGES)
+after.save("out.bmp")
+```
+
+**Reconnaissance faciale (`find_faces.py`) :**
+```python
+from PIL import Image
+import face_recognition
+
+image = face_recognition.load_image_file("office.jpg")
+face_locations = face_recognition.face_locations(image)
+
+for face_location in face_locations:
+    top, right, bottom, left = face_location
+    face_image = image[top:bottom, left:right]
+    pil_image = Image.fromarray(face_image)
+    pil_image.show()
+```
+*(Remarque : Pour utiliser cette bibliothèque, il suffit d'exécuter `pip install face_recognition` dans le terminal).*
+
+---
+
+## 4. La bibliothèque CS50 et les Chaînes de caractères (Strings)
+
+La bibliothèque CS50 est également disponible en Python.
+
+**Fonctions principales :**
+* `get_float`
+* `get_int`
+* `get_string`
+
+**Comparaison pour demander le nom d'un utilisateur :**
+
+En **C** :
+```c
+#include <cs50.h>
+#include <stdio.h>
+
+int main(void)
+{
+    string answer = get_string("Quel est ton nom ? ");
+    printf("hello, %s\n", answer);
+}
+```
+
+En **Python** (avec concaténation) :
+```python
+from cs50 import get_string
+
+answer = get_string("Quel est ton nom ? ")
+print("hello, " + answer)
+```
+
+En **Python** (avec *f-strings* / interpolation) :
+```python
+from cs50 import get_string
+
+answer = get_string("Quel est ton nom ? ")
+print(f"hello, {answer}")
+```
+*Note : Le préfixe `f` devant la chaîne permet d'insérer directement des variables entre acolades `{}`.*
+
+---
+
+## 5. Variables et Types de données
+
+La déclaration de variables en Python est dynamique. Vous n'avez pas besoin de préciser le type.
+
+* En C : `int counter = 0;`
+* En Python : `counter = 0`
+
+Pour incrémenter : Python utilise `counter += 1`. *(Attention : l'opérateur `counter++` n'existe pas en Python).*
+
+### Types natifs courants :
+* `bool` (booléen : `True` / `False`)
+* `float` (nombre à virgule)
+* `int` (entier)
+* `str` (chaîne de caractères)
+
+*(Note : Les types `long` et `double` du C n'existent pas ici. Python gère automatiquement la taille des grands nombres).*
+
+### Autres structures de données intégrées :
+* `range`
+* `list` (liste)
+* `tuple`
+* `dict` (dictionnaire)
+* `set` (ensemble)
+
+---
+
+## 6. Calculatrice et Saisie Utilisateur
+
+Créons un programme d'addition simple :
+
+```python
+from cs50 import get_int
+
+x = get_int("x: ")
+y = get_int("y: ")
+
+print(x + y)
+```
+
+### Sans la bibliothèque CS50 (Fonction native `input`) :
+Si vous utilisez la fonction native `input()`, faites attention :
+
+```python
+# Code incorrect (concatène au lieu d'additionner)
+x = input("x: ")
+y = input("y: ")
+print(x + y)  # Si x=1 et y=2, affiche "12"
+```
+
+Par défaut, `input()` renvoie une chaîne de caractères (`str`). Vous devez explicitement convertir la valeur en entier avec `int()` :
+
+```python
+# Code correct avec conversion de type
+x = int(input("x: "))
+y = int(input("y: "))
+
+print(x + y)  # Si x=1 et y=2, affiche 3
+```
+
+---
+
+## 7. Les Conditions (Conditionals)
+
+En Python, les accolades `{}` sont remplacées par **l'indentation** (les espaces au début de la ligne). Le mot-clé `else if` devient **`elif`**.
+
+```python
+from cs50 import get_int
+
+x = get_int("Quel est x ? ")
+y = get_int("Quel est y ? ")
+
+if x < y:
+    print("x est inférieur à y")
+elif x > y:
+    print("x est supérieur à y")
+else:
+    print("x est égal à y")
+```
+
+### Opérateurs logiques :
+* En C : `||` et `&&`
+* En Python : `or` et `and`
+
+```python
+from cs50 import get_string
+
+s = get_string("Êtes-vous d'accord ? ")
+
+if s == "Y" or s == "y":
+    print("D'accord.")
+elif s == "N" or s == "n":
+    print("Pas d'accord.")
+```
+
+Utilisation d'une **liste** avec le mot-clé `in` pour raccourcir le code :
+
+```python
+from cs50 import get_string
+
+s = get_string("Êtes-vous d'accord ? ")
+
+if s in ["y", "yes", "Y", "YES"]:
+    print("D'accord.")
+elif s in ["n", "no", "N", "NO"]:
+    print("Pas d'accord.")
+```
+
+---
+
+## 8. Programmation Orientée Objet (POO)
+
+En Python, les valeurs sont souvent des **objets**. Un objet contient non seulement des données, mais aussi des fonctions intégrées appelées **méthodes**.
+
+Par exemple, le type `str` contient la méthode `.lower()` :
+
+```python
+from cs50 import get_string
+
+# On transforme directement la réponse en minuscules
+s = get_string("Êtes-vous d'accord ? ").lower()
+
+if s in ["y", "yes"]:
+    print("D'accord.")
+elif s in ["n", "no"]:
+    print("Pas d'accord.")
+```
+
+---
+
+## 9. Boucles (Loops) et Abstraction
+
+### Boucle `while` :
+```python
+i = 0
+while i < 3:
+    print("miaou")
+    i += 1
+```
+
+### Boucle `for` avec `range` :
+```python
+for i in range(3):
+    print("miaou")
+```
+
+### Utilisation des fonctions et de `main()` :
+Par convention, il est recommandé de structurer votre code avec une fonction `main()` :
+
+```python
+def main():
+    meow(3)
+
+def meow(n):
+    for i in range(n):
+        print("miaou")
+
+# Appel de la fonction principale
+main()
+```
+
+### Manipulation de chaînes :
+Passer une chaîne en majuscules lettre par lettre vs globalement :
+
+```python
+# Approche globale (recommandée)
+before = input("Avant : ")
+after = before.upper()
+print(f"Après : {after}")
+```
+
+---
+
+## 10. Troncature et Imprécision des nombres flottants
+
+En C, la division de deux entiers coupait la partie décimale (troncature). En Python, la division par défaut `/` conserve les décimales.
+
+```python
+x = int(input("x: "))
+y = int(input("y: "))
+
+z = x / y
+print(z)
+```
+
+Cependant, Python est toujours sujet à **l'imprécision des nombres à virgule flottante** du fait de la représentation binaire des nombres :
+
+```python
+# Affichage avec 50 chiffres après la virgule
+print(f"{z:.50f}")
+```
+
+---
+
+## 11. Gestion des Exceptions
+
+Si un utilisateur entre une chaîne de caractères au lieu d'un nombre lors d'un `int(input())`, Python déclenche une erreur (*Exception*). On peut la capturer avec `try` et `except` :
+
+```python
+def get_int(prompt):
+    while True:
+        try:
+            return int(input(prompt))
+        except ValueError:
+            print("Ce n'est pas un entier valide.")
+
+def main():
+    x = get_int("x: ")
+    y = get_int("y: ")
+    print(x + y)
+
+main()
+```
+
+---
+
+## 12. Exercices d'application : Mario
+
+### A. Afficher une colonne verticale
+```python
+from cs50 import get_int
+
+# Demander une hauteur valide (> 0)
+while True:
+    n = get_int("Hauteur : ")
+    if n > 0:
+        break
+
+for i in range(n):
+    print("#")
+```
+
+### B. Afficher une ligne horizontale
+Par défaut, `print()` ajoute un saut de ligne. On peut modifier ce comportement avec l'argument `end=""` :
+
+```python
+for i in range(4):
+    print("?", end="")
+print() # Saut de ligne final
+```
+
+Ou de manière encore plus simple en Python :
+```python
+print("?" * 4)
+```
+
+### C. Afficher une grille 2D (3x3)
+```python
+for i in range(3):
+    for j in range(3):
+        print("#", end="")
+    print()
+```
+
+---
+
+## 13. Listes et Dictionnaires
+
+### Listes (`list`)
+Calcul de la moyenne d'une liste de notes :
+
+```python
+scores = [72, 73, 33]
+average = sum(scores) / len(scores)
+print(f"Moyenne : {average}")
+```
+
+Ajouter dynamiquement des éléments dans une liste avec `.append()` :
+
+```python
+from cs50 import get_int
+
+scores = []
+for i in range(3):
+    score = get_int("Note : ")
+    scores.append(score)
+
+average = sum(scores) / len(scores)
+print(f"Moyenne : {average}")
+```
+
+### Recherche linéaire et Dictionnaires (`dict`)
+
+Recherche simple dans une liste :
+```python
+names = ["Carter", "David", "John"]
+name = input("Nom : ")
+
+if name in names:
+    print("Trouvé")
+else:
+    print("Non trouvé")
+```
+
+**Utilisation d'un Dictionnaire (Clé-Valeur) :**
+Un dictionnaire permet d'associer directement une clé à une valeur (ex: Un nom associé à un numéro de téléphone).
+
+```python
+from cs50 import get_string
+
+# Déclaration du dictionnaire avec des accolades {}
+people = {
+    "Carter": "+1-617-495-1000",
+    "David": "+1-617-495-1000",
+    "John": "+1-949-468-2750",
+}
+
+name = get_string("Nom : ")
+
+if name in people:
+    print(f"Numéro : {people[name]}")
+else:
+    print("Non trouvé")
+```
+
+---
+
+## 14. Arguments en ligne de commande
+
+Pour récupérer des arguments transmis lors du lancement du script, on utilise le module `sys` et sa liste `argv`.
+
+```python
+from sys import argv
+
+if len(argv) == 2:
+    print(f"hello, {argv[1]}")
+else:
+    print("hello, world")
+```
+
+* `argv[0]` contient le nom du fichier Python en cours d'exécution.
+* Pour parcourir tous les arguments :
+
+```python
+from sys import argv
+
+for arg in argv[1:]: # Utilisation du découpage (slicing)
+    print(arg)
+```
+
+---
+
+## 15. Statut de sortie (Exit Status)
+
+Vous pouvez interrompre un programme et renvoyer un code de statut avec `sys.exit()` :
+
+```python
+import sys
+
+if len(sys.argv) != 2:
+    print("Argument de ligne de commande manquant")
+    sys.exit(1)
+
+print(f"hello, {sys.argv[1]}")
+sys.exit(0)
+```
+
+---
+
+## 16. Bibliothèques Tiers
+
+L'une des plus grandes forces de Python est sa communauté et son écosystème de bibliothèques tierces accessibles via `pip`.
+Par exemple :
+* `cowsay` (pour afficher des dessins en art ASCII)
+* `qrcode` (pour générer des codes QR en quelques lignes de code)
+
+---
+
+## En résumé
+
+Dans ce cours, vous avez découvert comment transposer les fondamentaux de la programmation appris en C vers **Python**. Vous avez vu à quel point Python rend le code plus lisible, plus court et plus simple à maintenir.
+
+**Concepts clés abordés :**
+1. L'Interpréteur Python
+2. Les types dynamiques et les structures (`list`, `dict`, `set`)
+3. La programmation orientée objet et les méthodes
+4. Les f-strings et la manipulation de chaînes
+5. La gestion des exceptions (`try/except`)
+6. La puissance des bibliothèques externes (`pip`)
+
+Vos compétences de développeur ne dépendent pas d'un seul langage : vous apprenez une logique universelle. À très bientôt pour la prochaine session !

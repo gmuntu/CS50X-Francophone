@@ -1,34 +1,30 @@
+'use client';
 
-'use client'
+import { useEffect, useState } from 'react';
 
-import { useEffect, useState } from 'react'
-
-interface AnimatedCounterProps {
-  end: number
-  duration?: number
-  suffix?: string
+interface Props {
+  end: number;
+  suffix?: string;
+  duration?: number;
 }
 
-export default function AnimatedCounter({ end, duration = 2000, suffix = '' }: AnimatedCounterProps) {
-  const [count, setCount] = useState(0)
+export default function AnimatedCounter({ end, suffix = '', duration = 2000 }: Props) {
+  const [count, setCount] = useState(0);
 
   useEffect(() => {
-    let startTime: number | null = null
-    const startValue = 0
-
-    const animate = (currentTime: number) => {
-      if (!startTime) startTime = currentTime
-      const progress = Math.min((currentTime - startTime) / duration, 1)
-      
-      setCount(Math.floor(progress * (end - startValue) + startValue))
-      
-      if (progress < 1) {
-        requestAnimationFrame(animate)
+    let start = 0;
+    const increment = end / (duration / 16);
+    const timer = setInterval(() => {
+      start += increment;
+      if (start >= end) {
+        setCount(end);
+        clearInterval(timer);
+      } else {
+        setCount(Math.floor(start));
       }
-    }
+    }, 16);
+    return () => clearInterval(timer);
+  }, [end, duration]);
 
-    requestAnimationFrame(animate)
-  }, [end, duration])
-
-  return <span>{count}{suffix}</span>
+  return <>{count?.toLocaleString?.('fr-FR') ?? '0'}{suffix}</>;
 }

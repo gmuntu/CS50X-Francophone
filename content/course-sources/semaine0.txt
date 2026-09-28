@@ -1,0 +1,2 @@
+Note de cours - Semaine 0 :
+L'informatique utilise le système binaire, composé uniquement de 0 et de 1. Chaque 0 ou 1 est appelé un "bit" (binary digit). Pour représenter des informations plus complexes comme des lettres, on regroupe ces bits par paquets de 8. Un groupe de 8 bits est appelé un "octet" (ou "byte" en anglais).

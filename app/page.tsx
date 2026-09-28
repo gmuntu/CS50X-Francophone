@@ -1,6 +1,5 @@
-
-import MainContent from '@/components/main-content'
+import LandingPage from '@/components/landing-page';
 
 export default function Home() {
-  return <MainContent />
+  return <LandingPage />;
 }

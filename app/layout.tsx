@@ -1,26 +1,33 @@
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import './globals.css';
+import { Providers } from '@/components/providers';
 
-import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-import './globals.css'
-import { Providers } from '@/components/providers'
+export const dynamic = 'force-dynamic';
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
 export const metadata: Metadata = {
-  title: 'CS50X Francophone - Cours de Programmation Harvard',
-  description: 'Plateforme francophone pour apprendre la programmation avec CS50 de Harvard',
-}
+  metadataBase: new URL(process.env.NEXTAUTH_URL || 'http://localhost:3000'),
+  title: 'CS50X Francophone - Plateforme d\'Apprentissage',
+  description: 'Plateforme francophone pour apprendre la programmation avec le cours CS50, certificat reconnu par Harvard',
+  icons: {
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
+  },
+  openGraph: {
+    title: 'CS50X Francophone',
+    description: 'Apprenez la programmation avec CS50, certificat reconnu par Harvard, entièrement en français',
+    images: ['/og-image.png'],
+  },
+};
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr">
-      <body className={inter.className}>
+    <html lang="fr" suppressHydrationWarning>
+      <body className={`${inter.variable} font-sans antialiased`} suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>
-  )
+  );
 }

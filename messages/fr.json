@@ -1,0 +1,57 @@
+{
+  "common": {
+    "appName": "CS50X Francophone",
+    "login": "Connexion",
+    "signup": "Inscription",
+    "logout": "Déconnexion",
+    "dashboard": "Tableau de bord",
+    "courses": "Cours",
+    "profile": "Profil",
+    "admin": "Administration",
+    "tutor": "Tuteur Socrate",
+    "loading": "Chargement...",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "submit": "Soumettre",
+    "back": "Retour",
+    "search": "Rechercher",
+    "noResults": "Aucun résultat"
+  },
+  "auth": {
+    "loginTitle": "Connexion Membres",
+    "loginDesc": "Connectez-vous pour accéder à votre espace de formation",
+    "signupTitle": "Créer un compte",
+    "signupDesc": "Rejoignez la première plateforme francophone CS50",
+    "email": "Adresse email",
+    "password": "Mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "fullName": "Nom complet",
+    "orContinueWith": "Ou continuer avec",
+    "noAccount": "Pas encore de compte ?",
+    "hasAccount": "Déjà un compte ?",
+    "googleLogin": "Google",
+    "githubLogin": "GitHub"
+  },
+  "hero": {
+    "title": "Apprenez la Programmation avec CS50X Francophone",
+    "subtitle": "Rejoignez la première plateforme francophone du célèbre cours CS50X",
+    "cta": "S'inscrire Maintenant",
+    "memberLogin": "Connexion Membres"
+  },
+  "dashboard": {
+    "welcome": "Bienvenue",
+    "progress": "Progression",
+    "completedModules": "Modules complétés",
+    "avgScore": "Score moyen",
+    "recentQuizzes": "Derniers quiz",
+    "continueLearning": "Continuer l'apprentissage"
+  },
+  "courses": {
+    "title": "Parcours CS50X",
+    "subtitle": "Un voyage complet de 11 semaines pour maîtriser les fondamentaux",
+    "allCourses": "Tous les cours",
+    "beginner": "Débutant",
+    "intermediate": "Intermédiaire",
+    "advanced": "Avancé"
+  }
+}

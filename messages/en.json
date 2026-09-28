@@ -1,0 +1,20 @@
+{
+  "common": {
+    "appName": "CS50X Francophone",
+    "login": "Login",
+    "signup": "Sign Up",
+    "logout": "Log Out",
+    "dashboard": "Dashboard",
+    "courses": "Courses",
+    "profile": "Profile",
+    "admin": "Admin",
+    "tutor": "Socratic Tutor",
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "submit": "Submit",
+    "back": "Back",
+    "search": "Search",
+    "noResults": "No results"
+  }
+}
