@@ -1,5 +1,6 @@
 'use client';
 
+import PasswordInput from '@/components/password-input';
 import React, { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
@@ -971,8 +972,7 @@ export default function SignupPage() {
                   <label className="text-xs font-bold text-foreground">
                     Mot de passe <span className="text-rose-500">*</span>
                   </label>
-                  <input
-                    type="password"
+                  <PasswordInput
                     value={formData.password}
                     onChange={(e) => updateField('password', e.target.value)}
                     placeholder="Minimum 10 caractères"
@@ -1010,8 +1010,7 @@ export default function SignupPage() {
                   <label className="text-xs font-bold text-foreground">
                     Confirmer le mot de passe <span className="text-rose-500">*</span>
                   </label>
-                  <input
-                    type="password"
+                  <PasswordInput
                     value={formData.confirmPassword}
                     onChange={(e) => updateField('confirmPassword', e.target.value)}
                     placeholder="Répétez le mot de passe"
