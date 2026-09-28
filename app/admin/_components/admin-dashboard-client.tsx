@@ -141,6 +141,19 @@ export default function AdminDashboardClient({ stats, recentSubmissions, role }:
           })}
         </div>
 
+        {!isInstructor && (
+          <Link
+            href="/admin/partners"
+            className="mb-6 flex items-center justify-between bg-card border border-border rounded-xl p-5 hover:border-primary transition"
+          >
+            <div>
+              <p className="font-bold text-foreground">Établissements partenaires & sessions</p>
+              <p className="text-sm text-muted-foreground">Ajouter un établissement, planifier les sessions, générer les codes de convention</p>
+            </div>
+            <ArrowRight className="w-5 h-5 text-primary" />
+          </Link>
+        )}
+
         <div className="bg-card border border-border rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-foreground">Dernières soumissions</h2>

@@ -62,6 +62,21 @@ export default function SignupPage() {
     hasGithubOAuth: false,
   });
 
+  // Établissements partenaires gérés dans /admin/partners (repli : liste statique)
+  const [partnerOptions, setPartnerOptions] = useState<string[]>(PARTNER_UNIVERSITIES);
+  useEffect(() => {
+    fetch('/api/partners')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        const names: string[] = (d?.institutions ?? []).map((i: any) => i.name);
+        if (names.length > 0) {
+          setPartnerOptions([...names, 'Autre université (saisie libre)']);
+          setFormData((prev: any) => ({ ...prev, university: names[0] }));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   useEffect(() => {
     fetch('/api/auth/providers-status')
       .then((res) => res.json())
@@ -770,7 +785,7 @@ export default function SignupPage() {
                         onChange={(e) => updateField('university', e.target.value)}
                         className="w-full px-4 py-3 rounded-xl bg-background border border-border text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500"
                       >
-                        {PARTNER_UNIVERSITIES.map((u) => (
+                        {partnerOptions.map((u) => (
                           <option key={u} value={u}>{u}</option>
                         ))}
                       </select>
@@ -799,7 +814,7 @@ export default function SignupPage() {
                         type="text"
                         value={formData.partnerCode}
                         onChange={(e) => updateField('partnerCode', e.target.value)}
-                        placeholder="Code remis par votre établissement"
+                        placeholder="Ex : UOM-CS50X-S1-2027-7Q4K9X"
                         autoComplete="off"
                         className="w-full px-4 py-3 rounded-xl bg-background border border-border text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500"
                       />

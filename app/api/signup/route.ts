@@ -90,17 +90,27 @@ export async function POST(request: Request) {
       if (!errorField) errorField = 'university';
     }
 
-    // 5b. Code de convention : seuls les étudiants munis d'un code valide sont exemptés.
-    // PARTNER_ACCESS_CODES (Vercel) : liste de codes séparés par des virgules.
+    // 5b. Code de convention : il identifie l'établissement ET la session (promotion).
+    // Codes gérés dans /admin/partners ; un code expire à la fin de sa session.
+    let partnerInstitutionId: string | null = null;
+    let partnerSessionId: string | null = null;
     if (resolvedType === 'UNIVERSITAIRE') {
-      const validCodes = String(process.env.PARTNER_ACCESS_CODES || '')
-        .split(',')
-        .map((c) => c.trim())
-        .filter(Boolean);
-      const submitted = String(partnerCode || '').trim();
-      if (!submitted || !validCodes.includes(submitted)) {
-        causes.push("Code de convention invalide : demandez le code officiel à votre université partenaire.");
+      const submitted = String(partnerCode || '').trim().toUpperCase();
+      const access = submitted
+        ? await prisma.accessCode.findUnique({
+            where: { code: submitted },
+            include: { institution: true, session: true },
+          })
+        : null;
+      const valid =
+        !!access && access.active && access.institution.active && access.session.endDate >= new Date();
+      if (!valid) {
+        causes.push("Code de convention invalide ou expiré : demandez le code de la session en cours à votre établissement.");
         if (!errorField) errorField = 'partnerCode';
+      } else {
+        partnerInstitutionId = access.institutionId;
+        partnerSessionId = access.sessionId;
+        resolvedUniversity = access.institution.name; // l'établissement est celui du code
       }
     }
 
@@ -143,8 +153,11 @@ export async function POST(request: Request) {
         firstName: trimmedFirst || null,
         lastName: trimmedLast || null,
         role: 'STUDENT',
-        // Candidat libre : compte en attente jusqu'à la validation du paiement par l'administration
-        status: resolvedType === 'UNIVERSITAIRE' ? 'ACTIVE' : 'PENDING',
+        // Tous les nouveaux comptes attendent une validation de l'administration :
+        // paiement vérifié (candidat libre) ou présence sur la liste de l'établissement (partenaire).
+        status: 'PENDING',
+        institutionId: partnerInstitutionId,
+        courseSessionId: partnerSessionId,
         birthDate: parsedBirthDate,
         countryCode: countryCode ? String(countryCode) : null,
         dialCode: dialCode ? String(dialCode) : null,
