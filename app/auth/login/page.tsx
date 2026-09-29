@@ -114,7 +114,7 @@ function LoginForm() {
                 <BookOpen className="w-5 h-5 text-primary-foreground" />
               </div>
               <span className="text-xl font-extrabold text-foreground">
-                CS50X <span className="text-primary">Francophone</span>
+                Savo<span className="text-primary">iria</span>
               </span>
             </Link>
             <h1 className="text-2xl font-extrabold text-foreground">Connexion Membres</h1>

@@ -25,6 +25,14 @@ type Unit =
 /*  Gemini : appel JSON                                                */
 /* ------------------------------------------------------------------ */
 async function geminiJson(prompt: string): Promise<any> {
+  let last: any;
+  for (let i = 0; i < 3; i++) {
+    try { return await geminiJsonOnce(prompt); } catch (e) { last = e; await new Promise(r => setTimeout(r, 1500 * (i + 1))); }
+  }
+  throw last;
+}
+
+async function geminiJsonOnce(prompt: string): Promise<any> {
   const key = process.env.GEMINI_API_KEY || process.env.EMINI_API_KEY;
   if (!key) throw new Error('GEMINI_API_KEY absente');
   const res = await fetch(
@@ -34,7 +42,7 @@ async function geminiJson(prompt: string): Promise<any> {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        generationConfig: { responseMimeType: 'application/json', temperature: 0.4, maxOutputTokens: 8192 },
+        generationConfig: { responseMimeType: 'application/json', temperature: 0.4, maxOutputTokens: 16384 },
       }),
     },
   );

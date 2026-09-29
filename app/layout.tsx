@@ -9,14 +9,14 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXTAUTH_URL || 'http://localhost:3000'),
-  title: 'CS50X Francophone - Plateforme d\'Apprentissage',
+  title: 'Savoiria - Apprendre l\'informatique en français',
   description: 'Plateforme francophone pour apprendre la programmation avec le cours CS50, accompagnement indépendant (non affilié à Harvard)',
   icons: {
     icon: '/favicon.svg',
     shortcut: '/favicon.svg',
   },
   openGraph: {
-    title: 'CS50X Francophone',
+    title: 'Savoiria',
     description: 'Accompagnement indépendant en français pour réussir CS50x, le cours gratuit de l’Université Harvard',
     images: ['/og-image.png'],
   },
