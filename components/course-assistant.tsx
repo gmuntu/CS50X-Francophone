@@ -82,6 +82,19 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const speechCancelRef = useRef(false);
   const speechGenRef = useRef(0);
+  // Lecteur unique, « débloqué » lors d'un clic (les navigateurs bloquent le son lancé plus tard sans clic).
+  const playerRef = useRef<HTMLAudioElement | null>(null);
+  const getPlayer = () => {
+    if (!playerRef.current && typeof window !== 'undefined') playerRef.current = new Audio();
+    return playerRef.current!;
+  };
+  const unlockAudio = () => {
+    try {
+      const p = getPlayer();
+      p.src = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+      p.play().catch(() => {});
+    } catch {}
+  };
 
   const currentScript = (audioScripts ?? []).find((a: any) => a?.dayOfWeek === selectedDay);
   const currentQuiz = (quizzes ?? []).find((q: any) => q?.dayOfWeek === selectedDay) ?? null;
@@ -154,11 +167,12 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
   }, []);
 
   const playBase64 = useCallback((b64: string) => new Promise<void>((resolve, reject) => {
-    if (currentAudioRef.current) currentAudioRef.current.pause();
-    const audio = new Audio('data:audio/mp3;base64,' + b64);
+    const audio = getPlayer();
+    audio.pause();
     currentAudioRef.current = audio;
     audio.onended = () => resolve();
     audio.onerror = () => reject(new Error('Erreur de lecture audio'));
+    audio.src = 'data:audio/mp3;base64,' + b64;
     audio.play().catch(reject);
   }), []);
 
@@ -196,7 +210,8 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
         await playBase64(b64);
       }
     } catch {
-      /* lecture interrompue */
+      // Son bloqué ou erreur : on bascule sur la voix du navigateur plutôt que le silence.
+      if (!stale()) { await new Promise<void>((r) => speak(clean, r)); }
     }
     if (!stale()) onEnd();
   }, [synthesizeChunk, playBase64, speak]);
@@ -208,6 +223,7 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
       return;
     }
     stopAllSpeech();
+    unlockAudio();
     speechCancelRef.current = false;
     // Fichier MP3 pré-généré prioritaire.
     if (currentScript?.audioUrl) {
@@ -249,6 +265,7 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
       return;
     }
     stopAllSpeech();
+    unlockAudio();
     speechCancelRef.current = false;
     setSpeakingIdx(idx);
     await speakSmart(text, () => setSpeakingIdx(null));
@@ -305,6 +322,7 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
 
   const startListening = () => {
     stopAllSpeech();
+    unlockAudio();
     const SR: any = typeof window !== 'undefined'
       ? (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
       : null;
