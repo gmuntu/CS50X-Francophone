@@ -1,5 +1,5 @@
 export const dynamic = 'force-dynamic';
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
@@ -29,5 +29,6 @@ export async function POST() {
     return NextResponse.json({ error: 'Réservé aux administrateurs' }, { status: 403 });
   }
   const result = await runWeeklyContent();
+  console.log('[manual weekly-content]', JSON.stringify(result));
   return NextResponse.json(result);
 }

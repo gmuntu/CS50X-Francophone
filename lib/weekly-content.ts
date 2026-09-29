@@ -34,13 +34,13 @@ async function geminiJson(prompt: string): Promise<any> {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        generationConfig: { responseMimeType: 'application/json', temperature: 0.4, maxOutputTokens: 3000 },
+        generationConfig: { responseMimeType: 'application/json', temperature: 0.4, maxOutputTokens: 8192 },
       }),
     },
   );
   if (!res.ok) throw new Error(`Gemini ${res.status}`);
   const data = await res.json();
-  const raw = String(data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '')
+  const raw = String((data?.candidates?.[0]?.content?.parts ?? []).map((p: any) => p?.text ?? '').join(''))
     .replace(/^```(?:json)?/i, '')
     .replace(/```$/, '')
     .trim();
@@ -195,7 +195,7 @@ async function runUnit(u: Unit): Promise<string> {
 }
 
 /** Produit un maximum d'éléments manquants en `budgetMs` millisecondes. */
-export async function runWeeklyContent(budgetMs = 45_000) {
+export async function runWeeklyContent(budgetMs = 200_000) {
   const start = Date.now();
   const done: string[] = [];
   const errors: string[] = [];
