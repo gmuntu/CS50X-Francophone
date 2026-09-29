@@ -81,6 +81,7 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
   const dayAudioRef = useRef<HTMLAudioElement | null>(null);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const speechCancelRef = useRef(false);
+  const speechGenRef = useRef(0);
 
   const currentScript = (audioScripts ?? []).find((a: any) => a?.dayOfWeek === selectedDay);
   const currentQuiz = (quizzes ?? []).find((q: any) => q?.dayOfWeek === selectedDay) ?? null;
@@ -99,6 +100,7 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
 
   const stopAllSpeech = useCallback(() => {
     speechCancelRef.current = true;
+    speechGenRef.current++;
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }
@@ -152,6 +154,7 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
   }, []);
 
   const playBase64 = useCallback((b64: string) => new Promise<void>((resolve, reject) => {
+    if (currentAudioRef.current) currentAudioRef.current.pause();
     const audio = new Audio('data:audio/mp3;base64,' + b64);
     currentAudioRef.current = audio;
     audio.onended = () => resolve();
@@ -163,13 +166,19 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
   const speakSmart = useCallback(async (fullText: string, onEnd: () => void) => {
     const clean = sanitizeForVoice(fullText);
     if (!clean) { onEnd(); return; }
+    // Une seule voix à la fois : on coupe toute lecture en cours.
+    if (typeof window !== 'undefined' && window.speechSynthesis) window.speechSynthesis.cancel();
+    if (currentAudioRef.current) { currentAudioRef.current.pause(); currentAudioRef.current = null; }
+    if (dayAudioRef.current) { dayAudioRef.current.pause(); dayAudioRef.current = null; }
+    const gen = ++speechGenRef.current;
+    const stale = () => gen !== speechGenRef.current;
     speechCancelRef.current = false;
     const chunks = chunkText(clean);
     if (chunks.length === 0) { onEnd(); return; }
 
     // On teste le 1er segment via Google : s'il échoue, repli complet navigateur.
     const first = await synthesizeChunk(chunks[0]);
-    if (speechCancelRef.current) { onEnd(); return; }
+    if (stale()) return;
     setIsDayLoading(false);
 
     if (first == null) {
@@ -180,17 +189,16 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
     try {
       await playBase64(first);
       for (let i = 1; i < chunks.length; i++) {
-        if (speechCancelRef.current) break;
+        if (stale()) return;
         const b64 = await synthesizeChunk(chunks[i]);
-        if (speechCancelRef.current) break;
+        if (stale()) return;
         if (b64 == null) { await new Promise<void>((r) => speak(chunks.slice(i).join(' '), r)); break; }
         await playBase64(b64);
       }
     } catch {
       /* lecture interrompue */
-    } finally {
-      onEnd();
     }
+    if (!stale()) onEnd();
   }, [synthesizeChunk, playBase64, speak]);
 
   // Écouter la session du jour (voix neuronale Google, repli navigateur).
@@ -370,6 +378,7 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
       }
       if (fromVoice && assistantContent.trim()) {
         const idx = newMessages.length;
+        stopAllSpeech();
         setSpeakingIdx(idx);
         speakSmart(assistantContent, () => setSpeakingIdx(null));
       }
