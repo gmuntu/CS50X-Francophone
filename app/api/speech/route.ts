@@ -1,15 +1,22 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
+import { auth } from '@/auth';
 
 /**
- * Synthèse vocale neuronale via Google Cloud Text-to-Speech.
- * Voix française naturelle (fr-FR-Neural2-D) — bien plus fluide que la voix
- * robotique du navigateur. Si la clé n'est pas configurée, on renvoie un signal
+ * Synthèse vocale via Google Cloud Text-to-Speech, voix « Chirp 3 HD »
+ * (génération la plus naturelle de Google). Voix réglable avec GOOGLE_TTS_VOICE
+ * (ex. fr-FR-Chirp3-HD-Charon, fr-FR-Chirp3-HD-Aoede). Si la clé n'est pas configurée, on renvoie un signal
  * `fallback` pour que le client bascule sur la synthèse vocale du navigateur.
  */
 export async function POST(request: Request) {
   try {
+    // Réservé aux utilisateurs connectés : protège le quota gratuit Google
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ fallback: true, error: 'Non authentifié' }, { status: 401 });
+    }
+
     const { text, voice } = await request.json();
 
     if (!text || typeof text !== 'string' || !text.trim()) {
@@ -35,8 +42,16 @@ export async function POST(request: Request) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           input: { text: input },
-          voice: { languageCode: 'fr-FR', name: voice || 'fr-FR-Neural2-D' },
-          audioConfig: { audioEncoding: 'MP3', speakingRate: 0.95, pitch: 0 },
+          voice: {
+            languageCode: 'fr-FR',
+            // Les anciennes voix Neural2 demandées par le client sont remplacées par Chirp 3 HD
+            name:
+              typeof voice === 'string' && voice.includes('Chirp3-HD')
+                ? voice
+                : process.env.GOOGLE_TTS_VOICE || 'fr-FR-Chirp3-HD-Charon',
+          },
+          // Chirp 3 HD ne prend pas en charge le réglage « pitch »
+          audioConfig: { audioEncoding: 'MP3', speakingRate: 0.95 },
         }),
       },
     );
@@ -46,7 +61,7 @@ export async function POST(request: Request) {
     if (!response.ok) {
       console.error('Erreur Google Cloud TTS :', JSON.stringify(data?.error || data));
       return NextResponse.json(
-        { error: data?.error?.message || "Erreur de l'API Google Cloud TTS" },
+        { fallback: true, error: "Erreur de l'API Google Cloud TTS" },
         { status: 502 },
       );
     }
@@ -54,6 +69,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ audioContent: data.audioContent });
   } catch (error: any) {
     console.error('Erreur serveur TTS :', error?.message);
-    return NextResponse.json({ error: error?.message || 'Erreur serveur' }, { status: 500 });
+    return NextResponse.json({ fallback: true, error: 'Erreur serveur' }, { status: 500 });
   }
 }
