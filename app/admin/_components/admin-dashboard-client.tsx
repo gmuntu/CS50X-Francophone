@@ -4,6 +4,7 @@ import Header from '@/components/header';
 import Footer from '@/components/footer';
 import { Users, BookOpen, FileText, Brain, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import PrepareContentButton from '@/components/prepare-content-button';
 import { motion } from 'framer-motion';
 
 interface Props {
@@ -140,6 +141,8 @@ export default function AdminDashboardClient({ stats, recentSubmissions, role }:
             );
           })}
         </div>
+
+        {!isInstructor && <PrepareContentButton />}
 
         {!isInstructor && (
           <Link
