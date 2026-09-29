@@ -59,7 +59,7 @@ export default function LandingPage() {
           >
             Apprenez la Programmation avec{' '}
             <span className="bg-gradient-to-r from-primary via-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              CS50 de Harvard
+              un tuteur IA socratique
             </span>
           </motion.h1>
 
@@ -69,7 +69,7 @@ export default function LandingPage() {
             transition={{ delay: 0.35, duration: 0.6 }}
             className="text-lg sm:text-xl md:text-2xl mb-10 text-muted-foreground font-medium max-w-3xl mx-auto leading-relaxed"
           >
-            Rejoignez la première plateforme francophone du célèbre cours CS50X
+            Suivez en français, avec un tuteur IA, le célèbre cours CS50x
           </motion.p>
 
           <motion.div
@@ -142,7 +142,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-4">
           <div className="text-center mb-16 space-y-3">
             <h2 className="text-3xl md:text-4xl font-extrabold text-foreground tracking-tight">
-              Pourquoi Choisir <span className="text-primary">CS50X Francophone</span> ?
+              Pourquoi choisir <span className="text-primary">Savoiria</span> ?
             </h2>
             <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
               Une expérience d'apprentissage unique adaptée aux francophones

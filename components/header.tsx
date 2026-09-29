@@ -31,7 +31,7 @@ export default function Header() {
               <BookOpen className="w-5 h-5 text-primary-foreground" />
             </div>
             <span className="text-lg font-extrabold text-foreground tracking-tight">
-              CS50X <span className="text-primary">Francophone</span>
+              Savo<span className="text-primary">iria</span>
             </span>
           </Link>
 

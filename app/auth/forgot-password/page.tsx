@@ -106,7 +106,7 @@ export default function ForgotPasswordPage() {
               <BookOpen className="w-5 h-5 text-primary-foreground" />
             </div>
             <span className="text-xl font-extrabold text-foreground">
-              CS50X <span className="text-primary">Francophone</span>
+              Savo<span className="text-primary">iria</span>
             </span>
           </Link>
           <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">

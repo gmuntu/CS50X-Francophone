@@ -315,7 +315,7 @@ export default function SignupPage() {
               <BookOpen className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-base font-extrabold tracking-tight">CS50X <span className="text-primary">Francophone</span></span>
+              <span className="text-base font-extrabold tracking-tight">Savo<span className="text-primary">iria</span></span>
               <p className="text-[10px] text-muted-foreground font-semibold">Portail d'Admission Savoiria</p>
             </div>
           </Link>

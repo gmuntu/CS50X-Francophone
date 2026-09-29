@@ -77,7 +77,7 @@ export default function AdminDashboardClient({ stats, recentSubmissions, role }:
               <p className="text-muted-foreground mt-1">
                 {isInstructor
                   ? 'Espace pédagogique de correction des exercices et suivi des étudiants'
-                  : 'Gestion globale de la plateforme CS50X Francophone'}
+                  : 'Gestion globale de la plateforme Savoiria'}
               </p>
             </div>
 

@@ -246,13 +246,62 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
     await speakSmart(text, () => setSpeakingIdx(null));
   };
 
+  // Enregistrement micro (repli quand le navigateur n'a pas de reconnaissance vocale intégrée)
+  const recorderRef = useRef<MediaRecorder | null>(null);
+
+  const transcribeWithGoogle = async (blob: Blob) => {
+    try {
+      const buf = await blob.arrayBuffer();
+      let binary = '';
+      const bytes = new Uint8Array(buf);
+      for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+      const res = await fetch('/api/stt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ audio: btoa(binary) }),
+      });
+      const data = await res.json();
+      if (data?.transcript) sendMessage(data.transcript, true);
+      else alert("Je n'ai pas compris. Réessaie en parlant un peu plus près du micro.");
+    } catch {
+      alert('La reconnaissance vocale a échoué. Tu peux taper ta question.');
+    }
+  };
+
+  const startRecordingFallback = async () => {
+    if (recorderRef.current) {
+      recorderRef.current.stop(); // deuxième clic : on arrête et on envoie
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : '';
+      const rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+      const chunks: Blob[] = [];
+      rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+      rec.onstop = () => {
+        stream.getTracks().forEach((t) => t.stop());
+        recorderRef.current = null;
+        setIsListening(false);
+        transcribeWithGoogle(new Blob(chunks, { type: rec.mimeType }));
+      };
+      recorderRef.current = rec;
+      setIsListening(true);
+      rec.start();
+      setTimeout(() => recorderRef.current === rec && rec.stop(), 15000); // 15 s maximum
+    } catch {
+      setIsListening(false);
+      alert("Impossible d'accéder au micro. Autorise le micro dans ton navigateur.");
+    }
+  };
+
   const startListening = () => {
     stopAllSpeech();
     const SR: any = typeof window !== 'undefined'
       ? (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
       : null;
     if (!SR) {
-      alert('La reconnaissance vocale n\u2019est pas supportée. Utilisez Chrome ou Edge.');
+      startRecordingFallback();
       return;
     }
     try {
@@ -262,8 +311,10 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
       recognition.maxAlternatives = 1;
       recognition.onstart = () => setIsListening(true);
       recognition.onresult = (e: any) => {
-        setInput(e?.results?.[0]?.[0]?.transcript ?? '');
+        const transcript = e?.results?.[0]?.[0]?.transcript ?? '';
         setIsListening(false);
+        // Conversation vocale : la question part directement, Socrate répondra à voix haute
+        if (transcript.trim()) sendMessage(transcript, true);
       };
       recognition.onerror = () => setIsListening(false);
       recognition.onend = () => setIsListening(false);
@@ -273,7 +324,7 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
     }
   };
 
-  const sendMessage = async (text: string) => {
+  const sendMessage = async (text: string, fromVoice = false) => {
     const trimmed = text?.trim?.();
     if (!trimmed || loading) return;
     const newMessages: Message[] = [...messages, { role: 'user', content: trimmed }];
@@ -316,6 +367,11 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
             } catch {}
           }
         }
+      }
+      if (fromVoice && assistantContent.trim()) {
+        const idx = newMessages.length;
+        setSpeakingIdx(idx);
+        speakSmart(assistantContent, () => setSpeakingIdx(null));
       }
     } catch (err) {
       console.error('Tutor error:', err);
@@ -573,7 +629,7 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
           <button
             type="button"
             onClick={startListening}
-            title="Dictée vocale"
+            title={isListening ? "J\u2019écoute… (clique pour arrêter)" : "Parler à Socrate"}
             className={`p-2.5 rounded-xl border transition shrink-0 ${
               isListening
                 ? 'bg-rose-600 text-white border-rose-500 animate-pulse'
