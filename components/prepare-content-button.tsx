@@ -7,15 +7,18 @@ import { Sparkles, Loader2 } from 'lucide-react';
 export default function PrepareContentButton() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
+  const [errors, setErrors] = useState<string[]>([]);
 
   const run = async () => {
     setBusy(true);
-    setMsg('Préparation en cours (jusqu’à une minute)…');
+    setErrors([]);
+    setMsg('Préparation en cours (jusqu’à 4 minutes, gardez la page ouverte)…');
     try {
       const res = await fetch('/api/cron/weekly-content', { method: 'POST' });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Erreur');
       const n = data.done?.length ?? 0;
+      setErrors(Array.isArray(data.errors) ? data.errors : []);
       setMsg(
         n === 0 && !data.errors?.length
           ? 'Tout le programme est déjà prêt ✅'
@@ -35,6 +38,9 @@ export default function PrepareContentButton() {
         <p className="text-sm text-muted-foreground">
           Chaque nuit, résumés, séances socratiques (lun/mer/ven) et quiz sont préparés automatiquement.
           {msg && <span className="block mt-1 text-foreground">{msg}</span>}
+          {errors.map((e) => (
+            <span key={e} className="block text-xs text-rose-600">⚠️ {e}</span>
+          ))}
         </p>
       </div>
       <button

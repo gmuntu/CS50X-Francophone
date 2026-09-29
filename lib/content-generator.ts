@@ -99,7 +99,7 @@ Contraintes :
         generationConfig: {
           responseMimeType: 'application/json',
           temperature: 0.6,
-          maxOutputTokens: 4000,
+          maxOutputTokens: 16384,
         },
       }),
     });
@@ -109,7 +109,10 @@ Contraintes :
       throw new Error('Erreur lors de la génération du contenu');
     }
     const data = await res.json();
-    raw = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+    raw = (data?.candidates?.[0]?.content?.parts ?? []).map((p: any) => p?.text ?? '').join('');
+    if (data?.candidates?.[0]?.finishReason && data.candidates[0].finishReason !== 'STOP') {
+      console.error('Gemini finishReason:', data.candidates[0].finishReason);
+    }
   } else if (process.env.ABACUSAI_API_KEY && !process.env.ABACUSAI_API_KEY.startsWith('AQ.')) {
     const response = await fetch('https://apps.abacus.ai/v1/chat/completions', {
       method: 'POST',
@@ -258,7 +261,7 @@ Contraintes : rédige TOUT en français ; le dialogue doit comporter entre 8 et 
         generationConfig: {
           responseMimeType: 'application/json',
           temperature: 0.4,
-          maxOutputTokens: 4000,
+          maxOutputTokens: 16384,
         },
       }),
     });
@@ -268,7 +271,10 @@ Contraintes : rédige TOUT en français ; le dialogue doit comporter entre 8 et 
       throw new Error('Erreur lors de la génération du script audio');
     }
     const data = await res.json();
-    raw = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+    raw = (data?.candidates?.[0]?.content?.parts ?? []).map((p: any) => p?.text ?? '').join('');
+    if (data?.candidates?.[0]?.finishReason && data.candidates[0].finishReason !== 'STOP') {
+      console.error('Gemini finishReason:', data.candidates[0].finishReason);
+    }
   } else if (process.env.ABACUSAI_API_KEY && !process.env.ABACUSAI_API_KEY.startsWith('AQ.')) {
     const response = await fetch('https://apps.abacus.ai/v1/chat/completions', {
       method: 'POST',
