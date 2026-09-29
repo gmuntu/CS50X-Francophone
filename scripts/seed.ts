@@ -111,7 +111,7 @@ async function main() {
     create: {
       title: 'CS50X Francophone',
       slug: 'cs50x-francophone',
-      description: "Le cours d'introduction à l'informatique CS50, avec certificat reconnu par Harvard. Entièrement en français.",
+      description: "Accompagnement indépendant en français pour réussir CS50x, le cours gratuit de l'Université Harvard.",
       isPublished: true,
       order: 0,
     },

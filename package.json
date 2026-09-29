@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && (prisma db push --skip-generate || echo 'ATTENTION: base de donnees injoignable, tables non mises a jour') && next build",
+    "build": "prisma generate && (prisma db push --skip-generate || echo 'ATTENTION: base de donnees injoignable, tables non mises a jour') && (npx prisma db seed || echo 'ATTENTION: contenu de base non installe') && next build",
     "start": "next start",
     "lint": "eslint ."
   },
