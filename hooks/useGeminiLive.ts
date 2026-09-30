@@ -130,7 +130,8 @@ export function useGeminiLive(lessonContext: string) {
       // 2. Jeton éphémère (la vraie clé reste sur le serveur)
       const tr = await fetch('/api/live-token', { method: 'POST' });
       const tj = await tr.json().catch(() => ({}));
-      if (!tr.ok || !tj?.token) return fail('Service vocal indisponible pour le moment.');
+      if (!tr.ok || !tj?.token) return fail(tj?.error || 'Service vocal indisponible pour le moment.');
+      console.info('Gemini Live — modèle utilisé :', tj.model);
 
       // 3. WebSocket Gemini Live
       const ws = new WebSocket(`${WS_URL}?access_token=${encodeURIComponent(tj.token)}`);
