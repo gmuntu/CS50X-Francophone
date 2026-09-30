@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Menu, X, BookOpen, LogOut, User, LayoutDashboard, GraduationCap, Shield } from 'lucide-react';
+import { Menu, X, BookOpen, LogOut, User, LayoutDashboard, GraduationCap, Shield, Mic } from 'lucide-react';
 import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
@@ -16,6 +16,7 @@ export default function Header() {
     { label: 'Tableau de bord', href: '/dashboard', icon: LayoutDashboard },
     { label: 'Cours', href: '/courses', icon: GraduationCap },
     { label: 'Tuteur Socrate', href: '/tuteur', icon: BookOpen },
+    { label: 'Agora', href: '/agora', icon: Mic },
     ...(role === 'ADMIN' || role === 'INSTRUCTOR' ? [{ label: 'Admin', href: '/admin', icon: Shield }] : []),
   ] : [
     { label: 'Accueil', href: '/', icon: BookOpen },

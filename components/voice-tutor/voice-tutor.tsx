@@ -66,7 +66,7 @@ export default function VoiceTutor({ moduleId, onActive }: Props) {
         )}
       </div>
       <p className="text-xs text-muted-foreground">
-        {error ?? 'Bêta : conversation vocale en direct. Parlez naturellement, vous pouvez interrompre Socrate.'}
+        {error ?? 'Conversation vocale en direct. Parlez naturellement, vous pouvez interrompre Socrate.'}
       </p>
     </div>
   );
