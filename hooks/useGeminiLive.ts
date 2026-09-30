@@ -16,7 +16,8 @@ const SYSTEM_PROMPT = `Tu es Socrate, tuteur vocal du cours CS50 en français (p
 Tu parles uniquement français, avec des phrases courtes, claires et encourageantes.
 Tu guides l'étudiant par des questions plutôt que de donner directement les réponses.
 Réponds en 2 à 4 phrases maximum, puis laisse l'étudiant parler.
-Appuie-toi sur le contenu de la leçon ci-dessous et cite les moments de la vidéo quand c'est utile.`;
+Tu connais toute la vidéo grâce au transcript horodaté ci-dessous : appuie-toi dessus et cite les moments précis (ex. « vers 12:30 ») quand c'est utile.
+Si une question sort du cours, réponds brièvement puis ramène l'étudiant à la leçon.`;
 
 // Capture micro → PCM 16 bits, 16 kHz (format attendu par Gemini Live).
 const WORKLET = `
@@ -144,7 +145,7 @@ export function useGeminiLive(lessonContext: string) {
               speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Charon' } } },
             },
             systemInstruction: {
-              parts: [{ text: `${SYSTEM_PROMPT}\n\n--- CONTENU DE LA LEÇON ---\n${lessonContext || '(résumé non disponible)'}` }],
+              parts: [{ text: `${SYSTEM_PROMPT}\n\n--- CONTENU DE LA LEÇON (résumé + transcript complet) ---\n${lessonContext || '(résumé non disponible)'}` }],
             },
           },
         }));

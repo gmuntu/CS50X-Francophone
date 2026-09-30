@@ -33,7 +33,7 @@ export async function POST() {
     }
     return NextResponse.json({
       token: data.name,
-      model: process.env.GEMINI_LIVE_MODEL || 'gemini-2.5-flash-native-audio-preview-09-2025',
+      model: process.env.GEMINI_LIVE_MODEL || 'gemini-3.8-live-extended',
     });
   } catch (e) {
     console.error('live-token fetch failed', e);
