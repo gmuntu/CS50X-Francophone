@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Menu, X, BookOpen, LogOut, User, LayoutDashboard, GraduationCap, Shield, Mic } from 'lucide-react';
 import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
+import { clearOfflineData } from '@/lib/offline';
 import { usePathname } from 'next/navigation';
 
 export default function Header() {
@@ -75,7 +76,7 @@ export default function Header() {
                   )}
                 </Link>
                 <button
-                  onClick={() => signOut({ redirectTo: '/' })}
+                  onClick={async () => { await clearOfflineData().catch(() => {}); signOut({ redirectTo: '/' }); }}
                   className="p-2 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition border border-transparent hover:border-destructive/20"
                   title="Déconnexion"
                 >
@@ -138,7 +139,7 @@ export default function Header() {
                   <User className="w-4 h-4 text-primary" /> Mon Profil
                 </Link>
                 <button
-                  onClick={() => { signOut({ redirectTo: '/' }); setMobileOpen(false); }}
+                  onClick={async () => { setMobileOpen(false); await clearOfflineData().catch(() => {}); signOut({ redirectTo: '/' }); }}
                   className="w-full flex items-center gap-2 text-left px-4 py-2.5 rounded-xl text-sm font-semibold text-destructive hover:bg-destructive/10"
                 >
                   <LogOut className="w-4 h-4" /> Déconnexion

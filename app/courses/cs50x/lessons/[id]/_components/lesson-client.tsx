@@ -9,6 +9,7 @@ import { motion } from 'framer-motion';
 import type { CourseModuleConfig } from '@/config/course-modules';
 import InteractiveQuizModal from '@/components/interactive-quiz-modal';
 import CourseAssistant from '@/components/course-assistant';
+import OfflineLessonButton from '@/components/pwa/offline-lesson-button';
 
 interface Props {
   moduleConfig: CourseModuleConfig;
@@ -32,6 +33,10 @@ export default function LessonClient({ moduleConfig, lesson, userId }: Props) {
     { id: 'quiz', label: `Quiz (${quizzes?.length ?? 0})`, icon: Brain },
     { id: 'exercises', label: `Exercices (${exercises?.length ?? 0})`, icon: FileText },
   ];
+
+  const offlineAudio: string[] = [moduleConfig?.podcastUrl, ...audioScripts.map((s: any) => s?.audioUrl)].filter(
+    (u: any): u is string => typeof u === 'string' && u.length > 0
+  );
 
   const currentWeek = moduleConfig?.id ?? 0;
   const prevWeek = currentWeek > 0 ? currentWeek - 1 : null;
@@ -69,6 +74,7 @@ export default function LessonClient({ moduleConfig, lesson, userId }: Props) {
             ))}
           </div>
           <h1 className="text-2xl sm:text-4xl font-extrabold text-foreground tracking-tight">{moduleConfig?.title}</h1>
+          <OfflineLessonButton lessonId={moduleConfig?.id} title={moduleConfig?.title} audioUrls={offlineAudio} />
           <p className="text-sm sm:text-base text-muted-foreground max-w-3xl leading-relaxed">{moduleConfig?.description}</p>
         </motion.div>
 

@@ -1,0 +1,106 @@
+/* Savoiria — service worker (application installable + mode hors ligne).
+ * - Pages : réseau d'abord, copie en cache en secours (hors ligne).
+ * - Fichiers techniques (/_next/static, icônes) : cache d'abord.
+ * - Podcasts : uniquement ceux que l'élève a téléchargés, lus depuis le cache
+ *   avec prise en charge des requêtes "Range" (nécessaires aux lecteurs audio).
+ */
+const VERSION = 'v1';
+const PAGES = `savoiria-pages-${VERSION}`;
+const STATIC = `savoiria-static-${VERSION}`;
+const AUDIO = 'savoiria-audio'; // non versionné : on garde les podcasts téléchargés entre les mises à jour
+const OFFLINE_URL = '/hors-ligne';
+const PRECACHE = [OFFLINE_URL, '/icons/icon-192.png', '/icons/icon-512.png', '/favicon.svg'];
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(caches.open(STATIC).then((c) => c.addAll(PRECACHE)).then(() => self.skipWaiting()));
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys()
+      .then((keys) => Promise.all(keys.filter((k) => ![PAGES, STATIC, AUDIO].includes(k)).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim())
+  );
+});
+
+const pageKey = (url) => {
+  const u = new URL(url, self.location.origin);
+  return u.origin + u.pathname;
+};
+
+async function rangeResponse(request, cached) {
+  const range = request.headers.get('range');
+  if (!range) return cached;
+  const buf = await cached.arrayBuffer();
+  const m = /bytes=(\d*)-(\d*)/.exec(range);
+  const size = buf.byteLength;
+  let start = m && m[1] ? parseInt(m[1], 10) : 0;
+  let end = m && m[2] ? parseInt(m[2], 10) : size - 1;
+  if (m && !m[1] && m[2]) { start = size - parseInt(m[2], 10); end = size - 1; }
+  end = Math.min(end, size - 1);
+  return new Response(buf.slice(start, end + 1), {
+    status: 206,
+    headers: {
+      'Content-Type': cached.headers.get('Content-Type') || 'audio/mpeg',
+      'Content-Range': `bytes ${start}-${end}/${size}`,
+      'Content-Length': String(end - start + 1),
+      'Accept-Ranges': 'bytes',
+    },
+  });
+}
+
+self.addEventListener('fetch', (event) => {
+  const req = event.request;
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+
+  // 1) Podcasts téléchargés (même domaine ou externe)
+  if (req.destination === 'audio' || /\.(mp3|m4a|ogg|wav)$/i.test(url.pathname)) {
+    event.respondWith(
+      caches.open(AUDIO).then(async (c) => {
+        const hit = await c.match(req.url, { ignoreSearch: true });
+        return hit ? rangeResponse(req, hit) : fetch(req);
+      })
+    );
+    return;
+  }
+
+  if (url.origin !== self.location.origin) return;
+  if (url.pathname.startsWith('/api/')) return;
+
+  // 2) Pages (navigation)
+  if (req.mode === 'navigate') {
+    event.respondWith(
+      fetch(req)
+        .then((res) => {
+          if (res.ok && !res.redirected && !url.pathname.startsWith('/auth') && !url.pathname.startsWith('/admin')) {
+            const copy = res.clone();
+            caches.open(PAGES).then((c) => c.put(pageKey(req.url), copy));
+          }
+          return res;
+        })
+        .catch(async () => (await caches.match(pageKey(req.url))) || (await caches.match(OFFLINE_URL)))
+    );
+    return;
+  }
+
+  // 3) Fichiers techniques immuables
+  if (url.pathname.startsWith('/_next/static/') || url.pathname.startsWith('/icons/') || url.pathname.startsWith('/_next/image')) {
+    event.respondWith(
+      caches.match(req).then((hit) =>
+        hit || fetch(req).then((res) => {
+          if (res.ok) { const copy = res.clone(); caches.open(STATIC).then((c) => c.put(req, copy)); }
+          return res;
+        })
+      )
+    );
+  }
+});
+
+// Messages envoyés par le site (bouton « Disponible hors ligne », déconnexion)
+self.addEventListener('message', (event) => {
+  const data = event.data || {};
+  if (data.type === 'CLEAR_USER_DATA') {
+    event.waitUntil(Promise.all([caches.delete(PAGES), caches.delete(AUDIO), caches.delete('savoiria-meta')]));
+  }
+});
