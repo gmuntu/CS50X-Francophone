@@ -3,16 +3,20 @@
 import { useState } from 'react';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
-import { User, Mail, Shield, Save, Loader2 } from 'lucide-react';
+import { User, Mail, Shield, Save, Loader2, Phone } from 'lucide-react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 
 interface Props {
   user: { id: string; name: string; email: string; image: string | null; role: string };
+  phone?: string;
+  dialCode?: string;
 }
 
-export default function ProfileClient({ user }: Props) {
+export default function ProfileClient({ user, phone: initialPhone, dialCode: initialDial }: Props) {
   const [name, setName] = useState(user?.name ?? '');
+  const [dialCode, setDialCode] = useState(initialDial || '+');
+  const [phone, setPhone] = useState(initialPhone ?? '');
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
@@ -21,10 +25,13 @@ export default function ProfileClient({ user }: Props) {
       const res = await fetch('/api/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ name, phone, dialCode }),
       });
       if (res?.ok) toast?.success?.('Profil mis à jour');
-      else toast?.error?.('Erreur de mise à jour');
+      else {
+        const j = await res.json().catch(() => ({}));
+        toast?.error?.(j?.error || 'Erreur de mise à jour');
+      }
     } catch { toast?.error?.('Erreur réseau'); }
     finally { setSaving(false); }
   };
@@ -71,6 +78,32 @@ export default function ProfileClient({ user }: Props) {
                   className="w-full bg-muted border border-border rounded-xl pl-10 pr-4 py-2.5 text-sm text-muted-foreground cursor-not-allowed"
                 />
               </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-muted-foreground mb-1.5">Téléphone (pour le tuteur par SMS / WhatsApp)</label>
+              <div className="flex gap-2">
+                <input
+                  value={dialCode}
+                  onChange={(e: any) => setDialCode(e?.target?.value ?? '')}
+                  placeholder="+243"
+                  aria-label="Indicatif du pays"
+                  inputMode="tel"
+                  className="w-24 bg-muted border border-border rounded-xl px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+                <div className="relative flex-1">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <input
+                    value={phone}
+                    onChange={(e: any) => setPhone(e?.target?.value ?? '')}
+                    placeholder="812345678"
+                    aria-label="Numéro de téléphone"
+                    inputMode="tel"
+                    className="w-full bg-muted border border-border rounded-xl pl-10 pr-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1.5">Indicatif du pays (ex. +243, +237, +1) puis votre numéro. C'est depuis ce numéro que vous écrirez à Socrate.</p>
             </div>
 
             <button
