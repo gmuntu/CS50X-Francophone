@@ -58,7 +58,9 @@ function LoginForm() {
 
       if (result?.error) {
         console.error('Erreur authentification:', result.error);
-        if (result.error === 'Configuration') {
+        if ((result as any).code === 'acces_expire') {
+          setError("Votre accès testeur est terminé. Merci pour votre participation ! Contactez l'équipe Savoiria si vous souhaitez le prolonger.");
+        } else if (result.error === 'Configuration') {
           setError('Erreur de configuration réseau. Veuillez actualiser la page et réessayer.');
         } else {
           setError('Email ou mot de passe incorrect.');
@@ -223,6 +225,12 @@ function LoginForm() {
             Pas encore de compte ?{' '}
             <Link href="/auth/signup" className="text-primary font-bold hover:underline">
               S'inscrire
+            </Link>
+          </p>
+          <p className="text-center text-xs text-muted-foreground mt-2">
+            Vous avez reçu un code testeur ?{' '}
+            <Link href="/auth/testeur" className="text-primary font-bold hover:underline">
+              Accès testeur
             </Link>
           </p>
         </div>

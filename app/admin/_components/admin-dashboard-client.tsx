@@ -146,6 +146,19 @@ export default function AdminDashboardClient({ stats, recentSubmissions, role }:
 
         {!isInstructor && (
           <Link
+            href="/admin/testeurs"
+            className="mb-6 flex items-center justify-between bg-card border border-border rounded-xl p-5 hover:border-primary transition"
+          >
+            <div>
+              <p className="font-bold text-foreground">Codes testeurs</p>
+              <p className="text-sm text-muted-foreground">Créer des accès temporaires pour les testeurs, avec date d'expiration automatique</p>
+            </div>
+            <ArrowRight className="w-5 h-5 text-muted-foreground" />
+          </Link>
+        )}
+
+        {!isInstructor && (
+          <Link
             href="/admin/voix"
             className="mb-6 flex items-center justify-between bg-card border border-border rounded-xl p-5 hover:border-primary transition"
           >

@@ -9,7 +9,7 @@ export async function findUserByPhone(e164: string) {
   const tail = incoming.slice(-8);
   const candidates = await prisma.user.findMany({
     where: { phone: { contains: tail.slice(-4) } },
-    select: { id: true, firstName: true, name: true, phone: true, dialCode: true, status: true },
+    select: { id: true, firstName: true, name: true, phone: true, dialCode: true, status: true, accessExpiresAt: true },
     take: 200,
   });
   const matches = candidates.filter((u) => {

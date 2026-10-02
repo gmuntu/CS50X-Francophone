@@ -1,4 +1,4 @@
-import NextAuth from 'next-auth';
+import NextAuth, { CredentialsSignin } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import Google from 'next-auth/providers/google';
 import GitHub from 'next-auth/providers/github';
@@ -14,6 +14,11 @@ if (typeof process !== 'undefined' && process.env) {
       delete process.env.NEXTAUTH_URL;
     }
   }
+}
+
+/** Erreur de connexion dédiée : l'écran de connexion affiche un message clair (code « acces_expire »). */
+class AccessExpired extends CredentialsSignin {
+  code = 'acces_expire';
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -71,6 +76,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (user.status === 'SUSPENDED') return null;
         // Candidat libre : accès seulement après validation du paiement par l'administration
         if (user.status === 'PENDING' && user.role !== 'ADMIN') return null;
+        // Accès testeur arrivé à expiration
+        if (user.accessExpiresAt && new Date(user.accessExpiresAt).getTime() <= Date.now()) {
+          throw new AccessExpired();
+        }
 
         return {
           id: user.id,
@@ -80,7 +89,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           // elle faisait dépasser la taille maximale des en-têtes (erreur 494).
           image: user.image && !String(user.image).startsWith('data:') && String(user.image).length < 500 ? user.image : null,
           role: user.role,
-        };
+          accessExpiresAt: user.accessExpiresAt ? new Date(user.accessExpiresAt).getTime() : null,
+        } as any;
       },
     }),
     ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
@@ -107,6 +117,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.id = user.id;
         token.role = (user as any).role ?? 'STUDENT';
+        token.accessExp = (user as any).accessExpiresAt ?? null;
+      }
+      // Accès testeur expiré : la session se ferme d'elle-même, même si l'appli était restée ouverte.
+      if (typeof token.accessExp === 'number' && Date.now() >= token.accessExp) {
+        // L'administration a peut-être prolongé l'accès : on vérifie avant de fermer la session.
+        try {
+          const fresh = await prisma.user.findUnique({ where: { id: token.id as string }, select: { accessExpiresAt: true } });
+          const exp = fresh?.accessExpiresAt ? new Date(fresh.accessExpiresAt).getTime() : null;
+          if (exp === null || exp > Date.now()) token.accessExp = exp;
+          else return null;
+        } catch {
+          return token; // base injoignable : on ne déconnecte pas sur une panne
+        }
       }
       // Garde-fou : aucune image volumineuse dans le jeton
       if (typeof token.picture === 'string' && (token.picture.startsWith('data:') || token.picture.length > 500)) {

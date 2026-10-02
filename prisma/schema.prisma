@@ -78,6 +78,10 @@ model User {
   institution             Institution?   @relation(fields: [institutionId], references: [id], onDelete: SetNull)
   courseSessionId         String?
   courseSession           CourseSession? @relation(fields: [courseSessionId], references: [id], onDelete: SetNull)
+  // Accès testeur temporaire (null = compte normal, sans limite)
+  testerCodeId            String?
+  testerCode              TesterCode?    @relation(fields: [testerCodeId], references: [id], onDelete: SetNull)
+  accessExpiresAt         DateTime?
 }
 
 model Account {
@@ -336,4 +340,21 @@ model AccessCode {
   createdAt     DateTime      @default(now())
 
   @@unique([institutionId, sessionId])
+}
+
+// ---------------------------------------------------------------------------
+// Codes testeurs : accès temporaire, activé sans validation manuelle,
+// coupé automatiquement à la date d'expiration.
+// ---------------------------------------------------------------------------
+model TesterCode {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  label     String
+  expiresAt DateTime
+  maxUses   Int?
+  usedCount Int      @default(0)
+  active    Boolean  @default(true)
+  users     User[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
