@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
+import { synthesizeLine, type PodcastSpeaker } from '@/lib/podcast-voices';
 
 /**
  * Synthèse vocale via Google Cloud Text-to-Speech, voix « Chirp 3 HD »
@@ -17,10 +18,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ fallback: true, error: 'Non authentifié' }, { status: 401 });
     }
 
-    const { text, voice } = await request.json();
+    const { text, voice, speaker, test } = await request.json();
 
     if (!text || typeof text !== 'string' || !text.trim()) {
       return NextResponse.json({ error: 'Texte manquant' }, { status: 400 });
+    }
+
+    // Podcasts à deux voix : Socrate (homme africain) / l'étudiante (femme africaine).
+    if (speaker === 'Socrate' || speaker === 'Étudiant') {
+      const role = (session.user as any)?.role;
+      // Réglages d'essai (page admin « Tester les voix ») : réservés aux administrateurs.
+      const overrides = test && role === 'ADMIN' ? { voice: test.voice, style: test.style, model: test.model } : undefined;
+      const r = await synthesizeLine(text, speaker as PodcastSpeaker, overrides);
+      if ('error' in r) return NextResponse.json({ fallback: true, error: r.error }, { status: 502 });
+      return NextResponse.json({ audioContent: r.audio, engine: r.engine });
     }
 
     const apiKey = process.env.GOOGLE_TTS_API_KEY?.trim();

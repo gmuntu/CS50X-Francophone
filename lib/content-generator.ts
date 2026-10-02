@@ -246,7 +246,7 @@ Réponds UNIQUEMENT avec un objet JSON valide (sans texte autour, sans balises m
   "cleanTtsText": "texte oralisé continu et immersif (~5 minutes de lecture), combinant la voix de Socrate et ses relances, SANS aucun markdown, avec une ponctuation soignée pour les pauses."
 }
 
-Contraintes : rédige TOUT en français ; le dialogue doit comporter entre 8 et 14 répliques alternées Socrate/Étudiant ; le cleanTtsText doit faire au moins 500 mots et rester fidèle au matériel de référence.`;
+Contraintes : rédige TOUT en français ; le dialogue doit comporter entre 8 et 14 répliques alternées Socrate/Étudiant ; « Étudiant » est en réalité une jeune étudiante africaine francophone : elle parle au féminin (« je suis perdue », « je suis curieuse ») et Socrate s'adresse à elle au féminin ; le cleanTtsText doit faire au moins 500 mots et rester fidèle au matériel de référence.`;
 
   const geminiKey = process.env.GEMINI_API_KEY || process.env.EMINI_API_KEY;
   let raw = '';

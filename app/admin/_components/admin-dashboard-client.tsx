@@ -146,6 +146,19 @@ export default function AdminDashboardClient({ stats, recentSubmissions, role }:
 
         {!isInstructor && (
           <Link
+            href="/admin/voix"
+            className="mb-6 flex items-center justify-between bg-card border border-border rounded-xl p-5 hover:border-primary transition"
+          >
+            <div>
+              <p className="font-bold text-foreground">Tester les voix des podcasts</p>
+              <p className="text-sm text-muted-foreground">Écouter et régler les voix de Socrate et de l'étudiante avant de les proposer aux élèves</p>
+            </div>
+            <ArrowRight className="w-5 h-5 text-muted-foreground" />
+          </Link>
+        )}
+
+        {!isInstructor && (
+          <Link
             href="/admin/partners"
             className="mb-6 flex items-center justify-between bg-card border border-border rounded-xl p-5 hover:border-primary transition"
           >
