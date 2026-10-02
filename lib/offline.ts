@@ -33,6 +33,8 @@ async function writeList(list: SavedLesson[]) {
 const absolute = (u: string) => new URL(u, window.location.origin).toString();
 
 export async function saveLesson(lesson: Omit<SavedLesson, 'savedAt'>, onProgress?: (done: number, total: number) => void) {
+  // Demande au téléphone de ne pas effacer ces cours quand l'espace manque.
+  try { await navigator.storage?.persist?.(); } catch {}
   const pages = await caches.open(PAGES_CACHE);
   const audio = await caches.open(AUDIO_CACHE);
   const total = lesson.audio.length + 1;

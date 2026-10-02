@@ -10,6 +10,8 @@ import type { CourseModuleConfig } from '@/config/course-modules';
 import InteractiveQuizModal from '@/components/interactive-quiz-modal';
 import CourseAssistant from '@/components/course-assistant';
 import OfflineLessonButton from '@/components/pwa/offline-lesson-button';
+import WeekPackButton from '@/components/pwa/week-pack-button';
+import LiteVideo from '@/components/pwa/lite-video';
 
 interface Props {
   moduleConfig: CourseModuleConfig;
@@ -109,13 +111,7 @@ export default function LessonClient({ moduleConfig, lesson, userId }: Props) {
               <div className="space-y-6">
                 {moduleConfig?.videoUrl && (
                   <div className="aspect-video bg-black border border-border/80 rounded-2xl overflow-hidden shadow-soft-sm">
-                    <iframe
-                      src={moduleConfig.videoUrl}
-                      className="w-full h-full"
-                      allowFullScreen
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      title={moduleConfig?.title}
-                    />
+                    <LiteVideo src={moduleConfig.videoUrl} title={moduleConfig?.title} />
                   </div>
                 )}
                 {videoSummary ? (
@@ -140,6 +136,19 @@ export default function LessonClient({ moduleConfig, lesson, userId }: Props) {
             {/* Audio Tab */}
             {activeTab === 'audio' && (
               <div className="space-y-4">
+                <WeekPackButton
+                  week={moduleConfig?.id}
+                  title={moduleConfig?.title}
+                  description={moduleConfig?.description}
+                  topics={moduleConfig?.topics}
+                  summary={videoSummary}
+                  quizzes={quizzes}
+                  exercises={exercises}
+                  podcasts={[
+                    ...(moduleConfig?.podcastUrl ? [{ title: 'Podcast de la semaine', url: moduleConfig.podcastUrl }] : []),
+                    ...audioScripts.filter((a: any) => a?.audioUrl).map((a: any) => ({ title: a.title, url: a.audioUrl })),
+                  ]}
+                />
                 {moduleConfig?.podcastUrl && (
                   <div className="bg-card border border-border/80 rounded-2xl p-6 shadow-soft-sm space-y-3">
                     <div className="flex items-center gap-2.5">
@@ -151,7 +160,7 @@ export default function LessonClient({ moduleConfig, lesson, userId }: Props) {
                         <p className="text-xs text-muted-foreground">Écoute en mobilité pour assimiler les concepts</p>
                       </div>
                     </div>
-                    <audio controls className="w-full pt-2" src={moduleConfig.podcastUrl}>
+                    <audio controls preload="none" className="w-full pt-2" src={moduleConfig.podcastUrl}>
                       Votre navigateur ne supporte pas l'élément audio.
                     </audio>
                   </div>
@@ -163,7 +172,7 @@ export default function LessonClient({ moduleConfig, lesson, userId }: Props) {
                       <h4 className="font-bold text-foreground text-sm">{script?.title}</h4>
                       <p className="text-xs text-muted-foreground leading-relaxed">{script?.pedagogicalObjective}</p>
                       {script?.audioUrl && (
-                        <audio controls className="w-full pt-1" src={script.audioUrl} />
+                        <audio controls preload="none" className="w-full pt-1" src={script.audioUrl} />
                       )}
                     </div>
                   ))

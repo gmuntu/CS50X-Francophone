@@ -4,7 +4,7 @@
  * - Podcasts : uniquement ceux que l'élève a téléchargés, lus depuis le cache
  *   avec prise en charge des requêtes "Range" (nécessaires aux lecteurs audio).
  */
-const VERSION = 'v1';
+const VERSION = 'v1'; // ne pas changer sans raison : les cours enregistrés en dépendent
 const PAGES = `savoiria-pages-${VERSION}`;
 const STATIC = `savoiria-static-${VERSION}`;
 const AUDIO = 'savoiria-audio'; // non versionné : on garde les podcasts téléchargés entre les mises à jour
@@ -22,6 +22,23 @@ self.addEventListener('activate', (event) => {
       .then(() => self.clients.claim())
   );
 });
+
+const NAV_TIMEOUT = 4000;
+
+async function navigate(req, url) {
+  const key = pageKey(req.url);
+  const cached = await caches.match(key);
+  const network = fetch(req).then((res) => {
+    if (res.ok && !res.redirected && !url.pathname.startsWith('/auth') && !url.pathname.startsWith('/admin')) {
+      const copy = res.clone();
+      caches.open(PAGES).then((c) => c.put(key, copy));
+    }
+    return res;
+  });
+  if (!cached) return network.catch(async () => (await caches.match(OFFLINE_URL)) || Response.error());
+  const timeout = new Promise((resolve) => setTimeout(() => resolve(cached), NAV_TIMEOUT));
+  return Promise.race([network.catch(() => cached), timeout]);
+}
 
 const pageKey = (url) => {
   const u = new URL(url, self.location.origin);
@@ -68,19 +85,10 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith('/api/')) return;
 
-  // 2) Pages (navigation)
+  // 2) Pages (navigation) : réseau d'abord, mais si une copie existe et que le réseau
+  //    met plus de NAV_TIMEOUT ms (réseau lent / 2G), on affiche la copie tout de suite.
   if (req.mode === 'navigate') {
-    event.respondWith(
-      fetch(req)
-        .then((res) => {
-          if (res.ok && !res.redirected && !url.pathname.startsWith('/auth') && !url.pathname.startsWith('/admin')) {
-            const copy = res.clone();
-            caches.open(PAGES).then((c) => c.put(pageKey(req.url), copy));
-          }
-          return res;
-        })
-        .catch(async () => (await caches.match(pageKey(req.url))) || (await caches.match(OFFLINE_URL)))
-    );
+    event.respondWith(navigate(req, url));
     return;
   }
 
