@@ -7,14 +7,14 @@ import { prisma } from '@/lib/prisma';
 import { CS50_MODULES } from '@/config/course-modules';
 import { findUserByPhone } from '@/lib/messaging/phone';
 import { tutorReply, type HistoryMsg } from '@/lib/messaging/tutor-reply';
-import { clip, plain, toGsm } from '@/lib/messaging/sms-text';
+import { clip, plain, toGsm, waFormat } from '@/lib/messaging/sms-text';
 
 // Webhook Twilio : reçoit les SMS et les messages WhatsApp des élèves et répond avec le tuteur.
 // Variables d'environnement : TWILIO_AUTH_TOKEN (obligatoire), TWILIO_WEBHOOK_URL (adresse publique exacte de ce webhook),
 // SMS_DAILY_LIMIT (défaut 15), WHATSAPP_DAILY_LIMIT (défaut 40).
 
 const SMS_MAX = 300; // 2 SMS maximum par réponse
-const WA_MAX = 900;
+const WA_MAX = 1500; // WhatsApp : explications complètes (limite technique : 1600)
 
 const xml = (s: string) => s.replace(/[<>&'"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' }[c]!));
 const twiml = (text: string) =>
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
   const body = (params.get('Body') ?? '').trim();
   const channel: 'sms' | 'whatsapp' = from.startsWith('whatsapp:') ? 'whatsapp' : 'sms';
   const max = channel === 'sms' ? SMS_MAX : WA_MAX;
-  const out = (t: string) => twiml(channel === 'sms' ? toGsm(clip(plain(t), max)) : clip(plain(t), max));
+  const out = (t: string) => twiml(channel === 'sms' ? toGsm(clip(plain(t), max)) : clip(waFormat(t), max));
 
   const user = await findUserByPhone(from.replace('whatsapp:', ''));
   if (!user) {
@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
 
   let answer: string;
   try {
-    answer = await tutorReply({ question: body.slice(0, 1000), week: conv?.lessonId ?? null, history, channel, maxChars: max - 20 });
+    answer = await tutorReply({ question: body.slice(0, 1000), week: conv?.lessonId ?? null, history, channel, maxChars: max - 100 });
     if (!answer) throw new Error('vide');
   } catch (e) {
     console.error('Tuteur message error:', e);

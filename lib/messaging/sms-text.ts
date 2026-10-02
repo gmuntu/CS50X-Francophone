@@ -53,3 +53,14 @@ export function clip(text: string, max: number): string {
   const end = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('? '), cut.lastIndexOf('! '), cut.lastIndexOf('\n'));
   return (end > max * 0.5 ? cut.slice(0, end + 1) : cut) + '...';
 }
+
+/** Mise en forme WhatsApp : **gras** Markdown devient *gras* WhatsApp ; titres et blocs de code simplifiés. */
+export function waFormat(text: string): string {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '*$1*')
+    .replace(/^#+\s*(.+)$/gm, '*$1*')
+    .replace(/```[a-z]*\n?/gi, '```\n')
+    .replace(/^\s*[*•]\s+/gm, '- ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
