@@ -76,6 +76,13 @@ export async function removeLesson(id: number) {
 
 /** À appeler à la déconnexion : efface les cours enregistrés sur l'appareil. */
 export async function clearOfflineData() {
+  // Résultats de quiz en attente : on tente l'envoi avec la session actuelle, puis on vide la file
+  // pour qu'ils ne soient jamais attribués à un autre élève sur le même appareil.
+  try {
+    const { flushQueue, clearQueue } = await import('@/lib/sync-queue');
+    await flushQueue();
+    clearQueue();
+  } catch {}
   if (!offlineSupported()) return;
   await Promise.all([caches.delete(PAGES_CACHE), caches.delete(AUDIO_CACHE), caches.delete(META_CACHE)]);
 }

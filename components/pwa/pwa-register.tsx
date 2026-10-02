@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Download, X, WifiOff } from 'lucide-react';
+import { Download, X, WifiOff, RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
+import { flushQueue, pendingCount, SYNC_EVENT } from '@/lib/sync-queue';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -14,6 +16,7 @@ const DISMISS_KEY = 'savoiria-install-dismissed';
 export default function PwaRegister() {
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [offline, setOffline] = useState(false);
+  const [pending, setPending] = useState(0);
 
   useEffect(() => {
     if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
@@ -26,8 +29,19 @@ export default function PwaRegister() {
       if (!dismissed) setInstallEvent(e as BeforeInstallPromptEvent);
     };
     const onInstalled = () => setInstallEvent(null);
-    const update = () => setOffline(!navigator.onLine);
+    const sync = async () => {
+      const n = await flushQueue();
+      if (n > 0) toast.success(n === 1 ? '1 résultat de quiz synchronisé.' : `${n} résultats de quiz synchronisés.`);
+    };
+    const update = () => {
+      setOffline(!navigator.onLine);
+      if (navigator.onLine) sync();
+    };
+    const onQueue = () => setPending(pendingCount());
+    onQueue();
     update();
+    window.addEventListener(SYNC_EVENT, onQueue);
+    const timer = window.setInterval(() => { if (navigator.onLine && pendingCount() > 0) sync(); }, 60_000);
     window.addEventListener('beforeinstallprompt', onPrompt);
     window.addEventListener('appinstalled', onInstalled);
     window.addEventListener('online', update);
@@ -37,6 +51,8 @@ export default function PwaRegister() {
       window.removeEventListener('appinstalled', onInstalled);
       window.removeEventListener('online', update);
       window.removeEventListener('offline', update);
+      window.removeEventListener(SYNC_EVENT, onQueue);
+      window.clearInterval(timer);
     };
   }, []);
 
@@ -50,7 +66,16 @@ export default function PwaRegister() {
       {offline && (
         <div className="fixed top-0 inset-x-0 z-[60] bg-amber-500 text-black text-xs font-bold text-center py-1.5 flex items-center justify-center gap-2">
           <WifiOff className="w-3.5 h-3.5" /> Hors ligne — vos cours enregistrés restent disponibles
+          {pending > 0 && <span>· {pending} quiz en attente d'envoi</span>}
         </div>
+      )}
+      {!offline && pending > 0 && (
+        <button
+          onClick={async () => { const n = await flushQueue(); if (n === 0) toast.info("Envoi impossible pour l'instant : reconnectez-vous à votre compte ou réessayez plus tard."); }}
+          className="fixed bottom-4 left-4 z-[60] inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-card border border-border shadow-lg text-xs font-bold text-foreground"
+        >
+          <RefreshCw className="w-3.5 h-3.5" /> {pending} quiz à envoyer
+        </button>
       )}
       {installEvent && (
         <div className="fixed bottom-4 inset-x-4 sm:left-auto sm:right-4 sm:w-96 z-[60] bg-card border border-border rounded-2xl shadow-lg p-4 flex items-start gap-3">
