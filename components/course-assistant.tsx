@@ -216,6 +216,53 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
     if (!stale()) onEnd();
   }, [synthesizeChunk, playBase64, speak]);
 
+  // Synthèse d'une réplique avec la voix du personnage (Socrate / l'étudiante).
+  const synthesizeLine = useCallback(async (text: string, speaker: 'Socrate' | 'Étudiant'): Promise<string | null> => {
+    try {
+      const res = await fetch('/api/speech', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, speaker }),
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data?.audioContent ?? null;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  // Podcast à deux voix : chaque réplique est lue par son personnage ;
+  // la suivante est préparée pendant la lecture de la précédente (pas de silence).
+  const speakDialogue = useCallback(async (lines: { speaker: 'Socrate' | 'Étudiant'; text: string }[], onEnd: () => void) => {
+    if (typeof window !== 'undefined' && window.speechSynthesis) window.speechSynthesis.cancel();
+    const gen = ++speechGenRef.current;
+    const stale = () => gen !== speechGenRef.current;
+    const clean = lines
+      .map((l) => ({ speaker: l.speaker, text: sanitizeForVoice(l.text) }))
+      .filter((l) => l.text);
+    if (clean.length === 0) { onEnd(); return; }
+
+    let next = synthesizeLine(clean[0].text, clean[0].speaker);
+    try {
+      for (let i = 0; i < clean.length; i++) {
+        const b64 = await next;
+        if (stale()) return;
+        if (i === 0) setIsDayLoading(false);
+        if (i + 1 < clean.length) next = synthesizeLine(clean[i + 1].text, clean[i + 1].speaker);
+        if (b64 == null) {
+          // Voix indisponible : on lit le reste avec la voix du navigateur plutôt que le silence.
+          await new Promise<void>((r) => speak(clean.slice(i).map((l) => l.text).join(' '), r));
+          break;
+        }
+        await playBase64(b64);
+      }
+    } catch {
+      if (!stale()) await new Promise<void>((r) => speak(clean.map((l) => l.text).join(' '), r));
+    }
+    if (!stale()) onEnd();
+  }, [synthesizeLine, playBase64, speak]);
+
   // Écouter la session du jour (voix neuronale Google, repli navigateur).
   const playDayAudio = async () => {
     if (isSpeakingDay || isDayLoading) {
@@ -225,7 +272,19 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
     stopAllSpeech();
     unlockAudio();
     speechCancelRef.current = false;
-    // Fichier MP3 pré-généré prioritaire.
+    // Dialogue disponible : podcast à deux voix africaines (Socrate + l'étudiante).
+    const lines = Array.isArray(currentScript?.dialogue)
+      ? currentScript.dialogue
+          .filter((d: any) => d?.text)
+          .map((d: any) => ({ speaker: d?.speaker === 'Socrate' ? 'Socrate' as const : 'Étudiant' as const, text: String(d.text) }))
+      : [];
+    if (lines.length >= 2) {
+      setIsDayLoading(true);
+      setIsSpeakingDay(true);
+      await speakDialogue(lines, () => { setIsSpeakingDay(false); setIsDayLoading(false); });
+      return;
+    }
+    // Sinon : fichier MP3 pré-généré.
     if (currentScript?.audioUrl) {
       const audio = new Audio(currentScript.audioUrl);
       dayAudioRef.current = audio;
@@ -516,7 +575,7 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
                   {dialogueLines.map((line: any, li: number) => (
                     <div key={li} className="space-y-0.5">
                       <span className={`font-extrabold ${line?.speaker === 'Socrate' ? 'text-primary' : 'text-amber-600'}`}>
-                        {line?.speaker} :
+                        {line?.speaker === 'Socrate' ? 'Socrate' : 'Étudiante'} :
                       </span>
                       <p className="text-foreground/80 pl-2 leading-relaxed">{line?.text}</p>
                     </div>
