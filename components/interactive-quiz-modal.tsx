@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import { X, CheckCircle, XCircle, ArrowRight, RotateCcw, Trophy } from 'lucide-react';
+import { useState, useCallback, useRef } from 'react';
+import { submitQuizAttempt } from '@/lib/sync-queue';
+import { X, CheckCircle, XCircle, ArrowRight, RotateCcw, Trophy, CloudOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface QuizQuestion {
@@ -58,6 +59,10 @@ export default function InteractiveQuizModal({ quiz, isOpen, onClose }: Props) {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isRevealed, setIsRevealed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const answersRef = useRef<Record<string, string>>({});
+  answersRef.current = answers ?? {};
+  const [savedOffline, setSavedOffline] = useState(false);
+
 
   const questions = quiz?.questions ?? [];
   const current = questions?.[currentIndex];
@@ -70,6 +75,7 @@ export default function InteractiveQuizModal({ quiz, isOpen, onClose }: Props) {
     if (isRevealed) return;
     setSelectedAnswer(optionId);
     setIsRevealed(true);
+    answersRef.current = { ...answersRef.current, [current?.id ?? '']: optionId };
     setAnswers((prev) => ({ ...(prev ?? {}), [current?.id ?? '']: optionId }));
   }, [isRevealed, current?.id]);
 
@@ -88,11 +94,9 @@ export default function InteractiveQuizModal({ quiz, isOpen, onClose }: Props) {
     if (!quiz?.id) return;
     setSubmitting(true);
     try {
-      await fetch('/api/quiz/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ quizId: quiz.id, answers }),
-      });
+      // On lit la référence pour être sûr d'inclure la réponse à la dernière question.
+      const sent = await submitQuizAttempt(quiz.id, { ...answersRef.current });
+      setSavedOffline(!sent);
     } catch (e) {
       console.error('Quiz submit error:', e);
     } finally {
@@ -106,6 +110,8 @@ export default function InteractiveQuizModal({ quiz, isOpen, onClose }: Props) {
     setShowResult(false);
     setSelectedAnswer(null);
     setIsRevealed(false);
+    setSavedOffline(false);
+    answersRef.current = {};
   }, []);
 
   const handleClose = useCallback(() => {
@@ -212,6 +218,13 @@ export default function InteractiveQuizModal({ quiz, isOpen, onClose }: Props) {
                     </span>
                   )}
                 </div>
+
+                {savedOffline && (
+                  <p className="flex items-center justify-center gap-2 text-xs text-muted-foreground bg-muted/60 border border-border rounded-xl px-3 py-2">
+                    <CloudOff className="w-3.5 h-3.5 shrink-0" />
+                    Pas de connexion : votre résultat est gardé sur l'appareil et sera envoyé automatiquement au retour du réseau.
+                  </p>
+                )}
 
                 <div className="flex gap-3 pt-4 justify-center">
                   <button
