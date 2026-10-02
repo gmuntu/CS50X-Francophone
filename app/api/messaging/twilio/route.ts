@@ -59,6 +59,9 @@ export async function POST(req: NextRequest) {
       "Bonjour ! Ce numero n'est relie a aucun compte Savoiria. Connectez-vous une fois sur le site et indiquez ce numero dans votre profil, puis reecrivez-nous."
     );
   }
+  if (user.accessExpiresAt && new Date(user.accessExpiresAt).getTime() <= Date.now()) {
+    return out('Votre acces testeur Savoiria est termine. Merci pour votre participation !');
+  }
   if (user.status !== 'ACTIVE') {
     return out("Votre compte Savoiria est en attente de validation. Le tuteur sera disponible des son activation.");
   }
