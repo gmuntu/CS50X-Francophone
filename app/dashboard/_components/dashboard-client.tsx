@@ -10,6 +10,7 @@ import {
 import Link from 'next/link';
 import { CS50_MODULES } from '@/config/course-modules';
 import { motion } from 'framer-motion';
+import TutorMessageCard from '@/components/tutor-message-card';
 
 interface Props {
   user: {
@@ -219,6 +220,8 @@ export default function DashboardClient({ user }: Props) {
         </div>
 
         {/* Main Content Layout */}
+        <TutorMessageCard />
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           {/* Course Track Modules */}
           <div className="lg:col-span-2 space-y-4">
