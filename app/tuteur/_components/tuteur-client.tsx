@@ -8,6 +8,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneLight } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import Header from '@/components/header';
 import CourseAssistant from '@/components/course-assistant';
+import TutorMessageCard from '@/components/tutor-message-card';
 import { CS50_MODULES } from '@/config/course-modules';
 import {
   BarChart3, BookOpen, Lightbulb, Clock, Code2, Search, Zap, Loader2,
@@ -389,6 +390,9 @@ export default function TuteurClient({ role, contentByModule }: Props) {
               audioScripts={activeContent.audioScripts}
               quizzes={activeContent.quizzes}
             />
+            <div className="mt-4">
+              <TutorMessageCard compact />
+            </div>
           </aside>
         )}
       </div>
