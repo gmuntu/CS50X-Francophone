@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { BrandMark, BrandName } from '@/components/brand-logo';
 import {
   ArrowLeft, ArrowRight, BookOpen, Camera, Check, CheckCircle2,
   Shield, ShieldCheck, AlertTriangle, X, Loader2, RefreshCw,
@@ -311,12 +312,10 @@ export default function SignupPage() {
       <header className="border-b border-border/80 bg-card/60 backdrop-blur-md py-4 px-4 sm:px-6">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <Link href="/" className="inline-flex items-center gap-2.5 text-foreground hover:opacity-90 transition">
-            <div className="w-10 h-10 bg-primary/10 border border-primary/20 text-primary rounded-xl flex items-center justify-center shadow-inner">
-              <BookOpen className="w-5 h-5" />
-            </div>
+            <BrandMark className="w-10 h-10" />
             <div>
-              <span className="text-base font-extrabold tracking-tight">Savo<span className="text-primary">iria</span></span>
-              <p className="text-[10px] text-muted-foreground font-semibold">Portail d'Admission Savoiria</p>
+              <BrandName className="text-base font-extrabold tracking-tight" />
+              <p className="text-[10px] text-muted-foreground font-semibold">Portail d'Admission SavoirIA</p>
             </div>
           </Link>
 

@@ -37,7 +37,7 @@ function validSignature(req: NextRequest, params: URLSearchParams, token: string
 const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase();
 
 const HELP =
-  "Savoiria - Tuteur Socrate. Ecrivez simplement votre question sur le cours CS50.\n" +
+  "SavoirIA - Tuteur Socrate. Ecrivez simplement votre question sur le cours CS50.\n" +
   "SEMAINE 3 : choisir la semaine (0 a 10)\nNOUVEAU : recommencer la discussion\nAIDE : ce message";
 
 export async function POST(req: NextRequest) {
@@ -56,14 +56,14 @@ export async function POST(req: NextRequest) {
   const user = await findUserByPhone(from.replace('whatsapp:', ''));
   if (!user) {
     return out(
-      "Bonjour ! Ce numero n'est relie a aucun compte Savoiria. Connectez-vous une fois sur le site et indiquez ce numero dans votre profil, puis reecrivez-nous."
+      "Bonjour ! Ce numero n'est relie a aucun compte SavoirIA. Connectez-vous une fois sur le site et indiquez ce numero dans votre profil, puis reecrivez-nous."
     );
   }
   if (user.accessExpiresAt && new Date(user.accessExpiresAt).getTime() <= Date.now()) {
-    return out('Votre acces testeur Savoiria est termine. Merci pour votre participation !');
+    return out('Votre acces testeur SavoirIA est termine. Merci pour votre participation !');
   }
   if (user.status !== 'ACTIVE') {
-    return out("Votre compte Savoiria est en attente de validation. Le tuteur sera disponible des son activation.");
+    return out("Votre compte SavoirIA est en attente de validation. Le tuteur sera disponible des son activation.");
   }
 
   const cmd = norm(body);

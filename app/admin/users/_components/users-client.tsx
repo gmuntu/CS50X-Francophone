@@ -832,7 +832,7 @@ export default function UsersClient({ users: initialUsers }: Props) {
                     <p className="text-xs text-muted-foreground">
                       {formData.role === 'INSTRUCTOR'
                         ? 'Privilèges limités : correction des devoirs et consultation pédagogique'
-                        : 'Fiche complète d\'admission Savoiria'}
+                        : 'Fiche complète d\'admission SavoirIA'}
                     </p>
                   </div>
                 </div>

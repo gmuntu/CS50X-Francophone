@@ -9,7 +9,7 @@ const PAGES = `savoiria-pages-${VERSION}`;
 const STATIC = `savoiria-static-${VERSION}`;
 const AUDIO = 'savoiria-audio'; // non versionné : on garde les podcasts téléchargés entre les mises à jour
 const OFFLINE_URL = '/hors-ligne';
-const PRECACHE = [OFFLINE_URL, '/icons/icon-192.png', '/icons/icon-512.png', '/favicon.svg'];
+const PRECACHE = [OFFLINE_URL, '/icons/icon-192.png', '/icons/icon-512.png', '/icons/favicon-64.png', '/brand/logo-mark.png', '/brand/logo-mark-light.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(STATIC).then((c) => c.addAll(PRECACHE)).then(() => self.skipWaiting()));
@@ -93,7 +93,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   // 3) Fichiers techniques immuables
-  if (url.pathname.startsWith('/_next/static/') || url.pathname.startsWith('/icons/') || url.pathname.startsWith('/_next/image')) {
+  if (url.pathname.startsWith('/_next/static/') || url.pathname.startsWith('/icons/') || url.pathname.startsWith('/brand/') || url.pathname.startsWith('/_next/image')) {
     event.respondWith(
       caches.match(req).then((hit) =>
         hit || fetch(req).then((res) => {

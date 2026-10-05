@@ -55,7 +55,7 @@ function buildHtml(p: PackInput, audioFiles: { title: string; file: string }[]) 
 
   return `<!doctype html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Semaine ${p.week} — ${esc(p.title)} | Savoiria</title>
+<title>Semaine ${p.week} — ${esc(p.title)} | SavoirIA</title>
 <style>
 :root{--bg:#fff;--fg:#0f172a;--mut:#64748b;--card:#f8fafc;--bd:#e2e8f0;--pri:#cc0000;--ok:#059669;--ko:#dc2626}
 @media(prefers-color-scheme:dark){:root{--bg:#0f172a;--fg:#e2e8f0;--mut:#94a3b8;--card:#1e293b;--bd:#334155}}
@@ -86,7 +86,7 @@ ${quizData.length ? `<h2 id="quiz">Quiz (corrigé automatique)</h2><div id="quiz
 
 ${p.exercises?.length ? `<h2 id="exercices">Exercices</h2>${p.exercises.map((e: any) => `<div class="card"><strong>${esc(e?.title)}</strong> <span class="mut">(${esc(e?.difficulty)})</span><p>${para(e?.description)}</p><pre>${esc(e?.instructions)}</pre></div>`).join('')}<p class="mut">Rendez vos exercices sur ${esc(p.siteUrl)} quand vous aurez une connexion.</p>` : ''}
 
-<p class="mut" style="margin-top:3em">Pack Savoiria — accompagnement indépendant en français pour CS50x (cours de l'Université Harvard, non affilié). Généré le ${new Date().toLocaleDateString('fr-FR')}. ${esc(p.siteUrl)}</p>
+<p class="mut" style="margin-top:3em">Pack SavoirIA — accompagnement indépendant en français pour CS50x (cours de l'Université Harvard, non affilié). Généré le ${new Date().toLocaleDateString('fr-FR')}. ${esc(p.siteUrl)}</p>
 </main>
 <script>
 var Q=${JSON.stringify(quizData).replace(/</g, '\\u003c')};
@@ -144,7 +144,7 @@ export async function buildWeekPack(p: PackInput, onProgress?: (done: number, to
   entries.unshift({ name: 'OUVRIR-MOI.html', data: buildHtml(p, audioFiles) });
   entries.push({
     name: 'LISEZMOI.txt',
-    data: `Savoiria — Semaine ${p.week} : ${p.title}\r\n\r\n1. Décompressez ce fichier (appui long > Extraire, ou double-clic sur ordinateur).\r\n2. Ouvrez OUVRIR-MOI.html avec votre navigateur (Chrome, Safari...).\r\n3. Tout fonctionne sans Internet : résumé, podcasts, quiz corrigé.\r\n\r\nVous pouvez partager ce fichier avec vos camarades par Bluetooth, WhatsApp, Xender ou clé USB.\r\nSite : ${p.siteUrl}\r\n`,
+    data: `SavoirIA — Semaine ${p.week} : ${p.title}\r\n\r\n1. Décompressez ce fichier (appui long > Extraire, ou double-clic sur ordinateur).\r\n2. Ouvrez OUVRIR-MOI.html avec votre navigateur (Chrome, Safari...).\r\n3. Tout fonctionne sans Internet : résumé, podcasts, quiz corrigé.\r\n\r\nVous pouvez partager ce fichier avec vos camarades par Bluetooth, WhatsApp, Xender ou clé USB.\r\nSite : ${p.siteUrl}\r\n`,
   });
   onProgress?.(++done, total);
 

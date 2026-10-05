@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Menu, X, BookOpen, LogOut, User, LayoutDashboard, GraduationCap, Shield, Mic } from 'lucide-react';
 import Link from 'next/link';
+import { BrandMark, BrandName } from '@/components/brand-logo';
 import { useSession, signOut } from 'next-auth/react';
 import { clearOfflineData } from '@/lib/offline';
 import { usePathname } from 'next/navigation';
@@ -29,12 +30,8 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <Link href={session ? '/dashboard' : '/'} className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center shadow-md shadow-primary/20 group-hover:scale-105 transition-transform">
-              <BookOpen className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="text-lg font-extrabold text-foreground tracking-tight">
-              Savo<span className="text-primary">iria</span>
-            </span>
+            <BrandMark className="w-10 h-10 group-hover:scale-105 transition-transform" />
+            <BrandName className="text-lg font-extrabold text-foreground tracking-tight" />
           </Link>
 
           <nav className="hidden md:flex items-center gap-1.5 bg-muted/50 p-1 rounded-2xl border border-border/60">

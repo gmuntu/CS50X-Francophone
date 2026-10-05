@@ -142,7 +142,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-4">
           <div className="text-center mb-16 space-y-3">
             <h2 className="text-3xl md:text-4xl font-extrabold text-foreground tracking-tight">
-              Pourquoi choisir <span className="text-primary">Savoiria</span> ?
+              Pourquoi choisir <span className="text-foreground">Savoir<span className="text-sky-500">IA</span></span> ?
             </h2>
             <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
               Une expérience d'apprentissage unique adaptée aux francophones
@@ -259,7 +259,7 @@ export default function LandingPage() {
             Prêt à Décrocher votre Certificat CS50 ?
           </h2>
           <p className="text-base sm:text-lg text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
-            CS50X est le cours d'introduction à l'informatique le plus populaire au monde, proposé gratuitement par l'Université Harvard. Savoiria vous accompagne en français pour le réussir.
+            CS50X est le cours d'introduction à l'informatique le plus populaire au monde, proposé gratuitement par l'Université Harvard. SavoirIA vous accompagne en français pour le réussir.
           </p>
           <div className="flex flex-wrap justify-center gap-3.5 mb-10">
             {['Accompagnement en français', 'Tuteur Socrate', 'Accès Permanent']?.map?.((label: string) => (

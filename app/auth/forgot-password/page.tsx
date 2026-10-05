@@ -3,6 +3,7 @@
 import PasswordInput from '@/components/password-input';
 import { useState } from 'react';
 import Link from 'next/link';
+import { BrandMark, BrandName } from '@/components/brand-logo';
 import { ArrowLeft, BookOpen, KeyRound, CheckCircle2, AlertCircle, ShieldCheck, RefreshCw } from 'lucide-react';
 
 export default function ForgotPasswordPage() {
@@ -102,12 +103,8 @@ export default function ForgotPasswordPage() {
       <div className="w-full max-w-md bg-card border border-border rounded-2xl p-8 shadow-xl">
         <div className="text-center mb-6">
           <Link href="/" className="inline-flex items-center justify-center gap-2.5 mb-4">
-            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-extrabold text-foreground">
-              Savo<span className="text-primary">iria</span>
-            </span>
+            <BrandMark className="w-11 h-11" />
+            <BrandName className="text-xl font-extrabold text-foreground" />
           </Link>
           <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
             <KeyRound className="w-6 h-6 text-primary" />
