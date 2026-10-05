@@ -57,7 +57,7 @@ export default function LessonClient({ moduleConfig, lesson, userId }: Props) {
             <ArrowLeft className="w-3.5 h-3.5" /> Retour aux cours
           </Link>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-muted-foreground">Savoiria</span>
+            <span className="text-xs font-semibold text-muted-foreground">SavoirIA</span>
             <span className="text-muted-foreground/40">/</span>
             <span className="text-xs font-bold text-foreground">Semaine {moduleConfig?.id}</span>
           </div>

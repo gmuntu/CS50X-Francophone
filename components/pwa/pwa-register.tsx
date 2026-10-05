@@ -81,7 +81,7 @@ export default function PwaRegister() {
         <div className="fixed bottom-4 inset-x-4 sm:left-auto sm:right-4 sm:w-96 z-[60] bg-card border border-border rounded-2xl shadow-lg p-4 flex items-start gap-3">
           <img src="/icons/icon-192.png" alt="" className="w-10 h-10 rounded-xl" />
           <div className="flex-1 space-y-2">
-            <p className="text-sm font-bold text-foreground">Installer Savoiria</p>
+            <p className="text-sm font-bold text-foreground">Installer SavoirIA</p>
             <p className="text-xs text-muted-foreground">Ouvrez vos cours comme une application et écoutez les podcasts même sans connexion.</p>
             <button
               onClick={async () => { await installEvent.prompt(); setInstallEvent(null); }}

@@ -50,7 +50,7 @@ export default function TesteursClient() {
 
   const site = typeof window !== 'undefined' ? window.location.origin : '';
   const invite = (c: Code) =>
-    `Bonjour ! Merci de tester Savoiria.\n1. Ouvrez ${site}/auth/testeur?code=${c.code}\n2. Créez votre compte (code : ${c.code})\n3. Suivez le dossier de test joint.\nVotre accès est valable jusqu'au ${fr(c.expiresAt)}.`;
+    `Bonjour ! Merci de tester SavoirIA.\n1. Ouvrez ${site}/auth/testeur?code=${c.code}\n2. Créez votre compte (code : ${c.code})\n3. Suivez le dossier de test joint.\nVotre accès est valable jusqu'au ${fr(c.expiresAt)}.`;
   const copy = (t: string) => { navigator.clipboard?.writeText(t); toast.success('Copié'); };
 
   const status = (c: Code) => {

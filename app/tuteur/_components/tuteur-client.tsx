@@ -105,7 +105,7 @@ export default function TuteurClient({ role, contentByModule }: Props) {
               <div>
                 <h1 className="text-xl font-extrabold text-foreground tracking-tight flex items-center gap-2">
                   <span className="w-2.5 h-2.5 rounded-full bg-primary" />
-                  Socrate · Savoiria
+                  Socrate · SavoirIA
                 </h1>
                 <p className="text-xs text-muted-foreground font-medium mt-0.5">Informatique en français</p>
               </div>

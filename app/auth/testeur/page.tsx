@@ -56,7 +56,7 @@ function TesterSignup() {
           <div className="w-12 h-12 mx-auto rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
             <FlaskConical className="w-6 h-6" />
           </div>
-          <h1 className="text-2xl font-extrabold text-foreground">Accès testeur Savoiria</h1>
+          <h1 className="text-2xl font-extrabold text-foreground">Accès testeur SavoirIA</h1>
           <p className="text-sm text-muted-foreground">Entrez le code reçu de l'équipe. Votre compte est actif immédiatement, jusqu'à la fin du test.</p>
         </div>
 

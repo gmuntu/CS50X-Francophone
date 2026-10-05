@@ -3,8 +3,8 @@ import type { MetadataRoute } from 'next';
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: '/',
-    name: 'Savoiria — CS50x en français',
-    short_name: 'Savoiria',
+    name: 'SavoirIA — CS50x en français',
+    short_name: 'SavoirIA',
     description: "Apprendre l'informatique en français avec CS50x, même hors ligne.",
     lang: 'fr',
     start_url: '/dashboard',

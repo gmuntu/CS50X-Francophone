@@ -5,6 +5,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { BrandMark, BrandName } from '@/components/brand-logo';
 import { ArrowLeft, BookOpen, Github, Loader2, Sparkles, AlertCircle } from 'lucide-react';
 import GoogleAuthModal from '@/components/google-auth-modal';
 
@@ -59,7 +60,7 @@ function LoginForm() {
       if (result?.error) {
         console.error('Erreur authentification:', result.error);
         if ((result as any).code === 'acces_expire') {
-          setError("Votre accès testeur est terminé. Merci pour votre participation ! Contactez l'équipe Savoiria si vous souhaitez le prolonger.");
+          setError("Votre accès testeur est terminé. Merci pour votre participation ! Contactez l'équipe SavoirIA si vous souhaitez le prolonger.");
         } else if (result.error === 'Configuration') {
           setError('Erreur de configuration réseau. Veuillez actualiser la page et réessayer.');
         } else {
@@ -112,12 +113,8 @@ function LoginForm() {
         <div className="w-full max-w-md bg-card border border-border rounded-2xl p-8 shadow-xl">
           <div className="text-center mb-6">
             <Link href="/" className="inline-flex items-center justify-center gap-2.5 mb-4">
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-                <BookOpen className="w-5 h-5 text-primary-foreground" />
-              </div>
-              <span className="text-xl font-extrabold text-foreground">
-                Savo<span className="text-primary">iria</span>
-              </span>
+              <BrandMark className="w-11 h-11" />
+              <BrandName className="text-xl font-extrabold text-foreground" />
             </Link>
             <h1 className="text-2xl font-extrabold text-foreground">Connexion Membres</h1>
             <p className="text-sm text-muted-foreground mt-1">Accédez à votre espace de formation</p>
