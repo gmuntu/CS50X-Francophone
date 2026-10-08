@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { CS50_MODULES } from '@/config/course-modules';
 import { motion } from 'framer-motion';
 import TutorMessageCard from '@/components/tutor-message-card';
+import MyTrainingsCard from '@/components/home/my-trainings-card';
 
 interface Props {
   user: {
@@ -220,6 +221,8 @@ export default function DashboardClient({ user }: Props) {
         </div>
 
         {/* Main Content Layout */}
+        <MyTrainingsCard />
+
         <TutorMessageCard />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">

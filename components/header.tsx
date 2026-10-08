@@ -16,13 +16,15 @@ export default function Header() {
 
   const navItems = session ? [
     { label: 'Tableau de bord', href: '/dashboard', icon: LayoutDashboard },
-    { label: 'Cours', href: '/courses', icon: GraduationCap },
+    { label: 'Mes cours', href: '/courses', icon: GraduationCap },
+    { label: 'Formations', href: '/#formations', icon: BookOpen },
     { label: 'Tuteur Socrate', href: '/tuteur', icon: BookOpen },
     { label: 'Agora', href: '/agora', icon: Mic },
     ...(role === 'ADMIN' || role === 'INSTRUCTOR' ? [{ label: 'Admin', href: '/admin', icon: Shield }] : []),
   ] : [
     { label: 'Accueil', href: '/', icon: BookOpen },
-    { label: 'Cours', href: '/#courses', icon: GraduationCap },
+    { label: 'Formations', href: '/#formations', icon: GraduationCap },
+    { label: 'CS50x', href: '/cs50x', icon: BookOpen },
   ];
 
   return (

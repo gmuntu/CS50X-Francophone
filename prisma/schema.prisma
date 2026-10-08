@@ -358,3 +358,15 @@ model TesterCode {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+// Personnes qui veulent être prévenues de l'ouverture d'une formation (« Me prévenir »).
+model CourseInterest {
+  id         String   @id @default(cuid())
+  email      String
+  courseSlug String
+  userId     String?
+  createdAt  DateTime @default(now())
+
+  @@unique([email, courseSlug])
+  @@index([courseSlug])
+}
