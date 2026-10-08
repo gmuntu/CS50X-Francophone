@@ -87,7 +87,9 @@ export async function POST(request: NextRequest) {
         generationConfig: {
           temperature: 0.7,
           maxOutputTokens: 2048,
-        },
+          // Réflexion courte : Socrate commence à répondre beaucoup plus vite.
+          thinkingConfig: { thinkingLevel: 'low' },
+        } as Record<string, unknown>,
       };
 
       const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:streamGenerateContent?alt=sse&key=${geminiKey}`;
@@ -102,7 +104,8 @@ export async function POST(request: NextRequest) {
         const errText = await geminiRes.text();
         console.error('Gemini streaming error:', geminiRes.status, errText);
 
-        // Fallback non-streaming avec generateContent
+        // Fallback non-streaming avec generateContent (sans réglage de réflexion, au cas où il serait refusé)
+        delete (geminiPayload.generationConfig as Record<string, unknown>).thinkingConfig;
         const fallbackUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${geminiKey}`;
         const fallbackRes = await fetch(fallbackUrl, {
           method: 'POST',

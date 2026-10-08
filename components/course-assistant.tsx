@@ -44,9 +44,17 @@ function sanitizeForVoice(text: string): string {
 
 // Découpe un long texte en segments (≤ maxLen) aux frontières de phrases,
 // pour respecter la limite d'entrée de Google Cloud TTS.
-function chunkText(text: string, maxLen = 1800): string[] {
+function chunkText(text: string, maxLen = 1800, firstLen = 220): string[] {
   const clean = (text ?? '').trim();
-  if (clean.length <= maxLen) return clean ? [clean] : [];
+  if (!clean) return [];
+  // 1er segment court (1 à 2 phrases) : la voix démarre presque tout de suite.
+  const sent = clean.match(/[^.!?…]+[.!?…]+/g);
+  if (firstLen && sent && clean.length > firstLen) {
+    let head = '';
+    for (const s of sent) { if (head && (head + s).length > firstLen) break; head += s; }
+    if (head && head.length < clean.length) return [head.trim(), ...chunkText(clean.slice(head.length), maxLen, 0)];
+  }
+  if (clean.length <= maxLen) return [clean];
   const sentences = clean.match(/[^.!?…]+[.!?…]+|\S+$/g) || [clean];
   const chunks: string[] = [];
   let cur = '';
@@ -88,7 +96,23 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
     if (!playerRef.current && typeof window !== 'undefined') playerRef.current = new Audio();
     return playerRef.current!;
   };
+  // iPhone : on joue la voix via Web Audio, « débloqué » pendant le clic ; ensuite
+  // Safari laisse Socrate parler même quand la réponse arrive plusieurs secondes plus tard.
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const sourceRef = useRef<AudioBufferSourceNode | null>(null);
   const unlockAudio = () => {
+    try {
+      const AC: any = (window as any).AudioContext || (window as any).webkitAudioContext;
+      if (AC) {
+        if (!audioCtxRef.current) audioCtxRef.current = new AC();
+        const ctx = audioCtxRef.current!;
+        ctx.resume?.().catch(() => {});
+        const silent = ctx.createBufferSource();
+        silent.buffer = ctx.createBuffer(1, 1, 22050);
+        silent.connect(ctx.destination);
+        silent.start(0);
+      }
+    } catch {}
     try {
       const p = getPlayer();
       p.src = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
@@ -116,6 +140,8 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
   const stopAllSpeech = useCallback(() => {
     speechCancelRef.current = true;
     speechGenRef.current++;
+    try { sourceRef.current?.stop(); } catch {}
+    sourceRef.current = null;
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }
@@ -168,7 +194,31 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
     }
   }, []);
 
-  const playBase64 = useCallback((b64: string) => new Promise<void>((resolve, reject) => {
+  const playBase64 = useCallback(async (b64: string) => {
+    const ctx = audioCtxRef.current;
+    if (ctx) {
+      if (ctx.state !== 'running') await ctx.resume().catch(() => {});
+      if (ctx.state === 'running') {
+        const bin = atob(b64);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        const buffer: AudioBuffer = await new Promise((res, rej) => ctx.decodeAudioData(bytes.buffer, res, rej));
+        await new Promise<void>((resolve) => {
+          try { sourceRef.current?.stop(); } catch {}
+          const src = ctx.createBufferSource();
+          src.buffer = buffer;
+          src.connect(ctx.destination);
+          src.onended = () => { if (sourceRef.current === src) sourceRef.current = null; resolve(); };
+          sourceRef.current = src;
+          src.start(0);
+        });
+        return;
+      }
+    }
+    return playWithElement(b64);
+  }, []);
+
+  const playWithElement = (b64: string) => new Promise<void>((resolve, reject) => {
     const audio = getPlayer();
     audio.pause();
     currentAudioRef.current = audio;
@@ -176,7 +226,7 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
     audio.onerror = () => reject(new Error('Erreur de lecture audio'));
     audio.src = 'data:audio/mpeg;base64,' + b64;
     audio.play().catch(reject);
-  }), []);
+  });
 
   // Lecture intelligente : voix neuronale Google (par segments) avec repli navigateur.
   const speakSmart = useCallback(async (fullText: string, onEnd: () => void) => {
@@ -203,10 +253,13 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
     }
 
     try {
+      // Le segment suivant est préparé pendant la lecture du précédent (pas de blanc).
+      let next = chunks.length > 1 ? synthesizeChunk(chunks[1]) : null;
       await playBase64(first);
       for (let i = 1; i < chunks.length; i++) {
         if (stale()) return;
-        const b64 = await synthesizeChunk(chunks[i]);
+        const b64 = await next;
+        next = i + 1 < chunks.length ? synthesizeChunk(chunks[i + 1]) : null;
         if (stale()) return;
         if (b64 == null) { await new Promise<void>((r) => speak(chunks.slice(i).join(' '), r)); break; }
         await playBase64(b64);
