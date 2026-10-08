@@ -53,7 +53,7 @@ function pcm16ToFloat(b64: string) {
   return out;
 }
 
-export function useGeminiLive(lessonContext: string) {
+export function useGeminiLive(lessonContext: string, systemPrompt: string = SYSTEM_PROMPT) {
   const [status, setStatus] = useState<LiveStatus>('idle');
   const [error, setError] = useState<string | null>(null);
 
@@ -159,7 +159,7 @@ export function useGeminiLive(lessonContext: string) {
               speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Charon' } } },
             },
             systemInstruction: {
-              parts: [{ text: `${SYSTEM_PROMPT}\n\n--- CONTENU DE LA LEÇON (résumé + transcript complet) ---\n${lessonContext || '(résumé non disponible)'}` }],
+              parts: [{ text: `${systemPrompt}\n\n--- CONTENU DE LA LEÇON ---\n${lessonContext || '(résumé non disponible)'}` }],
             },
           },
         }));
@@ -209,7 +209,7 @@ export function useGeminiLive(lessonContext: string) {
       console.error('useGeminiLive', e);
       fail('Le tuteur vocal a rencontré un problème.');
     }
-  }, [fail, lessonContext, playChunk, stop, stopPlayback]);
+  }, [fail, lessonContext, systemPrompt, playChunk, stop, stopPlayback]);
 
   useEffect(() => () => stop(), [stop]);
 

@@ -46,7 +46,7 @@ export const TRACKS: Track[] = [
     title: 'Données et intelligence artificielle',
     subtitle: "Analyser, visualiser et utiliser l'IA au travail.",
     courses: [
-      { slug: 'google-ai-essentials', title: "L'essentiel de l'IA", certificate: 'Google AI Essentials', note: 'Court', status: 'bientot' },
+      { slug: 'google-ai-essentials', title: "L'essentiel de l'IA", certificate: 'Google AI Essentials', note: '5 semaines · tuteur Socrate · hors ligne', status: 'disponible', href: '/formations/ia-essentiels' },
       { slug: 'google-data-analytics', title: 'Analyse de données', certificate: 'Google Data Analytics', note: '3 à 6 mois', status: 'bientot' },
       { slug: 'google-cloud-data', title: 'Données dans le cloud', certificate: 'Google Cloud', note: 'Intermédiaire', status: 'bientot' },
       { slug: 'power-bi', title: 'Power BI', certificate: 'Microsoft (PL-300)', note: 'Tableaux de bord', status: 'bientot' },
