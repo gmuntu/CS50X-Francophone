@@ -17,7 +17,7 @@ export default function SavoirIAHome() {
       <Header />
 
       <section className="bg-gradient-to-b from-blue-50 to-transparent dark:from-blue-950/30 px-4 py-16 sm:py-20">
-        <div className="max-w-7xl mx-auto grid lg:grid-cols-[1fr_auto] gap-10 items-center">
+        <div className="max-w-7xl mx-auto">
           <div>
             <span className="inline-block rounded-full bg-blue-100 dark:bg-blue-900/50 px-3 py-1 text-xs font-bold text-blue-800 dark:text-blue-200">
               Formations en ligne intelligentes · en français
@@ -39,10 +39,6 @@ export default function SavoirIAHome() {
               </Link>
             </div>
           </div>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/logo-mark.png" alt="" aria-hidden className="hidden lg:block w-52 h-52 object-contain dark:hidden" />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/logo-mark-light.png" alt="" aria-hidden className="hidden w-52 h-52 object-contain dark:lg:block" />
         </div>
       </section>
 
