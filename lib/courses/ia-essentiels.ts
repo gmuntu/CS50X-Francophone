@@ -91,7 +91,74 @@ L'IA est un **assistant**, pas un patron. C'est **vous** qui vérifiez, corrigez
     title: "Gagner du temps avec l'IA",
     intro: "Utiliser l'IA au travail : courriels, résumés, plans, tableaux.",
     tags: ["Outils d'IA du quotidien", 'Rédiger et résumer', 'Organiser son travail'],
-    ready: false,
+    ready: true,
+    summary: `Cette semaine, nous suivons **Awa**, qui vend des pagnes au marché de Douala et sur WhatsApp. Elle n'a pas d'assistante… alors elle utilise l'IA comme une aide de bureau.
+
+## 1. Les outils d'IA du quotidien
+- **Les assistants conversationnels** : Gemini, ChatGPT, Claude, Copilot. On leur écrit (ou on leur parle) comme à une personne.
+- **Gratuit ou payant** : les versions gratuites suffisent pour la plupart des tâches de cette formation.
+- **Sur le téléphone** : une application ou le navigateur suffit. Les échanges en texte consomment peu de données ; évitez d'envoyer de grosses photos ou vidéos si votre forfait est limité.
+- **Dans les outils que vous utilisez déjà** : messagerie, traitement de texte, tableur ont de plus en plus un bouton « IA ».
+
+## 2. Rédiger plus vite
+Le matin, Awa doit relancer un client et préparer une affiche. Elle demande :
+
+> « Écris un message WhatsApp poli à un client qui me doit 45 000 FCFA depuis 3 semaines. Ton chaleureux mais ferme. 4 lignes maximum. »
+
+L'IA propose un **premier brouillon** en quelques secondes. Awa le **relit**, change deux mots pour que cela ressemble à sa façon de parler, et l'envoie.
+
+Bonnes idées de tâches : courriels, lettres administratives, messages aux clients, descriptions de produits, textes d'affiche.
+
+## 3. Résumer
+À midi, Awa reçoit le compte rendu de 6 pages de la réunion de sa coopérative. Elle colle le texte et demande :
+
+> « Résume ce document en 5 points. Puis liste ce que je dois faire, avec les dates. »
+
+Elle obtient l'essentiel en une minute. Mais elle **vérifie les dates et les montants** dans le document original : un résumé peut oublier ou déformer un détail.
+
+## 4. Organiser son travail
+Le soir, Awa demande :
+
+> « Voici mes tâches de la semaine : … Organise-les en un plan du lundi au samedi, les plus urgentes d'abord. »
+
+Elle peut aussi demander un **tableau simple** pour suivre ses ventes (date, client, produit, montant, payé ou non), à copier dans un tableur.
+
+## 5. Garder le contrôle
+- **Relire avant d'envoyer** : l'IA peut se tromper de chiffre, de nom ou de ton.
+- **Garder sa voix** : adaptez le texte pour qu'il vous ressemble ; vos clients vous connaissent.
+- **Pas de données sensibles** : ne collez pas de mots de passe, de numéros de carte, ni d'informations privées de vos clients.
+- **Vous restez responsable** de ce que vous envoyez.
+
+## Exercice pratique
+Choisissez une vraie tâche de votre travail (un message, une lettre, un résumé). Demandez un brouillon à une IA, puis **améliorez-le vous-même**. Montrez les deux versions à Socrate ci-dessous : il vous aidera à voir ce que vous avez amélioré.`,
+    keyPoints: [
+      "L'IA fait un premier brouillon en quelques secondes ; vous le relisez et l'adaptez.",
+      'Préciser le ton, la longueur et le destinataire donne de bien meilleurs résultats.',
+      "Pour un résumé, vérifiez toujours les dates, chiffres et noms dans l'original.",
+      "L'IA aide à organiser : plan de semaine, liste de tâches, tableau de suivi.",
+      'Jamais de mots de passe ni de données privées de clients dans une IA.',
+    ],
+    podcast: [
+      { speaker: 'Étudiant', text: "Socrate, j'ai un problème. Un client me doit de l'argent depuis un mois, et je n'ose pas lui écrire. J'ai peur d'être trop dure… ou trop gentille." },
+      { speaker: 'Socrate', text: "C'est une situation délicate. Tu as entendu dire que l'IA peut aider à rédiger. Qu'est-ce que tu lui demanderais ?" },
+      { speaker: 'Étudiant', text: "Je lui écrirais : « Écris un message à un client qui ne paie pas. »" },
+      { speaker: 'Socrate', text: "Essayons de voir avec ses yeux. L'IA ne connaît ni ton client, ni le montant, ni votre relation. Que pourrait-elle te proposer avec si peu d'informations ?" },
+      { speaker: 'Étudiant', text: "Un message très général… peut-être même un peu froid." },
+      { speaker: 'Socrate', text: "Exactement. Alors, qu'ajouterais-tu pour l'aider ?" },
+      { speaker: 'Étudiant', text: "Le montant, depuis combien de temps il doit l'argent, que c'est un bon client, et que je veux rester polie mais ferme. Et un message court, pour WhatsApp." },
+      { speaker: 'Socrate', text: "Voilà une vraie demande ! L'IA va maintenant te donner un bon brouillon. Mais dis-moi : est-ce que tu l'envoies tel quel ?" },
+      { speaker: 'Étudiant', text: "Non. Je le relis, je vérifie le montant, et je le change un peu pour qu'il me ressemble. Mon client connaît ma façon de parler." },
+      { speaker: 'Socrate', text: "C'est toute la leçon de la semaine : l'IA te fait gagner du temps sur le brouillon, mais c'est ta voix et ton jugement qui font la différence. Et pour un résumé de réunion, que vérifierais-tu ?" },
+      { speaker: 'Étudiant', text: "Les dates et les chiffres, dans le document original." },
+      { speaker: 'Socrate', text: "Parfait. Cette semaine, choisis une vraie tâche de ton travail, demande un brouillon à l'IA, puis améliore-le. Tu verras combien de minutes tu gagnes." },
+    ],
+    quiz: [
+      { q: "Awa veut relancer un client. Quelle demande à l'IA donnera le meilleur résultat ?", options: ["« Écris un message. »", "« Client pas payé. »", "« Écris un message WhatsApp poli à un client qui me doit 45 000 FCFA depuis 3 semaines, ton chaleureux mais ferme, 4 lignes. »", "« Fais quelque chose pour mon argent. »"], answer: 2, explain: "Plus la demande est précise (destinataire, montant, ton, longueur), meilleur est le brouillon." },
+      { q: "L'IA a résumé un compte rendu de réunion. Que faut-il faire avant d'agir ?", options: ["Rien, le résumé est forcément juste", "Vérifier les dates, chiffres et noms dans le document original", "Supprimer le document original", "Demander un deuxième résumé et choisir au hasard"], answer: 1, explain: "Un résumé peut oublier ou déformer un détail important." },
+      { q: "Quelle information ne faut-il JAMAIS coller dans un assistant d'IA ?", options: ["La liste de ses tâches de la semaine", "Le texte d'une affiche", "Le mot de passe de son compte bancaire", "Une question sur l'orthographe"], answer: 2, explain: "Mots de passe, numéros de carte et données privées ne doivent pas être partagés." },
+      { q: "Pourquoi adapter le brouillon proposé par l'IA avant de l'envoyer ?", options: ["Pour qu'il ressemble à votre façon de parler et soit exact", "Parce que l'IA écrit toujours mal", "Ce n'est pas utile", "Pour le rendre plus long"], answer: 0, explain: "Vos interlocuteurs vous connaissent ; vous restez responsable du message." },
+      { q: "Laquelle de ces tâches l'IA peut-elle aider à faire ?", options: ["Organiser ses tâches en plan de semaine", "Proposer un tableau simple de suivi des ventes", "Rédiger un premier brouillon de lettre", "Les trois"], answer: 3, explain: "Rédiger, résumer et organiser : ce sont les trois grands gains de temps." },
+    ],
   },
   {
     n: 3,
