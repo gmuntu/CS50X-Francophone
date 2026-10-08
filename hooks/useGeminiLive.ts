@@ -113,6 +113,20 @@ export function useGeminiLive(lessonContext: string) {
     if (wsRef.current) return;
     setError(null);
     setStatus('connecting');
+    // iPhone/Safari : le son n'est autorisé que si les lecteurs audio sont créés ET relancés
+    // pendant le clic lui-même (avant tout « await »). Sinon ils restent muets et Socrate « boude ».
+    const AC: typeof AudioContext = (window as any).AudioContext || (window as any).webkitAudioContext;
+    let outCtx: AudioContext;
+    try {
+      outCtx = new AC({ sampleRate: 24000 });
+    } catch {
+      outCtx = new AC(); // anciens Safari : fréquence imposée, le lecteur rééchantillonne
+    }
+    const micCtx = new AC();
+    outCtx.resume?.().catch(() => {});
+    micCtx.resume?.().catch(() => {});
+    outCtxRef.current = outCtx;
+    micCtxRef.current = micCtx;
     try {
       // 1. Micro (demandé tout de suite, pendant le clic)
       if (!navigator.mediaDevices?.getUserMedia) return fail('Micro non disponible sur ce navigateur.');
@@ -125,7 +139,6 @@ export function useGeminiLive(lessonContext: string) {
         return fail("Micro refusé. Autorisez-le dans la barre d'adresse.");
       }
       streamRef.current = stream;
-      outCtxRef.current = new AudioContext({ sampleRate: 24000 });
 
       // 2. Jeton éphémère (la vraie clé reste sur le serveur)
       const tr = await fetch('/api/live-token', { method: 'POST' });
@@ -158,8 +171,8 @@ export function useGeminiLive(lessonContext: string) {
           const msg = JSON.parse(text);
           if (msg.setupComplete) {
             // 4. Envoi continu du micro
-            const ctx = new AudioContext();
-            micCtxRef.current = ctx;
+            const ctx = micCtx;
+            if (ctx.state !== 'running') await ctx.resume().catch(() => {});
             const url = URL.createObjectURL(new Blob([WORKLET], { type: 'application/javascript' }));
             await ctx.audioWorklet.addModule(url);
             URL.revokeObjectURL(url);
