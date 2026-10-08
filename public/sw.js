@@ -6,7 +6,9 @@
  */
 const VERSION = 'v1'; // ne pas changer sans raison : les cours enregistrés en dépendent
 const PAGES = `savoiria-pages-${VERSION}`;
-const STATIC = `savoiria-static-${VERSION}`;
+// Fichiers techniques : à augmenter quand le logo ou les icônes changent (ne touche pas aux cours enregistrés).
+const STATIC_VERSION = 'v2-logo-bleu';
+const STATIC = `savoiria-static-${STATIC_VERSION}`;
 const AUDIO = 'savoiria-audio'; // non versionné : on garde les podcasts téléchargés entre les mises à jour
 const OFFLINE_URL = '/hors-ligne';
 const PRECACHE = [OFFLINE_URL, '/icons/icon-192.png', '/icons/icon-512.png', '/icons/favicon-64.png', '/brand/logo-mark.png', '/brand/logo-mark-light.png'];
@@ -92,8 +94,22 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 3) Fichiers techniques immuables
-  if (url.pathname.startsWith('/_next/static/') || url.pathname.startsWith('/icons/') || url.pathname.startsWith('/brand/') || url.pathname.startsWith('/_next/image')) {
+  // 3a) Logo et icônes : copie affichée tout de suite, puis mise à jour en arrière-plan
+  //     (un nouveau logo apparaît dès la visite suivante).
+  if (url.pathname.startsWith('/icons/') || url.pathname.startsWith('/brand/')) {
+    event.respondWith(
+      caches.open(STATIC).then(async (c) => {
+        const hit = await c.match(req);
+        const fresh = fetch(req).then((res) => { if (res.ok) c.put(req, res.clone()); return res; });
+        if (hit) { event.waitUntil(fresh.catch(() => {})); return hit; }
+        return fresh;
+      })
+    );
+    return;
+  }
+
+  // 3b) Fichiers techniques immuables
+  if (url.pathname.startsWith('/_next/static/') || url.pathname.startsWith('/_next/image')) {
     event.respondWith(
       caches.match(req).then((hit) =>
         hit || fetch(req).then((res) => {

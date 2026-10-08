@@ -20,7 +20,10 @@ export default function PwaRegister() {
 
   useEffect(() => {
     if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
-      navigator.serviceWorker.register('/sw.js').catch(() => {});
+      navigator.serviceWorker
+        .register('/sw.js', { updateViaCache: 'none' })
+        .then((reg) => reg.update().catch(() => {}))
+        .catch(() => {});
     }
     const onPrompt = (e: Event) => {
       e.preventDefault();
