@@ -28,7 +28,7 @@ export default function HorsLignePage() {
               <li key={l.id}>
                 {/* Lien classique (pas next/link) pour que le service worker serve la page enregistrée */}
                 <a href={l.path} className="flex items-center justify-between gap-3 bg-card border border-border rounded-xl p-4 hover:border-primary/40">
-                  <span className="font-bold text-sm text-foreground">Semaine {l.id} — {l.title}</span>
+                  <span className="font-bold text-sm text-foreground">{l.id >= 1000 ? l.title : `Semaine ${l.id} — ${l.title}`}</span>
                   {l.audio.length > 0 && (
                     <span className="inline-flex items-center gap-1 text-xs text-muted-foreground"><Volume2 className="w-3.5 h-3.5" /> {l.audio.length}</span>
                   )}
