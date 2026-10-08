@@ -6,6 +6,11 @@ import { useGeminiLive } from '@/hooks/useGeminiLive';
 
 interface Props {
   moduleId: number;
+  /** Contexte fourni directement (formations SavoirIA) : pas de chargement CS50. */
+  context?: string;
+  systemPrompt?: string;
+  idleLabel?: string;
+  hint?: string;
   /** Appelé quand la conversation démarre (ex. mettre la vidéo en pause). */
   onActive?: () => void;
 }
@@ -18,19 +23,20 @@ const LABELS = {
   error: 'Réessayer',
 } as const;
 
-export default function VoiceTutor({ moduleId, onActive }: Props) {
-  const [context, setContext] = useState('');
+export default function VoiceTutor({ moduleId, onActive, context: given, systemPrompt, idleLabel, hint }: Props) {
+  const [context, setContext] = useState(given ?? '');
 
   useEffect(() => {
+    if (given !== undefined) { setContext(given); return; }
     let alive = true;
     fetch(`/api/transcript-beta?module=${moduleId}`)
       .then((r) => r.json())
       .then((j) => { if (alive) setContext(j?.context ?? ''); })
       .catch(() => { if (alive) setContext(''); });
     return () => { alive = false; };
-  }, [moduleId]);
+  }, [moduleId, given]);
 
-  const { status, error, start, stop } = useGeminiLive(context);
+  const { status, error, start, stop } = useGeminiLive(context, systemPrompt);
   const active = status === 'connecting' || status === 'listening' || status === 'speaking';
 
   useEffect(() => { if (active) onActive?.(); }, [active, onActive]);
@@ -57,7 +63,7 @@ export default function VoiceTutor({ moduleId, onActive }: Props) {
           aria-pressed={active}
         >
           <Icon className={`w-4 h-4 ${status === 'connecting' ? 'animate-spin' : ''}`} />
-          {LABELS[status]}
+          {status === 'idle' && idleLabel ? idleLabel : LABELS[status]}
         </button>
         {active && (
           <button type="button" onClick={stop} className="text-xs underline text-muted-foreground">
@@ -66,7 +72,7 @@ export default function VoiceTutor({ moduleId, onActive }: Props) {
         )}
       </div>
       <p className="text-xs text-muted-foreground">
-        {error ?? 'Conversation vocale en direct. Parlez naturellement, vous pouvez interrompre Socrate.'}
+        {error ?? hint ?? 'Conversation vocale en direct. Parlez naturellement, vous pouvez interrompre Socrate.'}
       </p>
     </div>
   );

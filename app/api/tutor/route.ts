@@ -5,6 +5,7 @@ import { auth } from '@/auth';
 import { CS50_MODULES } from '@/config/course-modules';
 import { prisma } from '@/lib/prisma';
 import { readCourseSource } from '@/lib/content-generator';
+import { IA_SLUG, IA_SYSTEM_PROMPT, iaWeekContext } from '@/lib/courses/ia-essentiels';
 
 const SYSTEM_PROMPT = `Tu es Socrate, un tuteur socratique expert en informatique et programmation, spécialisé dans le cours CS50 de Harvard pour les étudiants francophones.
 Ton rôle est de guider les étudiants vers la compréhension profonde par des questions socratiques stimulantes, sans donner directement les réponses toutes faites.
@@ -28,16 +29,19 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { messages, moduleId } = body ?? {};
+    const { messages, moduleId, course, week } = body ?? {};
+    const isIa = course === IA_SLUG;
 
     const mod = CS50_MODULES?.find?.((m: any) => m?.id === moduleId);
     let moduleContext = mod
       ? `\nModule actuel : ${mod.title}\nSujets : ${mod.topics?.join?.(', ')}\nDescription : ${mod.description}`
       : '';
 
+    if (isIa) moduleContext = `\n\n--- COURS DE LA SEMAINE ---\n${iaWeekContext(Number(week) || 1).slice(0, 12000)}`;
+
     // Intégration du matériel pédagogique du module
     try {
-      if (typeof moduleId === 'number' && !Number.isNaN(moduleId)) {
+      if (!isIa && typeof moduleId === 'number' && !Number.isNaN(moduleId)) {
         const summary = await prisma.videoSummary.findUnique({ where: { lessonId: moduleId } });
         if (summary) {
           const concepts = Array.isArray(summary.keyConcepts) ? (summary.keyConcepts as any[]) : [];
@@ -81,7 +85,7 @@ export async function POST(request: NextRequest) {
 
       const geminiPayload = {
         systemInstruction: {
-          parts: [{ text: SYSTEM_PROMPT + moduleContext }],
+          parts: [{ text: (isIa ? IA_SYSTEM_PROMPT : SYSTEM_PROMPT) + moduleContext }],
         },
         contents: rawContents,
         generationConfig: {
@@ -198,7 +202,7 @@ export async function POST(request: NextRequest) {
     // 2. ALTERNATIVE : ABACUS.AI (si configuré)
     if (abacusKey && !abacusKey.startsWith('AQ.')) {
       const apiMessages = [
-        { role: 'system', content: SYSTEM_PROMPT + moduleContext },
+        { role: 'system', content: (isIa ? IA_SYSTEM_PROMPT : SYSTEM_PROMPT) + moduleContext },
         ...((messages ?? [])?.map?.((m: any) => ({ role: m?.role ?? 'user', content: m?.content ?? '' })) ?? []),
       ];
 

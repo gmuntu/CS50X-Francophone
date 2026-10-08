@@ -370,3 +370,17 @@ model CourseInterest {
   @@unique([email, courseSlug])
   @@index([courseSlug])
 }
+
+// Progression dans les formations SavoirIA hors CS50x (ex. « L'essentiel de l'IA »).
+model CourseProgress {
+  id         String   @id @default(cuid())
+  userId     String
+  courseSlug String
+  week       Int
+  bestScore  Float    @default(0)
+  passedAt   DateTime?
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, courseSlug, week])
+  @@index([userId, courseSlug])
+}
