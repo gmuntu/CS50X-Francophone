@@ -159,6 +159,19 @@ export default function AdminDashboardClient({ stats, recentSubmissions, role }:
 
         {!isInstructor && (
           <Link
+            href="/admin/interets"
+            className="mb-6 flex items-center justify-between bg-card border border-border rounded-xl p-5 hover:border-primary transition"
+          >
+            <div>
+              <p className="font-bold text-foreground">Demandes « Me prévenir »</p>
+              <p className="text-sm text-muted-foreground">Voir qui attend chaque formation, et savoir laquelle ouvrir en premier</p>
+            </div>
+            <ArrowRight className="w-5 h-5 text-muted-foreground" />
+          </Link>
+        )}
+
+        {!isInstructor && (
+          <Link
             href="/admin/voix"
             className="mb-6 flex items-center justify-between bg-card border border-border rounded-xl p-5 hover:border-primary transition"
           >
