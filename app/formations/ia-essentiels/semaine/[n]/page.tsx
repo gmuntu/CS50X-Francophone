@@ -50,7 +50,7 @@ export default async function IaWeekPage({ params }: { params: Promise<{ n: stri
         {w.summary && (
           <details open className="rounded-2xl border border-border bg-card p-4 sm:p-5">
             <summary className="cursor-pointer font-bold">📄 Résumé du cours</summary>
-            <div className="mt-3 text-sm leading-relaxed space-y-2 [&_h2]:mt-4 [&_h2]:text-base [&_h2]:font-bold [&_ul]:list-disc [&_ul]:pl-5 [&_li]:my-1">
+            <div className="mt-3 text-sm leading-relaxed space-y-2 [&_h2]:mt-4 [&_h2]:text-base [&_h2]:font-bold [&_ul]:list-disc [&_ul]:pl-5 [&_li]:my-1 [&_blockquote]:border-l-4 [&_blockquote]:border-blue-300 [&_blockquote]:bg-blue-50/60 dark:[&_blockquote]:bg-blue-950/30 [&_blockquote]:px-3 [&_blockquote]:py-1 [&_blockquote]:italic">
               <ReactMarkdown>{w.summary}</ReactMarkdown>
             </div>
           </details>
