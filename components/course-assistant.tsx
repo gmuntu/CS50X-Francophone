@@ -93,6 +93,8 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
       const p = getPlayer();
       p.src = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
       p.play().catch(() => {});
+      // iPhone : la voix du navigateur (secours) doit aussi être « débloquée » pendant le clic.
+      if (window.speechSynthesis) window.speechSynthesis.speak(new SpeechSynthesisUtterance(''));
     } catch {}
   };
 
@@ -409,7 +411,10 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
     const SR: any = typeof window !== 'undefined'
       ? (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
       : null;
-    if (!SR) {
+    // iPhone / iPad : la reconnaissance intégrée s'arrête souvent sans rien dire.
+    // On utilise directement l'enregistrement + Google (1er appui : parler, 2e appui : envoyer).
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if (!SR || isIOS) {
       startRecordingFallback();
       return;
     }
