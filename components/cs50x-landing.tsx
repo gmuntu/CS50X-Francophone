@@ -9,7 +9,7 @@ import Footer from '@/components/footer';
 import AnimatedCounter from '@/components/animated-counter';
 import { CS50_MODULES } from '@/config/course-modules';
 
-export default function LandingPage() {
+export default function CS50xLanding() {
   const [heroRef, heroInView] = useInView({ triggerOnce: true, threshold: 0.1 });
   const [statsRef, statsInView] = useInView({ triggerOnce: true, threshold: 0.1 });
   const [featuresRef, featuresInView] = useInView({ triggerOnce: true, threshold: 0.1 });
