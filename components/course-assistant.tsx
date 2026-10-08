@@ -172,7 +172,7 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
     currentAudioRef.current = audio;
     audio.onended = () => resolve();
     audio.onerror = () => reject(new Error('Erreur de lecture audio'));
-    audio.src = 'data:audio/mp3;base64,' + b64;
+    audio.src = 'data:audio/mpeg;base64,' + b64;
     audio.play().catch(reject);
   }), []);
 
@@ -333,16 +333,40 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
   // Enregistrement micro (repli quand le navigateur n'a pas de reconnaissance vocale intégrée)
   const recorderRef = useRef<MediaRecorder | null>(null);
 
-  const transcribeWithGoogle = async (blob: Blob) => {
+  // Convertit l'enregistrement (webm sur Android/Chrome, mp4 sur iPhone) en PCM 16 kHz mono,
+  // un format que Google comprend quel que soit le téléphone.
+  const toPcm16 = async (blob: Blob): Promise<string> => {
+    const AC: any = (window as any).AudioContext || (window as any).webkitAudioContext;
+    const ctx = new AC();
     try {
       const buf = await blob.arrayBuffer();
+      // Forme « rappel » : compatible avec les anciens Safari.
+      const decoded: AudioBuffer = await new Promise((res, rej) => ctx.decodeAudioData(buf, res, rej));
+      const rate = 16000;
+      const off = new OfflineAudioContext(1, Math.ceil(decoded.duration * rate), rate);
+      const src = off.createBufferSource();
+      src.buffer = decoded;
+      src.connect(off.destination);
+      src.start();
+      const out = (await off.startRendering()).getChannelData(0);
+      const bytes = new Uint8Array(out.length * 2);
+      const view = new DataView(bytes.buffer);
+      for (let i = 0; i < out.length; i++) view.setInt16(i * 2, Math.max(-1, Math.min(1, out[i])) * 0x7fff, true);
       let binary = '';
-      const bytes = new Uint8Array(buf);
-      for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+      for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+      return btoa(binary);
+    } finally {
+      ctx.close?.();
+    }
+  };
+
+  const transcribeWithGoogle = async (blob: Blob) => {
+    try {
+      const audio = await toPcm16(blob);
       const res = await fetch('/api/stt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ audio: btoa(binary) }),
+        body: JSON.stringify({ audio, format: 'pcm16' }),
       });
       const data = await res.json();
       if (data?.transcript) sendMessage(data.transcript, true);
@@ -359,7 +383,7 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
     }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : '';
+      const mime = ['audio/webm;codecs=opus', 'audio/mp4', 'audio/aac'].find((m) => MediaRecorder.isTypeSupported?.(m)) || '';
       const rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
       const chunks: Blob[] = [];
       rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
@@ -401,7 +425,14 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
         // Conversation vocale : la question part directement, Socrate répondra à voix haute
         if (transcript.trim()) sendMessage(transcript, true);
       };
-      recognition.onerror = () => setIsListening(false);
+      let gotResult = false;
+      recognition.onresult = ((orig) => (e: any) => { gotResult = true; orig(e); })(recognition.onresult);
+      // iPhone (surtout l'application installée) : la reconnaissance intégrée échoue souvent.
+      // Dans ce cas on passe à l'enregistrement + reconnaissance Google.
+      recognition.onerror = (e: any) => {
+        setIsListening(false);
+        if (!gotResult && !['no-speech', 'aborted'].includes(e?.error)) startRecordingFallback();
+      };
       recognition.onend = () => setIsListening(false);
       recognition.start();
     } catch {
