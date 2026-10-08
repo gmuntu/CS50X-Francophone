@@ -8,6 +8,7 @@ import PodcastPlayer from '@/components/formations/ia/podcast-player';
 import WeekQuiz from '@/components/formations/ia/week-quiz';
 import SocrateChat from '@/components/formations/ia/socrate-chat';
 import VoiceTutor from '@/components/voice-tutor/voice-tutor';
+import OfflineLessonButton from '@/components/pwa/offline-lesson-button';
 import VoiceErrorBoundary from '@/components/voice-tutor/error-boundary';
 import { IA_SLUG, IA_TITLE, IA_WEEKS, IA_SYSTEM_PROMPT, getIaWeek, iaWeekContext } from '@/lib/courses/ia-essentiels';
 import { passedWeeks, isWeekOpen } from '@/lib/courses/progress';
@@ -36,6 +37,9 @@ export default async function IaWeekPage({ params }: { params: Promise<{ n: stri
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold">Semaine {n} : {w.title}</h1>
           <p className="text-muted-foreground">{w.intro}</p>
+          <div className="mt-3">
+            <OfflineLessonButton lessonId={1000 + n} title={`${IA_TITLE} — Semaine ${n} : ${w.title}`} audioUrls={[]} />
+          </div>
         </div>
 
         {w.keyPoints && (

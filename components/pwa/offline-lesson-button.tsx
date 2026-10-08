@@ -34,7 +34,7 @@ export default function OfflineLessonButton({ lessonId, title, audioUrls }: Prop
       );
       setSaved(true);
       if (failed.length) toast.warning(`Semaine enregistrée, mais ${failed.length} podcast(s) n'ont pas pu être téléchargés.`);
-      else toast.success('Semaine disponible hors ligne : résumé et podcasts enregistrés.');
+      else toast.success(audioUrls.length ? 'Semaine disponible hors ligne : résumé et podcasts enregistrés.' : 'Semaine disponible hors ligne : résumé et dialogue du podcast enregistrés.');
     } catch {
       toast.error("Échec de l'enregistrement. Vérifiez votre connexion et l'espace libre.");
     } finally {
