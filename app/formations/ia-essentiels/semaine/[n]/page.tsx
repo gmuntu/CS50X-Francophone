@@ -50,7 +50,7 @@ export default async function IaWeekPage({ params }: { params: Promise<{ n: stri
           </div>
         )}
 
-        {w.podcast && <PodcastPlayer lines={w.podcast} />}
+        {w.podcast && <PodcastPlayer lines={w.podcast} course={IA_SLUG} week={n} />}
 
         {w.summary && (
           <details open className="rounded-2xl border border-border bg-card p-4 sm:p-5">

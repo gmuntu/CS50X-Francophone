@@ -4,6 +4,7 @@ import Header from '@/components/header';
 import Footer from '@/components/footer';
 import { IA_SLUG, IA_TITLE, IA_WEEKS } from '@/lib/courses/ia-essentiels';
 import { passedWeeks, isWeekOpen } from '@/lib/courses/progress';
+import CourseDownloadButton from '@/components/pwa/course-download-button';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: `${IA_TITLE} · SavoirIA` };
@@ -37,6 +38,7 @@ export default async function IaCoursePage() {
               <Link href={startHref} className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-700">
                 {passed.size ? 'Continuer la formation' : 'Commencer la formation'}
               </Link>
+              {session && <CourseDownloadButton course={IA_SLUG} />}
               <a href="#programme" className="rounded-xl border border-blue-200 dark:border-blue-800 bg-card px-5 py-2.5 text-sm font-bold text-blue-700 dark:text-blue-300">Voir le programme</a>
             </div>
           </div>

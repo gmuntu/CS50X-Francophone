@@ -7,7 +7,7 @@
 const VERSION = 'v1'; // ne pas changer sans raison : les cours enregistrés en dépendent
 const PAGES = `savoiria-pages-${VERSION}`;
 // Fichiers techniques : à augmenter quand le logo ou les icônes changent (ne touche pas aux cours enregistrés).
-const STATIC_VERSION = 'v2-logo-bleu';
+const STATIC_VERSION = 'v2-logo-bleu'; // si on change : changer aussi STATIC_CACHE dans lib/offline.ts
 const STATIC = `savoiria-static-${STATIC_VERSION}`;
 const AUDIO = 'savoiria-audio'; // non versionné : on garde les podcasts téléchargés entre les mises à jour
 const OFFLINE_URL = '/hors-ligne';
