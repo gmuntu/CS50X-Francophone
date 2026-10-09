@@ -165,7 +165,70 @@ Choisissez une vraie tâche de votre travail (un message, une lettre, un résum�
     title: "L'art du prompt",
     intro: 'Bien demander pour bien obtenir : la méthode en 5 étapes.',
     tags: ['Tâche, contexte, exemples', 'Améliorer une réponse', 'Prompts en français et langues locales'],
-    ready: false,
+    ready: true,
+    summary: `Cette semaine, nous suivons **M. Kabeya**, enseignant de CM2 à Kinshasa. Il veut préparer une leçon sur le cycle de l'eau et une petite évaluation. Sa première demande à l'IA donne un texte trop long et trop compliqué. Il apprend à mieux demander.
+
+## 1. Qu'est-ce qu'un prompt ?
+Un **prompt** est la demande que vous écrivez (ou dites) à une IA. La qualité de la réponse dépend surtout de la qualité de la demande. L'IA ne lit pas dans vos pensées : ce que vous ne dites pas, elle le devine… souvent mal.
+
+## 2. La méthode en 5 étapes
+1. **La tâche** : que voulez-vous exactement ? (« Prépare une leçon… »)
+2. **Le contexte** : pour qui, pourquoi, dans quelle situation ? (« …pour des élèves de 10-11 ans à Kinshasa, sans projecteur. »)
+3. **Un exemple** : montrez ce que vous attendez. (« Comme cette leçon que j'ai faite sur la photosynthèse : … »)
+4. **Le format** : longueur, ton, forme. (« 1 page, phrases courtes, avec 5 questions à la fin. »)
+5. **Une contrainte** : langue, budget, pays, matériel. (« Utilise des exemples du fleuve Congo. »)
+
+Pas besoin des 5 à chaque fois : pour une petite tâche, 2 ou 3 suffisent. Pour une tâche importante, utilisez les 5.
+
+## 3. Avant / après
+> **Avant** : « Fais une leçon sur le cycle de l'eau. »
+
+> **Après** : « Tu es un enseignant expérimenté. Prépare une leçon d'une page sur le cycle de l'eau pour des élèves de CM2 à Kinshasa. Phrases courtes, exemples du fleuve Congo et de la saison des pluies. Termine par 5 questions à choix multiples avec les réponses. »
+
+La deuxième demande donne une leçon directement utilisable.
+
+## 4. Améliorer une réponse
+Une réponse ne vous plaît pas ? Ne recommencez pas tout : **continuez la conversation**.
+- « Plus court, s'il te plaît. »
+- « Explique plus simplement, comme à un enfant de 10 ans. »
+- « Donne 3 autres idées. »
+- « Mets ça sous forme de tableau. »
+- « Qu'est-ce qui manque dans ta réponse ? »
+
+## 5. Français simple et langues locales
+- Écrivez en français simple : phrases courtes, un sujet à la fois.
+- Vous pouvez demander une traduction ou une version en lingala, wolof, swahili, bambara… mais **faites vérifier** par quelqu'un qui parle bien la langue : l'IA est souvent moins précise dans les langues africaines.
+
+## Exercice oral avec Socrate Agora
+Plus bas sur cette page, dictez à Socrate un prompt pour une vraie tâche. Il vous aide à l'améliorer, étape par étape, avec la méthode en 5 étapes.`,
+    keyPoints: [
+      "Un prompt est votre demande à l'IA : la qualité de la réponse dépend de la qualité de la demande.",
+      'Méthode en 5 étapes : tâche, contexte, exemple, format, contrainte.',
+      'Une réponse décevante ? Continuez la conversation au lieu de tout recommencer.',
+      'Français simple, phrases courtes, un sujet à la fois.',
+      'Langues locales : possibles, mais à faire vérifier par un locuteur.',
+    ],
+    podcast: [
+      { speaker: 'Étudiant', text: "Socrate, j'ai demandé à l'IA de m'aider pour un exposé sur le cacao en Côte d'Ivoire. Elle m'a donné un texte de trois pages, plein de mots compliqués. C'est nul !" },
+      { speaker: 'Socrate', text: "Qu'avais-tu écrit exactement ?" },
+      { speaker: 'Étudiant', text: "« Fais un exposé sur le cacao. »" },
+      { speaker: 'Socrate', text: "Imagine que tu donnes cette même phrase à un ami très savant qui ne te connaît pas. Que lui manque-t-il pour bien t'aider ?" },
+      { speaker: 'Étudiant', text: "Il ne sait pas que c'est pour ma classe de terminale, que j'ai dix minutes pour parler, et que je veux parler surtout des planteurs." },
+      { speaker: 'Socrate', text: "Tu viens de trouver le contexte. Et la forme ? Tu voulais trois pages ?" },
+      { speaker: 'Étudiant', text: "Non ! Un plan en trois parties, avec des phrases simples que je peux dire à l'oral." },
+      { speaker: 'Socrate', text: "Voilà le format. Tâche, contexte, format : tu as déjà trois des cinq étapes. Une contrainte, peut-être ?" },
+      { speaker: 'Étudiant', text: "Utiliser des chiffres récents… et me dire d'où ils viennent, pour que je puisse vérifier." },
+      { speaker: 'Socrate', text: "Excellent, tu penses déjà à vérifier. Et si la réponse est encore trop longue, que feras-tu ?" },
+      { speaker: 'Étudiant', text: "Je ne recommence pas tout : je lui dis « plus court » ou « plus simple »." },
+      { speaker: 'Socrate', text: "Tu as compris l'art du prompt : bien demander, puis discuter. Tout à l'heure, dans l'exercice oral, tu vas le pratiquer à voix haute avec moi." },
+    ],
+    quiz: [
+      { q: "Qu'est-ce qu'un prompt ?", options: ["Un virus informatique", "La demande que l'on écrit ou dit à une IA", "Un type d'ordinateur", "Le nom d'une application"], answer: 1, explain: "Le prompt est votre demande ; sa qualité détermine celle de la réponse." },
+      { q: "Quelles sont les 5 étapes d'un bon prompt ?", options: ["Bonjour, merci, s'il te plaît, au revoir, bravo", "Tâche, contexte, exemple, format, contrainte", "Titre, image, couleur, police, taille", "Question, réponse, question, réponse, fin"], answer: 1, explain: "Tâche, contexte, exemple, format, contrainte." },
+      { q: "« Fais une leçon sur le cycle de l'eau. » Qu'ajouter en priorité ?", options: ["Rien, c'est parfait", "Le public (élèves de CM2), la longueur et le format attendu", "Des emojis", "Le mot « urgent »"], answer: 1, explain: "Le contexte et le format rendent la réponse directement utilisable." },
+      { q: "La réponse de l'IA est trop longue. Que faire ?", options: ["Fermer l'application", "Recommencer une nouvelle conversation depuis zéro", "Continuer la conversation : « Plus court, s'il te plaît »", "Copier quand même tout le texte"], answer: 2, explain: "On améliore une réponse en dialoguant avec l'IA." },
+      { q: "Vous demandez une traduction en wolof. Que faut-il faire ?", options: ["L'utiliser telle quelle", "La faire vérifier par quelqu'un qui parle bien wolof", "Ne jamais demander de traduction", "La traduire à nouveau en anglais"], answer: 1, explain: "L'IA est souvent moins précise dans les langues africaines : faites vérifier." },
+    ],
     oral: {
       title: "Exercice oral : l'art du prompt",
       instructions: "Dictez à Socrate un prompt pour une tâche réelle (ex. : une affiche pour votre boutique). Il vous aide à l'améliorer, étape par étape.",
@@ -181,14 +244,134 @@ Ne réécris jamais le prompt à sa place : guide-le pour qu'il le trouve lui-m�
     title: "Utiliser l'IA de façon responsable",
     intro: 'Biais, vie privée, sécurité des données, droits d\'auteur.',
     tags: ['Repérer les biais', 'Protéger ses données', 'Vérifier avant de partager'],
-    ready: false,
+    ready: true,
+    summary: `Cette semaine, nous suivons **Fatou**, journaliste à Dakar. À trois jours d'une élection, elle reçoit sur WhatsApp une vidéo où un candidat semble insulter ses électeurs. La vidéo circule partout. Est-elle vraie ?
+
+## 1. Les biais
+Une IA apprend à partir d'exemples. Si ces exemples sont déséquilibrés, l'IA reproduit les déséquilibres : c'est un **biais**.
+- Demandez « l'image d'un médecin » : l'IA montre souvent un homme blanc.
+- Demandez « une ville africaine » : elle montre parfois seulement la pauvreté, jamais les quartiers d'affaires de Lagos ou d'Abidjan.
+
+**Que faire ?** Remarquer le stéréotype, préciser votre demande (« une femme médecin camerounaise »), et ne pas prendre la réponse pour la réalité.
+
+## 2. La vie privée
+Ce que vous écrivez à une IA peut être conservé et parfois utilisé pour l'entraîner. **Ne donnez jamais** :
+- mots de passe, codes PIN, numéros de carte ;
+- numéros de pièce d'identité ;
+- informations de santé ou privées d'une autre personne ;
+- documents confidentiels de votre employeur.
+
+Astuce : remplacez les vrais noms par « Client A », « Élève B » avant de coller un texte.
+
+## 3. Les fausses informations
+L'IA permet de fabriquer de **fausses images, fausses voix et fausses vidéos** (on parle de *deepfakes*) très réalistes. Fatou applique sa méthode :
+1. **D'où vient la vidéo ?** Qui l'a publiée en premier ?
+2. **Les grands médias en parlent-ils ?** Une vraie déclaration choquante serait reprise partout.
+3. **Les détails** : lèvres décalées, voix métallique, mains ou yeux étranges, lumière bizarre.
+4. **Recherche inversée** : chercher l'image ou une capture de la vidéo sur Google Images ou Google Lens.
+5. **Dans le doute, on ne partage pas.**
+
+Fatou découvre que la voix a été fabriquée : elle publie un article qui explique la manipulation.
+
+## 4. Droits d'auteur et honnêteté
+- Un texte produit par l'IA n'est pas « votre » travail : à l'école, **dites quand vous avez utilisé l'IA** si on vous le demande.
+- Ne faites pas recopier mot pour mot le livre ou l'article de quelqu'un d'autre.
+- Citez vos sources, et vérifiez qu'elles existent vraiment.
+
+## 5. La règle d'or (encore)
+Vous restez **responsable** de ce que vous publiez, envoyez ou rendez, même si l'IA l'a écrit.`,
+    keyPoints: [
+      "Un biais : l'IA reproduit les déséquilibres de ses données (ex. stéréotypes sur l'Afrique ou les femmes).",
+      "Jamais de mots de passe, numéros de carte ou données privées d'autrui dans une IA.",
+      'Fausses vidéos et voix existent : vérifier la source, les médias, les détails, puis la recherche inversée.',
+      'Dans le doute, on ne partage pas.',
+      "Être honnête : dire quand on a utilisé l'IA, citer ses sources ; on reste responsable.",
+    ],
+    podcast: [
+      { speaker: 'Étudiant', text: "Socrate, tout le monde a partagé une vidéo d'un ministre qui insulte les commerçants. Je l'ai transférée à toute ma famille." },
+      { speaker: 'Socrate', text: "Avant de la transférer, qu'est-ce qui te faisait penser qu'elle était vraie ?" },
+      { speaker: 'Étudiant', text: "Euh… c'était sa voix, son visage. Et tout le monde la partageait." },
+      { speaker: 'Socrate', text: "Cette semaine, tu as appris que l'IA peut fabriquer une voix et un visage. Le fait que beaucoup de gens partagent une vidéo prouve-t-il qu'elle est vraie ?" },
+      { speaker: 'Étudiant', text: "Non… ça prouve seulement qu'elle choque." },
+      { speaker: 'Socrate', text: "Bien vu. Alors, comment aurais-tu pu vérifier ?" },
+      { speaker: 'Étudiant', text: "Regarder d'où elle vient, voir si les journaux sérieux en parlent, et faire une recherche avec une capture de l'image." },
+      { speaker: 'Socrate', text: "Et si tu ne trouves rien ?" },
+      { speaker: 'Étudiant', text: "Dans le doute, je ne partage pas. Et là, je vais envoyer un message à ma famille pour dire que ce n'est peut-être pas vrai." },
+      { speaker: 'Socrate', text: "C'est courageux. Une dernière question : pour ton devoir, tu as fait écrire ton introduction par l'IA. Que dois-tu à ton professeur ?" },
+      { speaker: 'Étudiant', text: "L'honnêteté. Je dois le dire, et vérifier ce qu'elle a écrit." },
+      { speaker: 'Socrate', text: "Voilà ce qu'est utiliser l'IA de façon responsable : vérifier, protéger, être honnête. Ce sont des qualités humaines, et elles comptent plus que jamais." },
+    ],
+    quiz: [
+      { q: "Qu'est-ce qu'un biais dans une IA ?", options: ["Une panne d'électricité", "Un déséquilibre appris dans ses données, qui peut créer des stéréotypes", "Une mise à jour", "Un mot de passe"], answer: 1, explain: "L'IA reproduit les déséquilibres de ses exemples d'entraînement." },
+      { q: "Que pouvez-vous coller sans risque dans une IA ?", options: ["Votre code PIN", "Le dossier médical d'un collègue", "Un texte où les vrais noms sont remplacés par « Client A », « Client B »", "Le numéro de votre carte bancaire"], answer: 2, explain: "Anonymisez : jamais de données sensibles ou privées." },
+      { q: "Vous recevez une vidéo choquante d'une personnalité. Première chose à faire ?", options: ["La partager vite à tout le monde", "Vérifier d'où elle vient et si des médias sérieux en parlent", "La commenter", "L'envoyer à la personnalité"], answer: 1, explain: "L'IA peut fabriquer de fausses vidéos : on vérifie la source d'abord." },
+      { q: "Après vérification, vous ne savez toujours pas si l'image est vraie.", options: ["Je la partage avec « peut-être »", "Je ne la partage pas", "Je la modifie", "Je demande à l'IA de dire si c'est vrai et je la crois"], answer: 1, explain: "Dans le doute, on ne partage pas." },
+      { q: "L'IA a écrit une partie de votre devoir. Quelle attitude est honnête ?", options: ["Ne rien dire", "Dire que vous avez utilisé l'IA si on le demande, et vérifier le contenu", "Accuser un camarade", "Changer quelques mots pour que ça ne se voie pas"], answer: 1, explain: "On reste honnête et responsable de ce qu'on rend." },
+    ],
   },
   {
     n: 5,
-    title: 'Rester à jour',
-    intro: "Suivre l'évolution de l'IA et préparer l'examen du certificat.",
+    title: 'Rester à jour et projet final',
+    intro: "Suivre l'évolution de l'IA, réaliser son projet final et préparer le certificat.",
     tags: ['Veille simple', 'Projet final', 'Préparation au certificat'],
-    ready: false,
+    ready: true,
+    summary: `Dernière semaine ! Vous savez ce qu'est l'IA, vous gagnez du temps avec elle, vous savez bien demander et l'utiliser de façon responsable. Il reste à **continuer d'apprendre** et à **le prouver**.
+
+## 1. L'IA change très vite
+De nouveaux outils sortent chaque mois. Inutile de tout suivre : **15 minutes par semaine** suffisent.
+- Choisissez **2 ou 3 sources fiables** : la rubrique technologie d'un grand média, le blog officiel d'un outil que vous utilisez, une communauté locale (club, groupe d'entraide).
+- Une fois par semaine, **testez une nouvelle fonction** sur une vraie tâche.
+- Méfiez-vous des promesses miracles (« devenez riche avec l'IA en 3 jours ») : ce sont souvent des arnaques.
+
+## 2. Garder ses bonnes habitudes
+- La **méthode en 5 étapes** pour chaque demande importante.
+- **Vérifier** les faits, chiffres, dates et sources.
+- **Protéger** vos données et celles des autres.
+- **Rester honnête** : vous êtes responsable du résultat.
+
+## 3. Votre projet final
+Choisissez une **vraie tâche** de votre travail ou de votre vie : une affiche, un plan de vente, un courriel important, une leçon, un CV…
+Préparez ces 4 éléments :
+1. **Votre prompt** (avec la méthode en 5 étapes).
+2. **La réponse de l'IA**.
+3. **Ce que vous avez vérifié** (faits, chiffres, ton).
+4. **Votre version finale améliorée**, et ce que vous avez changé.
+
+Présentez-les à Socrate ci-dessous : il vous donne son avis. Le dépôt officiel du projet et l'attestation SavoirIA arrivent très bientôt sur cette page.
+
+## 4. Préparer le certificat Google AI Essentials
+- Le cours officiel est sur **Coursera**, en anglais, et payant selon les conditions de Google (des aides financières existent parfois).
+- Vous connaissez déjà les grands thèmes : **vous aurez un temps d'avance**.
+- Conseil : utilisez la traduction automatique des sous-titres, et posez vos questions à Socrate en français.
+
+## 5. Et après ?
+L'IA est une porte d'entrée. Continuez avec une autre formation SavoirIA : **CS50x Francophone** (programmation), puis bientôt **Analyse de données** et **Cybersécurité**.`,
+    keyPoints: [
+      "15 minutes de veille par semaine, avec 2 ou 3 sources fiables, suffisent.",
+      'Méfiez-vous des promesses miracles : souvent des arnaques.',
+      'Projet final : prompt, réponse de l\'IA, vérifications, version finale améliorée.',
+      'Le certificat Google AI Essentials se prépare sur Coursera (en anglais) : vous avez une longueur d\'avance.',
+      "Continuez avec une autre formation SavoirIA.",
+    ],
+    podcast: [
+      { speaker: 'Étudiant', text: "Socrate, c'est la dernière semaine. Mais l'IA change tout le temps… ce que j'ai appris sera vite dépassé, non ?" },
+      { speaker: 'Socrate', text: "Réfléchissons. Parmi ce que tu as appris, qu'est-ce qui dépend d'un outil précis, et qu'est-ce qui restera vrai dans cinq ans ?" },
+      { speaker: 'Étudiant', text: "Les boutons des applications vont changer. Mais bien demander, vérifier, protéger ses données… ça restera." },
+      { speaker: 'Socrate', text: "Exactement. Les outils passent, les bonnes habitudes restent. Et pour suivre les nouveautés, combien de temps te faut-il ?" },
+      { speaker: 'Étudiant', text: "Pas des heures. Un quart d'heure par semaine, avec deux ou trois sources sérieuses." },
+      { speaker: 'Socrate', text: "Et si on te promet de devenir riche avec l'IA en trois jours ?" },
+      { speaker: 'Étudiant', text: "Je me méfie. C'est sûrement une arnaque." },
+      { speaker: 'Socrate', text: "Parlons de ton projet final. Quelle vraie tâche vas-tu choisir ?" },
+      { speaker: 'Étudiant', text: "Le CV de mon grand frère qui cherche du travail. Je vais écrire un bon prompt, vérifier, puis améliorer moi-même." },
+      { speaker: 'Socrate', text: "Un excellent choix, utile à quelqu'un que tu aimes. Et souviens-toi : ce n'est pas la fin. C'est le début. Viens me raconter ton projet quand tu veux." },
+    ],
+    quiz: [
+      { q: "Combien de temps de veille par semaine est conseillé pour suivre l'IA ?", options: ["Aucun", "Environ 15 minutes, avec 2 ou 3 sources fiables", "8 heures par jour", "Seulement quand un ami en parle"], answer: 1, explain: "Peu de temps, mais régulièrement, avec de bonnes sources." },
+      { q: "« Devenez riche avec l'IA en 3 jours ! » Votre réaction ?", options: ["Je paie tout de suite", "Je me méfie : c'est souvent une arnaque", "Je partage à mes amis", "Je donne mon numéro de carte"], answer: 1, explain: "Les promesses miracles sont un signal d'arnaque." },
+      { q: "Qu'est-ce qui restera utile même quand les outils changeront ?", options: ["L'emplacement des boutons", "Le nom des applications", "Bien demander, vérifier, protéger ses données, rester honnête", "Rien"], answer: 2, explain: "Les bonnes habitudes durent plus longtemps que les outils." },
+      { q: "Que contient le projet final ?", options: ["Seulement la réponse de l'IA", "Le prompt, la réponse de l'IA, les vérifications et votre version améliorée", "Une photo de profil", "Un paiement"], answer: 1, explain: "Le projet montre votre méthode, pas seulement le résultat de l'IA." },
+      { q: "Où se prépare le certificat officiel Google AI Essentials ?", options: ["Sur WhatsApp", "Sur Coursera, en anglais", "Uniquement sur SavoirIA", "À la mairie"], answer: 1, explain: "SavoirIA prépare en français ; le certificat officiel est délivré par Google sur Coursera." },
+    ],
   },
 ];
 

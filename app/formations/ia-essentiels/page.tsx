@@ -46,6 +46,37 @@ export default async function IaCoursePage() {
           </div>
         </section>
 
+
+        <section className="mt-10">
+          <h2 className="text-2xl font-extrabold">Ce que cette formation vous apporte</h2>
+          <p className="text-muted-foreground">Des résultats concrets dès la première semaine, sans connaissances techniques.</p>
+          <p className="mt-4 inline-block rounded-xl bg-blue-600 px-4 py-2.5 font-extrabold text-white">En 5 semaines, faites travailler l'IA pour vous, en toute sécurité.</p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              ['⏱️', 'Gagner des heures chaque semaine', "Courriels, lettres, résumés, plans de travail : l'IA prépare le brouillon, vous décidez."],
+              ['💼', 'Être plus employable', "« Je sais utiliser l'IA de façon responsable » : une compétence que les employeurs recherchent."],
+              ['🎓', 'Viser un certificat reconnu', "Préparez en français le certificat Google AI Essentials, puis recevez l'attestation SavoirIA."],
+              ['🛡️', 'Ne plus se faire piéger', "Repérer les erreurs de l'IA, les fausses informations et protéger vos données."],
+              ['🗣️', 'Savoir bien demander', 'La méthode du bon prompt, pratiquée à voix haute avec Socrate.'],
+              ['🚀', 'Un tremplin', "La porte d'entrée vers l'analyse de données, la cybersécurité ou CS50x."],
+            ].map(([icon, title, text]) => (
+              <div key={title} className="rounded-2xl border border-border bg-card p-4">
+                <div className="text-2xl">{icon}</div>
+                <p className="mt-1.5 font-bold">{title}</p>
+                <p className="text-sm text-muted-foreground">{text}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 rounded-2xl border border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/30 p-4">
+            <p className="font-bold text-blue-900 dark:text-blue-200">Pour qui ?</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {['Commerçants et entrepreneurs', 'Employés de bureau', 'Enseignants', 'Étudiants', "Chercheurs d'emploi", 'Retraités curieux'].map((t) => (
+                <span key={t} className="rounded-full border border-blue-200 dark:border-blue-800 bg-card px-3 py-1 text-xs font-semibold text-blue-900 dark:text-blue-200">{t}</span>
+              ))}
+            </div>
+          </div>
+        </section>
+
         <h2 id="programme" className="mt-10 text-2xl font-extrabold scroll-mt-20">Programme en 5 semaines</h2>
         <p className="text-muted-foreground mb-4">Chaque semaine : résumé, podcast à deux voix, quiz et questions à Socrate. La semaine suivante s'ouvre quand le quiz est réussi.</p>
 
