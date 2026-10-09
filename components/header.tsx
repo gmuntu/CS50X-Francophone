@@ -18,13 +18,21 @@ export default function Header() {
     { label: 'Mon espace', href: '/dashboard', icon: LayoutDashboard },
     { label: 'Mes formations', href: '/formations', icon: GraduationCap },
     { label: 'Catalogue', href: '/#formations', icon: BookOpen },
-    { label: 'Socrate', href: '/tuteur', icon: Mic },
     { label: 'Hors ligne', href: '/hors-ligne', icon: CloudDownload, offline: true },
     ...(role === 'ADMIN' || role === 'INSTRUCTOR' ? [{ label: 'Admin', href: '/admin', icon: Shield }] : []),
   ] : [
     { label: 'Accueil', href: '/', icon: BookOpen },
     { label: 'Catalogue', href: '/#formations', icon: GraduationCap },
     { label: 'Hors ligne', href: '/hors-ligne', icon: CloudDownload, offline: true },
+  ];
+
+  // Sous-menu propre à CS50x : visible seulement dans les pages de cette formation.
+  const inCs50 = ['/cs50x', '/courses', '/tuteur', '/agora'].some((p) => pathname === p || pathname?.startsWith(p + '/'));
+  const cs50Items = [
+    { label: 'Présentation', href: '/cs50x' },
+    { label: 'Semaines', href: '/courses' },
+    { label: 'Socrate', href: '/tuteur' },
+    { label: 'Agora (vocal)', href: '/agora' },
   ];
 
   return (
@@ -167,6 +175,19 @@ export default function Header() {
           </nav>
         )}
       </div>
+      {inCs50 && (
+        <div className="border-t border-border/60 bg-blue-50/70 dark:bg-blue-950/20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-1 overflow-x-auto py-1.5 text-xs font-bold">
+            <span className="mr-2 shrink-0 text-blue-800 dark:text-blue-200">CS50x Francophone</span>
+            {cs50Items.map((it) => (
+              <Link key={it.href} href={it.href}
+                className={`shrink-0 rounded-lg px-3 py-1.5 ${pathname === it.href || pathname?.startsWith(it.href + '/') ? 'bg-card text-blue-700 dark:text-blue-300 shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>
+                {it.label === 'Socrate' || it.label.startsWith('Agora') ? <Mic className="inline w-3.5 h-3.5 mr-1 -mt-0.5" /> : null}{it.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
     </header>
   );
 }
