@@ -6,8 +6,10 @@ import { listSavedLessons, type SavedLesson } from '@/lib/offline';
 
 export default function HorsLignePage() {
   const [lessons, setLessons] = useState<SavedLesson[] | null>(null);
+  const [online, setOnline] = useState(false);
 
   useEffect(() => {
+    setOnline(navigator.onLine);
     listSavedLessons().then(setLessons).catch(() => setLessons([]));
   }, []);
 
@@ -16,9 +18,11 @@ export default function HorsLignePage() {
       <div className="w-full max-w-lg space-y-6">
         <div className="text-center space-y-3">
           <WifiOff className="w-12 h-12 mx-auto text-muted-foreground" />
-          <h1 className="text-2xl font-extrabold text-foreground">Vous êtes hors ligne</h1>
+          <h1 className="text-2xl font-extrabold text-foreground">{online ? 'Mes cours hors ligne' : 'Vous êtes hors ligne'}</h1>
           <p className="text-sm text-muted-foreground">
-            Cette page n'a pas été enregistrée sur votre appareil. Voici les semaines que vous pouvez consulter sans connexion.
+            {online
+              ? "Les semaines enregistrées ici restent lisibles sans Internet. Pour en ajouter : ouvrez une semaine, puis touchez « Disponible hors ligne »."
+              : "Cette page n'a pas été enregistrée sur votre appareil. Voici les semaines que vous pouvez consulter sans connexion."}
           </p>
         </div>
 
@@ -38,13 +42,14 @@ export default function HorsLignePage() {
           </ul>
         ) : lessons ? (
           <p className="text-center text-sm text-muted-foreground bg-card border border-border rounded-xl p-5">
-            Aucune semaine enregistrée. Une fois reconnecté, ouvrez une semaine de cours et touchez « Rendre disponible hors ligne ».
+            Aucune semaine enregistrée. Une fois reconnecté, ouvrez une semaine de cours et touchez « Disponible hors ligne ».
           </p>
         ) : null}
 
-        <div className="text-center">
+        <div className="text-center flex justify-center gap-2">
+          {online && <a href="/formations" className="px-5 py-2.5 rounded-xl border border-border text-sm font-bold">Mes formations</a>}
           <button onClick={() => window.location.reload()} className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-bold">
-            Réessayer
+            {online ? 'Actualiser' : 'Réessayer'}
           </button>
         </div>
       </div>

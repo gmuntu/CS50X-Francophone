@@ -12,6 +12,7 @@ import { CS50_MODULES } from '@/config/course-modules';
 import { motion } from 'framer-motion';
 import TutorMessageCard from '@/components/tutor-message-card';
 import MyTrainingsCard from '@/components/home/my-trainings-card';
+import OfflineBanner from '@/components/home/offline-banner';
 
 interface Props {
   user: {
@@ -221,6 +222,8 @@ export default function DashboardClient({ user }: Props) {
         </div>
 
         {/* Main Content Layout */}
+        <OfflineBanner />
+
         <MyTrainingsCard />
 
         <TutorMessageCard />

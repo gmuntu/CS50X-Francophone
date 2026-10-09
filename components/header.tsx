@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Menu, X, BookOpen, LogOut, User, LayoutDashboard, GraduationCap, Shield, Mic } from 'lucide-react';
+import { CloudDownload, Menu, X, BookOpen, LogOut, User, LayoutDashboard, GraduationCap, Shield, Mic } from 'lucide-react';
 import Link from 'next/link';
 import { BrandMark, BrandName } from '@/components/brand-logo';
 import { useSession, signOut } from 'next-auth/react';
@@ -15,16 +15,16 @@ export default function Header() {
   const role = (session?.user as any)?.role;
 
   const navItems = session ? [
-    { label: 'Tableau de bord', href: '/dashboard', icon: LayoutDashboard },
-    { label: 'Mes cours', href: '/courses', icon: GraduationCap },
-    { label: 'Formations', href: '/#formations', icon: BookOpen },
-    { label: 'Tuteur Socrate', href: '/tuteur', icon: BookOpen },
-    { label: 'Agora', href: '/agora', icon: Mic },
+    { label: 'Mon espace', href: '/dashboard', icon: LayoutDashboard },
+    { label: 'Mes formations', href: '/formations', icon: GraduationCap },
+    { label: 'Catalogue', href: '/#formations', icon: BookOpen },
+    { label: 'Socrate', href: '/tuteur', icon: Mic },
+    { label: 'Hors ligne', href: '/hors-ligne', icon: CloudDownload, offline: true },
     ...(role === 'ADMIN' || role === 'INSTRUCTOR' ? [{ label: 'Admin', href: '/admin', icon: Shield }] : []),
   ] : [
     { label: 'Accueil', href: '/', icon: BookOpen },
-    { label: 'Formations', href: '/#formations', icon: GraduationCap },
-    { label: 'CS50x', href: '/cs50x', icon: BookOpen },
+    { label: 'Catalogue', href: '/#formations', icon: GraduationCap },
+    { label: 'Hors ligne', href: '/hors-ligne', icon: CloudDownload, offline: true },
   ];
 
   return (
@@ -45,7 +45,9 @@ export default function Header() {
                   key={item?.href}
                   href={item?.href}
                   className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                    isActive
+                    item.offline
+                      ? 'bg-sky-50 text-sky-700 ring-1 ring-sky-300 hover:bg-sky-100 dark:bg-sky-950/40 dark:text-sky-300 dark:ring-sky-800'
+                      : isActive
                       ? 'bg-card text-foreground shadow-sm shadow-black/5 border border-border/60'
                       : 'text-muted-foreground hover:text-foreground hover:bg-card/50'
                   }`}
@@ -120,7 +122,7 @@ export default function Header() {
                   href={item?.href}
                   onClick={() => setMobileOpen(false)}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition ${
-                    isActive ? 'bg-primary text-primary-foreground font-bold shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                    item.offline ? 'bg-sky-50 text-sky-700 ring-1 ring-sky-300 dark:bg-sky-950/40 dark:text-sky-300 dark:ring-sky-800' : isActive ? 'bg-primary text-primary-foreground font-bold shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                   }`}
                 >
                   <Icon className="w-4 h-4" />
