@@ -164,6 +164,10 @@ export default function TuteurClient({ role, contentByModule }: Props) {
 
         {/* ===================== ZONE CENTRALE ===================== */}
         <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 space-y-6 overflow-y-auto">
+          <a href="/agora" className="flex items-center justify-between gap-3 rounded-2xl border border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/30 px-4 py-3 hover:bg-blue-100 dark:hover:bg-blue-950/50">
+            <span className="text-sm"><b className="text-blue-800 dark:text-blue-200">🎙️ Agora : parler à Socrate de vive voix</b><span className="hidden sm:inline text-muted-foreground"> · conversation en direct, vous pouvez l'interrompre</span></span>
+            <span className="text-sm font-bold text-blue-700 dark:text-blue-300">Ouvrir →</span>
+          </a>
           {/* En-tête du module */}
           <div className="bg-card/80 backdrop-blur-sm border border-border/80 rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="space-y-2">

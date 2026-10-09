@@ -58,8 +58,8 @@ export default function OfflineLessonButton({ lessonId, title, audioUrls }: Prop
 
   return saved ? (
     <span className="inline-flex items-center gap-2">
-      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold border border-emerald-500/20">
-        <CheckCircle className="w-3.5 h-3.5" /> Disponible hors ligne
+      <span className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-200 text-sm font-extrabold ring-1 ring-sky-300 dark:ring-sky-800">
+        <CheckCircle className="w-4 h-4" /> Enregistrée sur cet appareil
       </span>
       <button onClick={onRemove} title="Retirer de l'appareil" aria-label="Retirer de l'appareil" className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted">
         <Trash2 className="w-3.5 h-3.5" />
@@ -68,9 +68,9 @@ export default function OfflineLessonButton({ lessonId, title, audioUrls }: Prop
   ) : (
     <button
       onClick={onSave}
-      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-bold border border-primary/20 hover:bg-primary/15"
+      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-sky-50 text-sky-700 text-sm font-extrabold ring-1 ring-sky-300 hover:bg-sky-100 dark:bg-sky-950/40 dark:text-sky-300 dark:ring-sky-800"
     >
-      <CloudDownload className="w-3.5 h-3.5" /> Rendre disponible hors ligne
+      <CloudDownload className="w-4 h-4" /> Disponible hors ligne
     </button>
   );
 }

@@ -2,6 +2,8 @@ import Link from 'next/link';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 import NotifyButton from '@/components/home/notify-button';
+import OfflineBanner from '@/components/home/offline-banner';
+import ReadyCourses from '@/components/home/ready-courses';
 import { TRACKS, DISCLAIMER } from '@/lib/catalog';
 
 const FEATURES = [
@@ -51,8 +53,13 @@ export default function SavoirIAHome() {
         ))}
       </section>
 
+      <section className="max-w-7xl mx-auto px-4 pt-10 space-y-10">
+        <OfflineBanner />
+        <ReadyCourses />
+      </section>
+
       <section id="formations" className="max-w-7xl mx-auto px-4 py-14 scroll-mt-20">
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground">Nos formations, par parcours</h2>
+        <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground">Toutes les formations, par parcours</h2>
         <p className="text-muted-foreground">Choisissez un métier ; chaque formation vous prépare à un certificat officiel.</p>
 
         {TRACKS.map((track, i) => (
