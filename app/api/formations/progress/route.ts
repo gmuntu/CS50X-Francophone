@@ -19,7 +19,8 @@ export async function POST(req: Request) {
 
   const w = getIaWeek(week);
   if (!w?.quiz?.length) return NextResponse.json({ error: 'Quiz introuvable' }, { status: 404 });
-  if (!isWeekOpen(week, await passedWeeks(userId, IA_SLUG))) {
+  const staff = ['ADMIN', 'INSTRUCTOR'].includes((session?.user as any)?.role);
+  if (!staff && !isWeekOpen(week, await passedWeeks(userId, IA_SLUG))) {
     return NextResponse.json({ error: 'Semaine pas encore ouverte' }, { status: 403 });
   }
 

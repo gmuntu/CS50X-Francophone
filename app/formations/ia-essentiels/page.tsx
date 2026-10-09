@@ -11,6 +11,8 @@ export const metadata = { title: `${IA_TITLE} · SavoirIA` };
 export default async function IaCoursePage() {
   const session = await auth();
   const passed = session?.user?.id ? await passedWeeks(session.user.id, IA_SLUG) : new Set<number>();
+  // Admin et formateurs : toutes les semaines ouvertes (pour tester et corriger).
+  const staff = ['ADMIN', 'INSTRUCTOR'].includes((session?.user as any)?.role);
   const startHref = session ? '/formations/ia-essentiels/semaine/1' : '/auth/signup';
 
   return (
@@ -82,7 +84,7 @@ export default async function IaCoursePage() {
 
         <div className="space-y-3">
           {IA_WEEKS.map((w) => {
-            const open = isWeekOpen(w.n, passed) && w.ready;
+            const open = (staff || isWeekOpen(w.n, passed)) && w.ready;
             const done = passed.has(w.n);
             return (
               <div key={w.n} className={`flex gap-4 rounded-2xl bg-card p-4 sm:p-5 ${open && !done ? 'border-2 border-blue-600 shadow-md' : 'border border-border'}`}>
