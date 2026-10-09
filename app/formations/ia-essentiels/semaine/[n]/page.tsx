@@ -22,7 +22,8 @@ export default async function IaWeekPage({ params }: { params: Promise<{ n: stri
   const w = getIaWeek(n);
   if (!w) redirect('/formations/ia-essentiels');
   const passed = await passedWeeks(session.user.id, IA_SLUG);
-  if (!w.ready || !isWeekOpen(n, passed)) redirect('/formations/ia-essentiels');
+  const staff = ['ADMIN', 'INSTRUCTOR'].includes((session.user as any)?.role);
+  if (!w.ready || (!staff && !isWeekOpen(n, passed))) redirect('/formations/ia-essentiels');
 
   const next = IA_WEEKS.find((x) => x.n === n + 1);
   const context = iaWeekContext(n);
