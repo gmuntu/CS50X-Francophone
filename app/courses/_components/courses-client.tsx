@@ -8,6 +8,7 @@ import Link from 'next/link';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 import { CS50_MODULES } from '@/config/course-modules';
+import CourseDownloadButton from '@/components/pwa/course-download-button';
 
 export default function CoursesClient({ isLoggedIn }: { isLoggedIn: boolean }) {
   const [ref, inView] = useInView({ triggerOnce: true, threshold: 0.1 });
@@ -28,6 +29,7 @@ export default function CoursesClient({ isLoggedIn }: { isLoggedIn: boolean }) {
           <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
             Un voyage complet de 11 semaines pour maîtriser les fondamentaux de l'informatique
           </p>
+          {isLoggedIn && <div className="mt-5"><CourseDownloadButton course="cs50x" label="Les 11 semaines hors ligne" /></div>}
         </motion.div>
 
         {/* Filters */}

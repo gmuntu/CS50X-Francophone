@@ -3,6 +3,7 @@
 // Outils côté navigateur pour enregistrer une semaine de cours sur l'appareil.
 export const PAGES_CACHE = 'savoiria-pages-v1';
 export const AUDIO_CACHE = 'savoiria-audio';
+export const STATIC_CACHE = 'savoiria-static-v2-logo-bleu'; // doit rester identique à public/sw.js
 const META_CACHE = 'savoiria-meta';
 const META_KEY = '/__savoiria/saved-lessons.json';
 
@@ -42,7 +43,19 @@ export async function saveLesson(lesson: Omit<SavedLesson, 'savedAt'>, onProgres
 
   const page = await fetch(lesson.path, { credentials: 'include' });
   if (!page.ok || page.redirected) throw new Error('page');
+  const html = await page.clone().text();
   await pages.put(absolute(lesson.path), page);
+  // Fichiers techniques de la page (scripts, styles) : sans eux, la page s'affiche mais
+  // les boutons (podcast, quiz) ne marchent pas hors ligne. Nom aligné sur public/sw.js.
+  try {
+    const assets = Array.from(new Set(html.match(/\/_next\/static\/[^"'\s)]+/g) ?? []));
+    const stat = await caches.open(STATIC_CACHE);
+    await Promise.all(assets.map(async (a) => {
+      if (await stat.match(absolute(a))) return;
+      const r = await fetch(a).catch(() => null);
+      if (r?.ok) await stat.put(absolute(a), r);
+    }));
+  } catch {}
   onProgress?.(++done, total);
 
   const failed: string[] = [];
@@ -85,4 +98,30 @@ export async function clearOfflineData() {
   } catch {}
   if (!offlineSupported()) return;
   await Promise.all([caches.delete(PAGES_CACHE), caches.delete(AUDIO_CACHE), caches.delete(META_CACHE)]);
+}
+
+/** Clé de cache d'une réplique de podcast générée (formations SavoirIA sans fichier MP3). */
+export const generatedAudioKey = (course: string, week: number, line: number) =>
+  `/__savoiria/podcast/${course}/s${week}-${line}.mp3`;
+
+/** Lit une réplique déjà enregistrée sur l'appareil (null si absente). */
+export async function readGeneratedAudio(key: string): Promise<ArrayBuffer | null> {
+  if (!offlineSupported()) return null;
+  try {
+    const hit = await (await caches.open(AUDIO_CACHE)).match(absolute(key));
+    return hit ? await hit.arrayBuffer() : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Enregistre une réplique générée (MP3 en base64) et la rattache à la semaine pour pouvoir la retirer. */
+export async function storeGeneratedAudio(lessonId: number, key: string, b64: string) {
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  await (await caches.open(AUDIO_CACHE)).put(absolute(key), new Response(bytes, { headers: { 'Content-Type': 'audio/mpeg' } }));
+  const list = await listSavedLessons();
+  const l = list.find((x) => x.id === lessonId);
+  if (l && !l.audio.includes(key)) { l.audio.push(key); await writeList(list); }
 }

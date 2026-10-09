@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import { ALL_COURSES } from '@/lib/catalog';
+import CourseDownloadButton from '@/components/pwa/course-download-button';
 
 // Formations ouvertes aujourd'hui, côte à côte.
-export default function ReadyCourses({ title = 'Prêtes à commencer', subtitle = "Les formations ouvertes aujourd'hui, côte à côte." }: { title?: string; subtitle?: string }) {
+export default function ReadyCourses({ title = 'Commencez maintenant', subtitle = 'Choisissez votre formation : tout est disponible, même sans Internet.' }: { title?: string; subtitle?: string }) {
   const ready = ALL_COURSES.filter((c) => c.status === 'disponible' && c.href);
   const blurb: Record<string, string> = {
     cs50x: 'Programmation et informatique',
@@ -24,7 +25,7 @@ export default function ReadyCourses({ title = 'Prêtes à commencer', subtitle 
             <p className="text-xs text-muted-foreground/70 mt-1 mb-4">{c.note}</p>
             <div className="flex flex-wrap gap-2">
               <Link href={c.href!} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700">Commencer</Link>
-              <a href="/hors-ligne" className="rounded-lg border border-sky-300 bg-sky-50 px-4 py-2 text-sm font-bold text-sky-700 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-300">📥 Hors ligne</a>
+              <CourseDownloadButton course={c.slug === 'google-ai-essentials' ? 'ia-essentiels' : c.slug} label="Tout télécharger" />
             </div>
           </div>
         ))}

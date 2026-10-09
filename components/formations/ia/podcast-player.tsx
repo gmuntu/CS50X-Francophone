@@ -3,17 +3,23 @@
 import { useRef, useState } from 'react';
 import { Headphones, Square, Loader2 } from 'lucide-react';
 import type { IaLine } from '@/lib/courses/ia-essentiels';
+import { generatedAudioKey, readGeneratedAudio } from '@/lib/offline';
 
 // Podcast à deux voix (Socrate et l'étudiante), synthétisé réplique par réplique.
 // La lecture passe par Web Audio, « débloqué » au clic : fonctionne aussi sur iPhone.
-export default function PodcastPlayer({ lines }: { lines: IaLine[] }) {
+export default function PodcastPlayer({ lines, course, week }: { lines: IaLine[]; course?: string; week?: number }) {
   const [state, setState] = useState<'idle' | 'loading' | 'playing'>('idle');
   const [current, setCurrent] = useState(-1);
   const ctxRef = useRef<AudioContext | null>(null);
   const srcRef = useRef<AudioBufferSourceNode | null>(null);
   const genRef = useRef(0);
 
-  const synth = async (line: IaLine): Promise<ArrayBuffer | null> => {
+  const synth = async (line: IaLine, idx: number): Promise<ArrayBuffer | null> => {
+    // Enregistré sur l'appareil (formation hors ligne) : lecture sans Internet.
+    if (course && week) {
+      const cached = await readGeneratedAudio(generatedAudioKey(course, week, idx));
+      if (cached) return cached;
+    }
     try {
       const res = await fetch('/api/speech', {
         method: 'POST',
@@ -46,11 +52,11 @@ export default function PodcastPlayer({ lines }: { lines: IaLine[] }) {
     ctx.resume?.().catch(() => {});
     const gen = ++genRef.current;
     setState('loading');
-    let next = synth(lines[0]);
+    let next = synth(lines[0], 0);
     for (let i = 0; i < lines.length; i++) {
       const buf = await next;
       if (gen !== genRef.current) return;
-      next = i + 1 < lines.length ? synth(lines[i + 1]) : Promise.resolve(null);
+      next = i + 1 < lines.length ? synth(lines[i + 1], i + 1) : Promise.resolve(null);
       if (!buf) continue;
       const audio: AudioBuffer = await new Promise((res, rej) => ctx.decodeAudioData(buf, res, rej)).catch(() => null as any);
       if (!audio || gen !== genRef.current) continue;
