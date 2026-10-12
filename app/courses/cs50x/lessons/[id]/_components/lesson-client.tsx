@@ -10,6 +10,7 @@ import type { CourseModuleConfig } from '@/config/course-modules';
 import InteractiveQuizModal from '@/components/interactive-quiz-modal';
 import CourseAssistant from '@/components/course-assistant';
 import OfflineLessonButton from '@/components/pwa/offline-lesson-button';
+import NotebookCard from '@/components/notebook-card';
 import WeekPackButton from '@/components/pwa/week-pack-button';
 import LiteVideo from '@/components/pwa/lite-video';
 
@@ -79,6 +80,8 @@ export default function LessonClient({ moduleConfig, lesson, userId }: Props) {
           <OfflineLessonButton lessonId={moduleConfig?.id} title={moduleConfig?.title} audioUrls={offlineAudio} />
           <p className="text-sm sm:text-base text-muted-foreground max-w-3xl leading-relaxed">{moduleConfig?.description}</p>
         </motion.div>
+
+        <div className="mb-8"><NotebookCard url={moduleConfig?.notebookUrl} /></div>
 
         {/* 2-Columns Grid Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
