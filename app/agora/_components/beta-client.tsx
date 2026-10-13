@@ -1,6 +1,7 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
+import BilingualVideo from '@/components/pwa/bilingual-video';
 import Link from 'next/link';
 import Header from '@/components/header';
 import { CS50_MODULES } from '@/config/course-modules';
@@ -9,18 +10,11 @@ import VoiceErrorBoundary from '@/components/voice-tutor/error-boundary';
 
 export default function BetaClient() {
   const [moduleId, setModuleId] = useState(CS50_MODULES[0]?.id ?? 0);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
   const mod = CS50_MODULES.find((m) => m.id === moduleId) ?? CS50_MODULES[0];
-  const v = mod?.videoUrlFr || mod?.videoUrl;
-  const src = v ? `${v}${v.includes('?') ? '&' : '?'}enablejsapi=1` : '';
 
   // Met la vidéo en pause quand la conversation commence.
   const pauseVideo = useCallback(() => {
-    try {
-      iframeRef.current?.contentWindow?.postMessage(
-        JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }), '*',
-      );
-    } catch {}
+    window.dispatchEvent(new Event('savoiria:pause-video'));
   }, []);
 
   return (
@@ -43,21 +37,14 @@ export default function BetaClient() {
           {CS50_MODULES.map((m) => <option key={m.id} value={m.id}>{m.title}</option>)}
         </select>
 
-        <div className="w-full aspect-video bg-black rounded-2xl overflow-hidden border border-border/80">
-          {src ? (
-            <iframe
-              ref={iframeRef}
-              key={src}
-              src={src}
-              className="w-full h-full"
-              allowFullScreen
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              title={mod.title}
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">Vidéo indisponible</div>
-          )}
-        </div>
+        {mod?.videoUrl ? (
+          <BilingualVideo key={mod.id} en={mod.videoUrl} fr={mod.videoUrlFr} title={mod.title} autoload />
+        ) : (
+          <div className="w-full aspect-video bg-black rounded-2xl flex items-center justify-center text-muted-foreground text-sm">Vidéo indisponible</div>
+        )}
+        {mod?.videoUrlFr && (
+          <p className="text-xs text-muted-foreground -mt-2">Socrate s'appuie sur la vidéo originale anglaise : ses repères de temps (« vers 12:30 ») correspondent à la version anglaise ; en français, le moment peut être légèrement décalé.</p>
+        )}
 
         <VoiceErrorBoundary>
           <VoiceTutor key={moduleId} moduleId={moduleId} onActive={pauseVideo} />

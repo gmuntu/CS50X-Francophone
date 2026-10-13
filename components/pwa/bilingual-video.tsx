@@ -11,9 +11,9 @@ const KEY = 'savoiria-video-lang';
  * Le bouton de langue reprend la vidéo au même moment.
  * La vidéo ne se charge qu'au clic : la page reste légère sur les petits forfaits.
  */
-export default function BilingualVideo({ en, fr, title }: { en: string; fr?: string; title?: string }) {
+export default function BilingualVideo({ en, fr, title, autoload = false }: { en: string; fr?: string; title?: string; autoload?: boolean }) {
   const [lang, setLang] = useState<Lang>(fr ? 'fr' : 'en');
-  const [on, setOn] = useState(false);
+  const [on, setOn] = useState(autoload);
   const [start, setStart] = useState(0);
   const timeRef = useRef(0);
   const frameRef = useRef<HTMLIFrameElement>(null);
@@ -35,8 +35,13 @@ export default function BilingualVideo({ en, fr, title }: { en: string; fr?: str
         if (typeof t === 'number') timeRef.current = t;
       } catch {}
     };
+    // Pause demandée par la page (ex. : Socrate Agora commence à parler).
+    const onPause = () => {
+      try { frameRef.current?.contentWindow?.postMessage(JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }), '*'); } catch {}
+    };
     window.addEventListener('message', onMsg);
-    return () => window.removeEventListener('message', onMsg);
+    window.addEventListener('savoiria:pause-video', onPause);
+    return () => { window.removeEventListener('message', onMsg); window.removeEventListener('savoiria:pause-video', onPause); };
   }, []);
 
   const listen = () => {
@@ -51,7 +56,7 @@ export default function BilingualVideo({ en, fr, title }: { en: string; fr?: str
   };
 
   const base = lang === 'fr' && fr ? fr : en;
-  const src = `${base}${base.includes('?') ? '&' : '?'}enablejsapi=1&autoplay=1&start=${start}${lang === 'fr' ? '&hl=fr' : ''}`;
+  const src = `${base}${base.includes('?') ? '&' : '?'}enablejsapi=1${autoload && start === 0 ? '' : '&autoplay=1'}&start=${start}${lang === 'fr' ? '&hl=fr' : ''}`;
 
   return (
     <div className="space-y-2">
