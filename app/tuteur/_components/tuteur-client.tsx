@@ -8,6 +8,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneLight } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import Header from '@/components/header';
 import CourseAssistant from '@/components/course-assistant';
+import BilingualVideo from '@/components/pwa/bilingual-video';
 import TutorMessageCard from '@/components/tutor-message-card';
 import { CS50_MODULES } from '@/config/course-modules';
 import {
@@ -210,21 +211,12 @@ export default function TuteurClient({ role, contentByModule }: Props) {
             </div>
           </div>
 
-          {/* Lecteur vidéo */}
-          <div className="w-full aspect-video bg-black rounded-2xl border border-border/80 shadow-md overflow-hidden ring-1 ring-black/5">
-            {activeModule.videoUrl ? (
-              <iframe
-                key={activeModule.videoUrl}
-                src={activeModule.videoUrl}
-                className="w-full h-full"
-                allowFullScreen
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                title={activeModule.title}
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">Vidéo indisponible</div>
-            )}
-          </div>
+          {/* Lecteur vidéo : français ou anglais, comme dans les semaines et Agora */}
+          {activeModule.videoUrl ? (
+            <BilingualVideo key={activeModule.id} en={activeModule.videoUrl} fr={activeModule.videoUrlFr} title={activeModule.title} autoload />
+          ) : (
+            <div className="w-full aspect-video bg-black rounded-2xl flex items-center justify-center text-muted-foreground text-sm">Vidéo indisponible</div>
+          )}
 
           {/* Onglets segmented control */}
           <div className="p-1 bg-muted/60 backdrop-blur-sm rounded-xl border border-border/70 inline-flex gap-1 overflow-x-auto max-w-full">
