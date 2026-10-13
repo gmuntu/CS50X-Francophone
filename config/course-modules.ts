@@ -4,6 +4,8 @@ export interface CourseModuleConfig {
   slug: string;
   description: string;
   videoUrl?: string;
+  /** Version doublée en français (YouTube, non répertoriée). */
+  videoUrlFr?: string;
   podcastUrl?: string;
   notebookUrl?: string;
   difficulty: 'Débutant' | 'Intermédiaire' | 'Avancé';
@@ -18,6 +20,7 @@ export const CS50_MODULES: CourseModuleConfig[] = [
     slug: 'semaine-0-introduction-scratch',
     description: "Introduction au cours CS50 : pensée computationnelle, binaire, algorithmes et programmation visuelle avec Scratch.",
     videoUrl: 'https://www.youtube.com/embed/UuIEbpQms8o',
+    videoUrlFr: 'https://www.youtube.com/embed/AsNlqXLJC3E',
     notebookUrl: 'https://notebooklm.google.com/notebook/65407ca2-0219-4a61-9fa7-27d7da2ed113',
     difficulty: 'Débutant',
     topics: ['Binaire', 'Scratch', 'Algorithmes'],
@@ -29,6 +32,7 @@ export const CS50_MODULES: CourseModuleConfig[] = [
     slug: 'semaine-1-c',
     description: "Transition vers le langage C, syntaxe de base, types de données, conditions et compilation.",
     videoUrl: 'https://www.youtube.com/embed/SlqjA04_dpk',
+    videoUrlFr: 'https://www.youtube.com/embed/NsH8PY_WoT8',
     podcastUrl: '/podcasts/semaine1.mp3',
     notebookUrl: 'https://notebooklm.google.com/notebook/3f36e2f0-5a38-43c5-91a0-76b368627019',
     difficulty: 'Débutant',
@@ -41,6 +45,7 @@ export const CS50_MODULES: CourseModuleConfig[] = [
     slug: 'semaine-2-les-tableaux',
     description: "Exploration des tableaux, mémoire, chaînes de caractères et débogage en C.",
     videoUrl: 'https://www.youtube.com/embed/h5Gc1n8ZuU8',
+    videoUrlFr: 'https://www.youtube.com/embed/Ts_r8AK19QU',
     podcastUrl: '/podcasts/semaine2.mp3',
     notebookUrl: 'https://notebooklm.google.com/notebook/4be4999a-6fce-4c17-93d3-b66d0f9f98eb',
     difficulty: 'Intermédiaire',
@@ -53,6 +58,7 @@ export const CS50_MODULES: CourseModuleConfig[] = [
     slug: 'semaine-3-les-algorithmes',
     description: "Complexité algorithmique, recherche linéaire et binaire, tris et récursion.",
     videoUrl: 'https://www.youtube.com/embed/6Svu_ae5ebk',
+    videoUrlFr: 'https://www.youtube.com/embed/Z26bcyDI4-U',
     podcastUrl: '/podcasts/semaine3.mp3',
     notebookUrl: 'https://notebooklm.google.com/notebook/087eec10-568f-476e-93a1-7784e53c7a55',
     difficulty: 'Intermédiaire',
@@ -65,6 +71,7 @@ export const CS50_MODULES: CourseModuleConfig[] = [
     slug: 'semaine-4-la-memoire',
     description: "Pointeurs, allocation dynamique, gestion de la mémoire et manipulation de fichiers.",
     videoUrl: 'https://www.youtube.com/embed/db0H0U13YsA',
+    videoUrlFr: 'https://www.youtube.com/embed/svmsj_bjSYA',
     podcastUrl: '/podcasts/semaine4.mp3',
     notebookUrl: 'https://notebooklm.google.com/notebook/89d2916a-c08c-4da0-93bd-ffae8a1ebecd',
     difficulty: 'Avancé',
@@ -77,6 +84,7 @@ export const CS50_MODULES: CourseModuleConfig[] = [
     slug: 'semaine-5-les-structures-de-donnees',
     description: "Listes chaînées, arbres binaires, tables de hachage et Tries.",
     videoUrl: 'https://www.youtube.com/embed/PmAI76OGE_E',
+    videoUrlFr: 'https://www.youtube.com/embed/lfolfGtrK2A',
     podcastUrl: '/podcasts/semaine5.mp3',
     notebookUrl: 'https://notebooklm.google.com/notebook/f8826302-5ef7-4970-b979-7d87a2196e22',
     difficulty: 'Avancé',
@@ -89,6 +97,7 @@ export const CS50_MODULES: CourseModuleConfig[] = [
     slug: 'semaine-6-python',
     description: "Transition vers Python, typage dynamique, structures natives et projet ADN.",
     videoUrl: 'https://www.youtube.com/embed/Rl0ludWTLxs',
+    videoUrlFr: 'https://www.youtube.com/embed/fGBJsvNTkVw',
     podcastUrl: '/podcasts/semaine6.mp3',
     notebookUrl: 'https://notebooklm.google.com/notebook/0af54950-3af4-45ac-bf76-b8f44613c079',
     difficulty: 'Intermédiaire',
@@ -101,6 +110,7 @@ export const CS50_MODULES: CourseModuleConfig[] = [
     slug: 'semaine-7-sql',
     description: "Bases de données relationnelles, requêtes SQL, jointures et sécurité.",
     videoUrl: 'https://www.youtube.com/embed/oqRU2So6Z2Y',
+    videoUrlFr: 'https://www.youtube.com/embed/2soubRuIBxA',
     podcastUrl: '/podcasts/semaine7.mp3',
     notebookUrl: 'https://notebooklm.google.com/notebook/69cb4cda-a672-43f3-ba88-901968509476',
     difficulty: 'Intermédiaire',

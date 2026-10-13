@@ -11,7 +11,8 @@ export default function BetaClient() {
   const [moduleId, setModuleId] = useState(CS50_MODULES[0]?.id ?? 0);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const mod = CS50_MODULES.find((m) => m.id === moduleId) ?? CS50_MODULES[0];
-  const src = mod?.videoUrl ? `${mod.videoUrl}${mod.videoUrl.includes('?') ? '&' : '?'}enablejsapi=1` : '';
+  const v = mod?.videoUrlFr || mod?.videoUrl;
+  const src = v ? `${v}${v.includes('?') ? '&' : '?'}enablejsapi=1` : '';
 
   // Met la vidéo en pause quand la conversation commence.
   const pauseVideo = useCallback(() => {

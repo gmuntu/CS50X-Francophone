@@ -12,7 +12,7 @@ import CourseAssistant from '@/components/course-assistant';
 import OfflineLessonButton from '@/components/pwa/offline-lesson-button';
 import NotebookCard from '@/components/notebook-card';
 import WeekPackButton from '@/components/pwa/week-pack-button';
-import LiteVideo from '@/components/pwa/lite-video';
+import BilingualVideo from '@/components/pwa/bilingual-video';
 
 interface Props {
   moduleConfig: CourseModuleConfig;
@@ -113,9 +113,7 @@ export default function LessonClient({ moduleConfig, lesson, userId }: Props) {
             {activeTab === 'video' && (
               <div className="space-y-6">
                 {moduleConfig?.videoUrl && (
-                  <div className="aspect-video bg-black border border-border/80 rounded-2xl overflow-hidden shadow-soft-sm">
-                    <LiteVideo src={moduleConfig.videoUrl} title={moduleConfig?.title} />
-                  </div>
+                  <BilingualVideo en={moduleConfig.videoUrl} fr={moduleConfig?.videoUrlFr} title={moduleConfig?.title} />
                 )}
                 {videoSummary ? (
                   <div className="bg-card border border-border/80 rounded-2xl p-6 sm:p-7 shadow-soft-sm space-y-4">
