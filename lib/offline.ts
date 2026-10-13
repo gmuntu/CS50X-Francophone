@@ -3,7 +3,7 @@
 // Outils côté navigateur pour enregistrer une semaine de cours sur l'appareil.
 export const PAGES_CACHE = 'savoiria-pages-v1';
 export const AUDIO_CACHE = 'savoiria-audio';
-export const STATIC_CACHE = 'savoiria-static-v2-logo-bleu'; // doit rester identique à public/sw.js
+export const STATIC_CACHE = 'savoiria-static-v3-logo-cerveau'; // doit rester identique à public/sw.js
 const META_CACHE = 'savoiria-meta';
 const META_KEY = '/__savoiria/saved-lessons.json';
 
