@@ -18,3 +18,14 @@ export async function uploadBlob(pathname: string, body: ArrayBuffer, contentTyp
   if (!res.ok || !d?.url) throw new Error(d?.error?.message || "L'enregistrement audio n'a pas pu être sauvegardé.");
   return d.url as string;
 }
+
+// Suppression (au mieux) d'un fichier Vercel Blob.
+export async function deleteBlob(url: string) {
+  const token = process.env.BLOB_READ_WRITE_TOKEN;
+  if (!token || !url) return;
+  await fetch('https://blob.vercel-storage.com/delete', {
+    method: 'POST',
+    headers: { authorization: `Bearer ${token}`, 'x-api-version': '11', 'content-type': 'application/json' },
+    body: JSON.stringify({ urls: [url] }),
+  }).catch(() => {});
+}
