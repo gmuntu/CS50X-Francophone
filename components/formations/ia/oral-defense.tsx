@@ -3,11 +3,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { Mic, Loader2, Square } from 'lucide-react';
 import { useGeminiLive } from '@/hooks/useGeminiLive';
+import { startRecorder, uploadVoice } from '@/lib/recorder';
 
-// Défense orale avec Socrate : conversation vocale en direct + transcription écrite (aucun audio conservé).
+// Défense orale avec Socrate : conversation vocale en direct + transcription écrite (voix enregistrée pour la vérification).
 export default function OralDefense({ course, systemPrompt, onDone }: { course: string; systemPrompt: string; onDone: () => void }) {
+  const recRef = useRef<{ done: () => Promise<Blob> } | null>(null);
   const { status, error, start, stop, transcript } = useGeminiLive('', systemPrompt, {
     transcript: true,
+    onStream: (s) => { try { recRef.current = startRecorder(s); } catch { recRef.current = null; } },
     opening: "Bonjour Socrate, je suis prêt pour la défense orale de mon projet final.",
   });
   const [sending, setSending] = useState(false);
@@ -24,10 +27,13 @@ export default function OralDefense({ course, systemPrompt, onDone }: { course: 
   useEffect(() => { endRef.current?.scrollIntoView({ block: 'nearest' }); }, [transcript]);
 
   const finish = async () => {
+    const voice = recRef.current ? await recRef.current.done().catch(() => null) : null;
+    recRef.current = null;
     stop();
     setSending(true);
     setMsg('');
     try {
+      if (voice && voice.size > 2000) await uploadVoice(course, 'defense', voice);
       const res = await fetch('/api/formations/projet/defense', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -73,7 +79,7 @@ export default function OralDefense({ course, systemPrompt, onDone }: { course: 
       )}
       {(error || msg) && <p className="text-sm text-red-600">{error || msg}</p>}
       {sending && <p className="text-sm text-muted-foreground flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Envoi de la défense…</p>}
-      <p className="text-[11px] text-muted-foreground">🔒 La voix est transformée en texte pour l'évaluation. L'enregistrement audio n'est pas conservé. Aucune identification par la voix.</p>
+      <p className="text-[11px] text-muted-foreground">🔒 Votre voix est enregistrée pour être comparée à votre empreinte vocale par votre formateur. Elle n'est jamais partagée et elle est supprimée 6 mois après la validation.</p>
     </div>
   );
 }
