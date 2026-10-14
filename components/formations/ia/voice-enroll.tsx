@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Mic, Square, Loader2 } from 'lucide-react';
+import { Mic, Square, Loader2, Trash2 } from 'lucide-react';
 import { startRecorder, uploadVoice } from '@/lib/recorder';
 
 // Empreinte vocale : 15 secondes de lecture à voix haute, avec consentement explicite.
@@ -46,6 +46,11 @@ export default function VoiceEnroll({ course, name, onDone }: { course: string; 
     setState('ready');
   };
 
+  const erase = () => {
+    if (url) URL.revokeObjectURL(url);
+    setAudio(null); setUrl(''); setSeconds(0); setMsg(''); setState('idle');
+  };
+
   const send = async () => {
     if (!audio) return;
     if (seconds < 8) { setMsg('Lisez la phrase en entier (au moins 8 secondes).'); return; }
@@ -66,16 +71,21 @@ export default function VoiceEnroll({ course, name, onDone }: { course: string; 
         « Je m'appelle {name || '…'}, je suis étudiant SavoirIA et je présente aujourd'hui mon projet final. J'ai écrit ce projet moi-même et je peux l'expliquer. »
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        {state !== 'rec' ? (
-          <button disabled={!consent || state === 'sending'} onClick={startRec} className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-40 flex items-center gap-1.5">
-            <Mic className="h-4 w-4" /> {audio ? 'Recommencer' : 'Enregistrer'}
-          </button>
-        ) : (
+        {state === 'rec' ? (
           <button onClick={stopRec} className="rounded-xl bg-red-600 px-4 py-2 text-sm font-bold text-white flex items-center gap-1.5 animate-pulse">
             <Square className="h-3.5 w-3.5" /> Arrêter · {seconds} s
           </button>
+        ) : !audio && (
+          <button disabled={!consent || state === 'sending'} onClick={startRec} className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-40 flex items-center gap-1.5">
+            <Mic className="h-4 w-4" /> Enregistrer
+          </button>
         )}
         {url && state !== 'rec' && <audio controls src={url} className="h-9" />}
+        {audio && state !== 'rec' && (
+          <button disabled={state === 'sending'} onClick={erase} className="rounded-xl border border-border px-3 py-2 text-sm font-bold flex items-center gap-1.5">
+            <Trash2 className="h-4 w-4" /> Effacer
+          </button>
+        )}
         {audio && state !== 'rec' && (
           <button disabled={state === 'sending'} onClick={send} className="rounded-xl border-2 border-blue-600 px-4 py-2 text-sm font-bold text-blue-700 dark:text-blue-300 flex items-center gap-1.5">
             {state === 'sending' && <Loader2 className="h-4 w-4 animate-spin" />} Valider

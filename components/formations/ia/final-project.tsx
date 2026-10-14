@@ -36,6 +36,14 @@ export default function FinalProject({ course }: { course: string }) {
     } catch (e: any) { setMsg(e?.message || 'Erreur'); } finally { setSaving(false); }
   };
 
+  const eraseVoice = async () => {
+    setMsg('');
+    const res = await fetch(`/api/formations/projet/voix?course=${course}`, { method: 'DELETE' });
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) { setMsg(d?.error || 'Erreur'); return; }
+    await load();
+  };
+
   const status = project?.status;
   const step = !project ? 1 : status === 'SUBMITTED' || status === 'REDO' ? 2 : 3;
 
@@ -78,7 +86,12 @@ export default function FinalProject({ course }: { course: string }) {
           {!project.voiceRefUrl
             ? <VoiceEnroll course={course} name={session?.user?.name || ''} onDone={load} />
             : <>
-                <p className="text-xs text-blue-700 dark:text-blue-300 font-bold">✓ Empreinte vocale enregistrée</p>
+                <div className="flex flex-wrap items-center gap-2 rounded-xl border border-blue-200 dark:border-blue-900 bg-blue-50/60 dark:bg-blue-950/30 p-3">
+                  <p className="text-sm text-blue-700 dark:text-blue-300 font-bold">✓ Empreinte vocale enregistrée</p>
+                  <audio controls preload="none" src={project.voiceRefUrl} className="h-9" />
+                  <button onClick={eraseVoice} className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-bold">🗑 Effacer et recommencer</button>
+                </div>
+                {msg && <p className="text-sm text-red-600">{msg}</p>}
                 <OralDefense course={course} systemPrompt={defensePrompt(course, project)} onDone={load} />
               </>}
         </div>

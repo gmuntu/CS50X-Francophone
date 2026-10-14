@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
-import { uploadBlob } from '@/lib/blob';
+import { uploadBlob, deleteBlob } from '@/lib/blob';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -42,4 +42,20 @@ export async function POST(req: Request) {
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || 'Erreur' }, { status: 500 });
   }
+}
+
+// Effacer l'empreinte pour recommencer : seulement avant la défense (étape 2).
+export async function DELETE(req: Request) {
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) return NextResponse.json({ error: 'Non connecté' }, { status: 401 });
+  const course = new URL(req.url).searchParams.get('course') || '';
+  const project = await prisma.finalProject.findUnique({ where: { userId_courseSlug: { userId, courseSlug: course } } });
+  if (!project) return NextResponse.json({ error: 'Projet introuvable' }, { status: 404 });
+  if (!['SUBMITTED', 'REDO'].includes(project.status)) {
+    return NextResponse.json({ error: "La défense est terminée : l'empreinte ne peut plus être changée." }, { status: 400 });
+  }
+  if (project.voiceRefUrl) await deleteBlob(project.voiceRefUrl);
+  await prisma.finalProject.update({ where: { id: project.id }, data: { voiceRefUrl: null, voiceConsentAt: null } });
+  return NextResponse.json({ ok: true });
 }
