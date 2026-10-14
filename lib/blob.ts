@@ -1,8 +1,8 @@
 // Envoi d'un fichier vers Vercel Blob par l'API REST (sans dépendance).
 // Nécessite la variable BLOB_READ_WRITE_TOKEN (créée en activant Blob dans Vercel → Storage).
 export async function uploadBlob(pathname: string, body: ArrayBuffer, contentType: string): Promise<string> {
-  const token = process.env.BLOB_READ_WRITE_TOKEN;
-  if (!token) throw new Error("Stockage audio non configuré (BLOB_READ_WRITE_TOKEN).");
+  const token = process.env.VOIX_READ_WRITE_TOKEN || process.env.BLOB_READ_WRITE_TOKEN;
+  if (!token) throw new Error("Stockage audio non configuré (VOIX_READ_WRITE_TOKEN).");
   const res = await fetch(`https://blob.vercel-storage.com/?pathname=${encodeURIComponent(pathname)}`, {
     method: 'PUT',
     headers: {
@@ -21,7 +21,7 @@ export async function uploadBlob(pathname: string, body: ArrayBuffer, contentTyp
 
 // Suppression (au mieux) d'un fichier Vercel Blob.
 export async function deleteBlob(url: string) {
-  const token = process.env.BLOB_READ_WRITE_TOKEN;
+  const token = process.env.VOIX_READ_WRITE_TOKEN || process.env.BLOB_READ_WRITE_TOKEN;
   if (!token || !url) return;
   await fetch('https://blob.vercel-storage.com/delete', {
     method: 'POST',
