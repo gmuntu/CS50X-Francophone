@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { IA_SLUG, IA_PASS_SCORE, getIaWeek } from '@/lib/courses/ia-essentiels';
 import { passedWeeks, isWeekOpen } from '@/lib/courses/progress';
+import { quizFor } from '@/lib/courses/shuffle';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,7 +15,8 @@ export async function POST(req: Request) {
 
   const body = await req.json().catch(() => ({}));
   const week = Number(body?.week);
-  const answers: number[] = Array.isArray(body?.answers) ? body.answers.map(Number) : [];
+  // Réponses : { indice d'origine de la question : indice d'origine de la réponse }
+  const answers: Record<string, number> = body?.answers && typeof body.answers === 'object' ? body.answers : {};
   if (body?.course !== IA_SLUG) return NextResponse.json({ error: 'Formation inconnue' }, { status: 400 });
 
   const w = getIaWeek(week);
@@ -24,8 +26,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Semaine pas encore ouverte' }, { status: 403 });
   }
 
-  const results = w.quiz.map((q, i) => answers[i] === q.answer);
-  const score = results.filter(Boolean).length / w.quiz.length;
+  // Questions réellement posées à CET élève (même tirage que sur la page).
+  const asked = quizFor(w.quiz, `${userId}:${IA_SLUG}:${week}`).map((x) => x.qi);
+  const correct = asked.filter((qi) => Number(answers[qi]) === w.quiz![qi].answer);
+  const score = correct.length / asked.length;
   const passed = score >= IA_PASS_SCORE;
 
   const prev = await prisma.courseProgress.findUnique({
@@ -43,6 +47,6 @@ export async function POST(req: Request) {
   return NextResponse.json({
     score,
     passed,
-    results: w.quiz.map((q, i) => ({ correct: results[i], answer: q.answer, explain: q.explain })),
+    results: Object.fromEntries(asked.map((qi) => [qi, { correct: Number(answers[qi]) === w.quiz![qi].answer, answer: w.quiz![qi].answer, explain: w.quiz![qi].explain }])),
   });
 }

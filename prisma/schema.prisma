@@ -384,3 +384,27 @@ model CourseProgress {
   @@unique([userId, courseSlug, week])
   @@index([userId, courseSlug])
 }
+
+// Projet final d'une formation SavoirIA + défense orale avec Socrate.
+model FinalProject {
+  id                String   @id @default(cuid())
+  userId            String
+  courseSlug        String
+  prompt            String   @db.Text
+  aiResponse        String   @db.Text
+  verification      String   @db.Text
+  finalVersion      String   @db.Text
+  similarity        Float    @default(0)  // ressemblance maximale avec un autre projet (0 à 1)
+  similarToUserId   String?
+  defenseTranscript Json?
+  defenseScore      Int?     // 0 à 5, proposé par Socrate
+  defenseFeedback   String?  @db.Text
+  defenseCount      Int      @default(0)
+  status            String   @default("SUBMITTED") // SUBMITTED | DEFENDED | VALIDATED | REDO
+  reviewedAt        DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([userId, courseSlug])
+  @@index([courseSlug, status])
+}

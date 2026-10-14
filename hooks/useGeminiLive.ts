@@ -53,8 +53,20 @@ function pcm16ToFloat(b64: string) {
   return out;
 }
 
-export function useGeminiLive(lessonContext: string, systemPrompt: string = SYSTEM_PROMPT) {
+export type TranscriptLine = { who: 'eleve' | 'socrate'; text: string };
+
+export function useGeminiLive(lessonContext: string, systemPrompt: string = SYSTEM_PROMPT, opts: { transcript?: boolean; opening?: string } = {}) {
   const [status, setStatus] = useState<LiveStatus>('idle');
+  // Transcription écrite de la conversation (défense orale) : texte seulement, aucun audio conservé.
+  const [transcript, setTranscript] = useState<TranscriptLine[]>([]);
+  const addLine = useCallback((who: TranscriptLine['who'], text: string) => {
+    if (!text) return;
+    setTranscript((t) => {
+      const last = t[t.length - 1];
+      if (last && last.who === who) return [...t.slice(0, -1), { who, text: last.text + text }];
+      return [...t, { who, text }];
+    });
+  }, []);
   const [error, setError] = useState<string | null>(null);
 
   const wsRef = useRef<WebSocket | null>(null);
@@ -112,6 +124,7 @@ export function useGeminiLive(lessonContext: string, systemPrompt: string = SYST
   const start = useCallback(async () => {
     if (wsRef.current) return;
     setError(null);
+    setTranscript([]);
     setStatus('connecting');
     // iPhone/Safari : le son n'est autorisé que si les lecteurs audio sont créés ET relancés
     // pendant le clic lui-même (avant tout « await »). Sinon ils restent muets et Socrate « boude ».
@@ -158,6 +171,7 @@ export function useGeminiLive(lessonContext: string, systemPrompt: string = SYST
               responseModalities: ['AUDIO'],
               speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Charon' } } },
             },
+            ...(opts.transcript ? { inputAudioTranscription: {}, outputAudioTranscription: {} } : {}),
             systemInstruction: {
               parts: [{ text: `${systemPrompt}\n\n--- CONTENU DE LA LEÇON ---\n${lessonContext || '(résumé non disponible)'}` }],
             },
@@ -186,10 +200,18 @@ export function useGeminiLive(lessonContext: string, systemPrompt: string = SYST
             };
             ctx.createMediaStreamSource(stream).connect(node);
             setStatus('listening');
+            // Socrate parle en premier (ex. : ouverture de la défense orale).
+            if (opts.opening && wsRef.current?.readyState === WebSocket.OPEN) {
+              wsRef.current.send(JSON.stringify({ clientContent: { turns: [{ role: 'user', parts: [{ text: opts.opening }] }], turnComplete: true } }));
+            }
             return;
           }
           const sc = msg.serverContent;
           if (sc?.interrupted) { stopPlayback(); setStatus('listening'); }
+          if (opts.transcript) {
+            if (sc?.inputTranscription?.text) addLine('eleve', sc.inputTranscription.text);
+            if (sc?.outputTranscription?.text) addLine('socrate', sc.outputTranscription.text);
+          }
           for (const p of sc?.modelTurn?.parts ?? []) {
             if (p?.inlineData?.data) playChunk(p.inlineData.data);
           }
@@ -209,9 +231,9 @@ export function useGeminiLive(lessonContext: string, systemPrompt: string = SYST
       console.error('useGeminiLive', e);
       fail('Le tuteur vocal a rencontré un problème.');
     }
-  }, [fail, lessonContext, systemPrompt, playChunk, stop, stopPlayback]);
+  }, [fail, lessonContext, systemPrompt, playChunk, stop, stopPlayback, opts.transcript, opts.opening, addLine]);
 
   useEffect(() => () => stop(), [stop]);
 
-  return { status, error, start, stop };
+  return { status, error, start, stop, transcript, setTranscript };
 }

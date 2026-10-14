@@ -24,6 +24,7 @@ export default function SignupPage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
   const [loading, setLoading] = useState(false);
+  const [acceptTerms, setAcceptTerms] = useState(false);
   const [error, setError] = useState('');
   const [causes, setCauses] = useState<string[]>([]);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -214,6 +215,10 @@ export default function SignupPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateStep(4)) return;
+    if (!acceptTerms) {
+      setError("Veuillez accepter les Conditions d'utilisation et la Politique de confidentialité.");
+      return;
+    }
 
     setLoading(true);
     setError('');
@@ -1049,6 +1054,12 @@ export default function SignupPage() {
               <div />
             )}
 
+            {currentStep === 4 && (
+              <label className="flex items-start gap-2 text-xs text-muted-foreground sm:max-w-xs">
+                <input type="checkbox" checked={acceptTerms} onChange={(e) => setAcceptTerms(e.target.checked)} className="mt-0.5 h-4 w-4 accent-blue-600" required />
+                <span>J'accepte les <a href="/conditions" target="_blank" className="font-semibold text-blue-700 dark:text-blue-300 underline">Conditions d'utilisation</a> et la <a href="/confidentialite" target="_blank" className="font-semibold text-blue-700 dark:text-blue-300 underline">Politique de confidentialité</a>.</span>
+              </label>
+            )}
             {currentStep < 4 ? (
               <button
                 type="button"

@@ -1,6 +1,7 @@
 import { BookOpen } from 'lucide-react';
 import Link from 'next/link';
 import { BrandMark, BrandName } from '@/components/brand-logo';
+import { LEGAL } from '@/lib/legal';
 
 export default function Footer() {
   return (
@@ -11,10 +12,12 @@ export default function Footer() {
             <BrandMark className="w-9 h-9" />
             <BrandName className="text-sm font-bold text-foreground tracking-tight" />
           </div>
-          <div className="flex items-center gap-6 text-xs font-semibold text-muted-foreground">
+          <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-2 text-xs font-semibold text-muted-foreground">
             <Link href="/courses" className="hover:text-foreground transition-colors">Cours</Link>
             <Link href="/tuteur" className="hover:text-foreground transition-colors">Tuteur Socrate</Link>
-            <a href="mailto:contact@savoiria.online" className="hover:text-foreground transition-colors">Contact</a>
+            <Link href="/confidentialite" className="hover:text-foreground transition-colors">Confidentialité</Link>
+            <Link href="/conditions" className="hover:text-foreground transition-colors">Conditions</Link>
+            <a href={`mailto:${LEGAL.contactEmail}`} className="hover:text-foreground transition-colors">Contact</a>
           </div>
           <p className="text-xs text-muted-foreground font-medium">
             © 2026 SavoirIA
