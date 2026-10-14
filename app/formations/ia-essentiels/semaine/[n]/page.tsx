@@ -12,6 +12,8 @@ import OfflineLessonButton from '@/components/pwa/offline-lesson-button';
 import VoiceErrorBoundary from '@/components/voice-tutor/error-boundary';
 import { IA_SLUG, IA_TITLE, IA_WEEKS, IA_SYSTEM_PROMPT, getIaWeek, iaWeekContext } from '@/lib/courses/ia-essentiels';
 import { passedWeeks, isWeekOpen } from '@/lib/courses/progress';
+import { quizFor } from '@/lib/courses/shuffle';
+import FinalProject from '@/components/formations/ia/final-project';
 
 export const dynamic = 'force-dynamic';
 
@@ -79,11 +81,13 @@ export default async function IaWeekPage({ params }: { params: Promise<{ n: stri
           )}
         </div>
 
+        {n === 5 && <FinalProject course={IA_SLUG} />}
+
         <SocrateChat course={IA_SLUG} week={n}
           starter={`Bonjour ! Je suis Socrate. Qu'est-ce qui t'a le plus surpris dans « ${w.title} » ?`} />
 
         {w.quiz && (
-          <WeekQuiz course={IA_SLUG} week={n} questions={w.quiz}
+          <WeekQuiz course={IA_SLUG} week={n} questions={quizFor(w.quiz, `${session.user.id}:${IA_SLUG}:${n}`)}
             nextHref={next?.ready ? `/formations/ia-essentiels/semaine/${next.n}` : '/formations/ia-essentiels'} />
         )}
       </main>

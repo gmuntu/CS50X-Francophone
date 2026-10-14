@@ -157,6 +157,17 @@ export default function AdminDashboardClient({ stats, recentSubmissions, role }:
           </Link>
         )}
 
+        <Link
+          href="/admin/projets"
+          className="mb-6 flex items-center justify-between bg-card border border-border rounded-xl p-5 hover:border-primary transition"
+        >
+          <div>
+            <p className="font-bold text-foreground">Projets finaux et défenses orales</p>
+            <p className="text-sm text-muted-foreground">Lire les projets, la transcription de la défense avec Socrate, les alertes de ressemblance ; valider</p>
+          </div>
+          <ArrowRight className="w-5 h-5 text-muted-foreground" />
+        </Link>
+
         {!isInstructor && (
           <Link
             href="/admin/interets"
