@@ -66,6 +66,14 @@ export async function POST(req: NextRequest) {
     return out("Votre compte SavoirIA est en attente de validation. Le tuteur sera disponible des son activation.");
   }
 
+  // Bac à sable WhatsApp : on note le début de la connexion (elle expire 72 h après le « join »).
+  if (channel === 'whatsapp') {
+    const joined = (user as any).waJoinedAt ? new Date((user as any).waJoinedAt).getTime() : 0;
+    if (!joined || Date.now() - joined > 72 * 3600_000 || /^join\s/i.test(body)) {
+      await prisma.user.update({ where: { id: user.id }, data: { waJoinedAt: new Date(), waRemindedAt: null } }).catch(() => {});
+    }
+  }
+
   const cmd = norm(body);
   if (!cmd || cmd === 'aide' || cmd === 'help' || cmd === 'menu') return out(HELP);
 
