@@ -100,7 +100,7 @@ export default function FinalProject({ course }: { course: string }) {
       {!loading && step === 3 && (
         <div className="rounded-xl bg-muted/50 p-4 text-sm">
           {status === 'VALIDATED'
-            ? <p><b>🎉 Projet validé !</b> Votre attestation SavoirIA sera disponible ici très bientôt.</p>
+            ? <div className="flex flex-wrap items-center justify-between gap-3"><p><b>🎉 Projet validé !</b> Félicitations, votre attestation SavoirIA est prête.</p><a href={`/attestation/${(project as any)?.id}`} target="_blank" className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700">📄 Mon attestation (PDF)</a></div>
             : <p><b>Défense orale terminée ✓.</b> Votre formateur va examiner votre projet et votre défense. Vous serez prévenu de la validation.</p>}
         </div>
       )}

@@ -69,6 +69,7 @@ export default async function AdminProjetsPage() {
                   <div className="mt-2 space-y-1">{transcript.map((l, i) => <p key={i}><b>{l.who === 'socrate' ? 'Socrate' : 'Élève'} :</b> {l.text}</p>)}</div>
                 </details>
               )}
+              {p.status === 'VALIDATED' && <a href={`/attestation/${p.id}`} target="_blank" className="mt-3 inline-block rounded-lg border border-border px-4 py-2 text-sm font-bold">📄 Voir l'attestation</a>}
               {p.status !== 'VALIDATED' && <ProjectActions id={p.id} canValidate={p.status === 'DEFENDED'} />}
             </details>
           );
