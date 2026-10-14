@@ -92,6 +92,7 @@ function TesterSignup() {
 
         {error && <p className="text-sm font-semibold text-red-600 bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2">{error}</p>}
 
+        <p className="text-[11px] text-muted-foreground">En créant votre accès, vous acceptez les <a href="/conditions" target="_blank" className="underline">Conditions d'utilisation</a> et la <a href="/confidentialite" target="_blank" className="underline">Politique de confidentialité</a>.</p>
         <button disabled={loading} className="w-full py-3 rounded-xl bg-primary text-primary-foreground text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50">
           {loading && <Loader2 className="w-4 h-4 animate-spin" />} Commencer le test
         </button>
