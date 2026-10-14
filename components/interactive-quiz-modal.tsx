@@ -1,6 +1,8 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useMemo } from 'react';
+import { useSession } from 'next-auth/react';
+import { shuffled } from '@/lib/courses/shuffle';
 import { submitQuizAttempt } from '@/lib/sync-queue';
 import { X, CheckCircle, XCircle, ArrowRight, RotateCcw, Trophy, CloudOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -64,9 +66,13 @@ export default function InteractiveQuizModal({ quiz, isOpen, onClose }: Props) {
   const [savedOffline, setSavedOffline] = useState(false);
 
 
-  const questions = quiz?.questions ?? [];
+  // Quiz mélangé : ordre des questions et des réponses propre à chaque élève
+  // (la correction reste faite par identifiant de question et lettre d'origine).
+  const { data: session } = useSession();
+  const seed = `${(session?.user as any)?.id ?? 'invite'}:${quiz?.id ?? ''}`;
+  const questions = useMemo(() => shuffled(quiz?.questions ?? [], `${seed}:q`), [quiz?.questions, seed]);
   const current = questions?.[currentIndex];
-  const optionsList = getNormalizedOptions(current?.options);
+  const optionsList = useMemo(() => shuffled(getNormalizedOptions(current?.options), `${seed}:${current?.id}`), [current, seed]);
   const correctOptKey = String(current?.correctOption ?? '').trim().toUpperCase();
   const isCorrect = selectedAnswer ? selectedAnswer === correctOptKey : false;
   const totalQuestions = questions?.length ?? 0;
@@ -278,7 +284,7 @@ export default function InteractiveQuizModal({ quiz, isOpen, onClose }: Props) {
                       >
                         <div className="flex items-center gap-3">
                           <span className={`w-7 h-7 rounded-full border flex items-center justify-center font-bold text-xs shrink-0 transition-colors ${badgeCls}`}>
-                            {optKey}
+                            {String.fromCharCode(65 + idx)}
                           </span>
                           <span className="text-foreground flex-1 font-medium leading-snug">{optItem.text}</span>
                           {isRevealed && isCorrectOpt && (

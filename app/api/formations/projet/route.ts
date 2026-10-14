@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { passedWeeks, isWeekOpen } from '@/lib/courses/progress';
-import { FINAL_WEEK, projectText } from '@/lib/courses/final-project';
+import { FINAL_WEEK, projectText, CS50_SLUG } from '@/lib/courses/final-project';
 import { similarity } from '@/lib/courses/similarity';
 
 export const dynamic = 'force-dynamic';
@@ -28,7 +28,8 @@ export async function POST(req: Request) {
   if (!week) return NextResponse.json({ error: 'Formation inconnue' }, { status: 400 });
 
   const staff = ['ADMIN', 'INSTRUCTOR'].includes((session?.user as any)?.role);
-  if (!staff && !isWeekOpen(week, await passedWeeks(userId, course))) {
+  // CS50x : la semaine 10 est ouverte à tous les inscrits ; formations SavoirIA : semaines débloquées par les quiz.
+  if (!staff && course !== CS50_SLUG && !isWeekOpen(week, await passedWeeks(userId, course))) {
     return NextResponse.json({ error: 'Le projet final s’ouvre en dernière semaine.' }, { status: 403 });
   }
 
@@ -43,11 +44,11 @@ export async function POST(req: Request) {
   if (existing?.status === 'VALIDATED') return NextResponse.json({ error: 'Projet déjà validé.' }, { status: 409 });
 
   // Comparaison avec les autres projets de la même formation.
-  const mine = projectText(data as any);
+  const mine = projectText(data as any, course);
   const others = await prisma.finalProject.findMany({ where: { courseSlug: course, NOT: { userId } } });
   let best = 0, bestUser: string | null = null;
   for (const o of others) {
-    const s = similarity(mine, projectText(o));
+    const s = similarity(mine, projectText(o, course));
     if (s > best) { best = s; bestUser = o.userId; }
   }
 
