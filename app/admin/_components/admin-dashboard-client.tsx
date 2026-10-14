@@ -158,6 +158,17 @@ export default function AdminDashboardClient({ stats, recentSubmissions, role }:
         )}
 
         <Link
+          href="/admin/whatsapp"
+          className="mb-6 flex items-center justify-between bg-card border border-border rounded-xl p-5 hover:border-primary transition"
+        >
+          <div>
+            <p className="font-bold text-foreground">Socrate sur WhatsApp</p>
+            <p className="text-sm text-muted-foreground">Qui est connecté au bac à sable Twilio, quand la connexion expire, rappels envoyés</p>
+          </div>
+          <ArrowRight className="w-5 h-5 text-muted-foreground" />
+        </Link>
+
+        <Link
           href="/admin/projets"
           className="mb-6 flex items-center justify-between bg-card border border-border rounded-xl p-5 hover:border-primary transition"
         >

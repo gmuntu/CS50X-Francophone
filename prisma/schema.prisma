@@ -51,6 +51,8 @@ model User {
   role                    Role       @default(STUDENT)
   status                  UserStatus @default(ACTIVE)
   phone                   String?
+  waJoinedAt              DateTime? // début estimé de la connexion au bac à sable WhatsApp (expire après 72 h)
+  waRemindedAt            DateTime? // dernier rappel « join » envoyé
   countryCode             String?
   dialCode                String?
   dossierNumber           String?    @unique
