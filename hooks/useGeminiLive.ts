@@ -55,7 +55,7 @@ function pcm16ToFloat(b64: string) {
 
 export type TranscriptLine = { who: 'eleve' | 'socrate'; text: string };
 
-export function useGeminiLive(lessonContext: string, systemPrompt: string = SYSTEM_PROMPT, opts: { transcript?: boolean; opening?: string } = {}) {
+export function useGeminiLive(lessonContext: string, systemPrompt: string = SYSTEM_PROMPT, opts: { transcript?: boolean; opening?: string; onStream?: (s: MediaStream) => void } = {}) {
   const [status, setStatus] = useState<LiveStatus>('idle');
   // Transcription écrite de la conversation (défense orale) : texte seulement, aucun audio conservé.
   const [transcript, setTranscript] = useState<TranscriptLine[]>([]);
@@ -152,6 +152,7 @@ export function useGeminiLive(lessonContext: string, systemPrompt: string = SYST
         return fail("Micro refusé. Autorisez-le dans la barre d'adresse.");
       }
       streamRef.current = stream;
+      try { opts.onStream?.(stream); } catch {}
 
       // 2. Jeton éphémère (la vraie clé reste sur le serveur)
       const tr = await fetch('/api/live-token', { method: 'POST' });
@@ -231,7 +232,7 @@ export function useGeminiLive(lessonContext: string, systemPrompt: string = SYST
       console.error('useGeminiLive', e);
       fail('Le tuteur vocal a rencontré un problème.');
     }
-  }, [fail, lessonContext, systemPrompt, playChunk, stop, stopPlayback, opts.transcript, opts.opening, addLine]);
+  }, [fail, lessonContext, systemPrompt, playChunk, stop, stopPlayback, opts.transcript, opts.opening, opts.onStream, addLine]);
 
   useEffect(() => () => stop(), [stop]);
 

@@ -2,14 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import OralDefense from '@/components/formations/ia/oral-defense';
+import VoiceEnroll from '@/components/formations/ia/voice-enroll';
+import { useSession } from 'next-auth/react';
 import { defensePrompt, PROJECT_PARTS, type ProjectFields } from '@/lib/courses/final-project';
 
-type Project = ProjectFields & { status: string; defenseCount: number };
+type Project = ProjectFields & { status: string; defenseCount: number; voiceRefUrl?: string | null };
 
 
 
 export default function FinalProject({ course }: { course: string }) {
   const PARTS = PROJECT_PARTS[course] ?? [];
+  const { data: session } = useSession();
   const [project, setProject] = useState<Project | null>(null);
   const [form, setForm] = useState<ProjectFields>({ prompt: '', aiResponse: '', verification: '', finalVersion: '' });
   const [loading, setLoading] = useState(true);
@@ -72,7 +75,12 @@ export default function FinalProject({ course }: { course: string }) {
         <div className="space-y-2">
           {status === 'REDO' && <p className="rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 p-3 text-sm">Votre formateur demande une nouvelle défense orale.</p>}
           <p className="text-sm">Projet déposé ✓. Prenez 10 minutes au calme, avec un micro : Socrate va vous poser 5 questions sur <b>votre</b> projet.</p>
-          <OralDefense course={course} systemPrompt={defensePrompt(course, project)} onDone={load} />
+          {!project.voiceRefUrl
+            ? <VoiceEnroll course={course} name={session?.user?.name || ''} onDone={load} />
+            : <>
+                <p className="text-xs text-blue-700 dark:text-blue-300 font-bold">✓ Empreinte vocale enregistrée</p>
+                <OralDefense course={course} systemPrompt={defensePrompt(course, project)} onDone={load} />
+              </>}
         </div>
       )}
 

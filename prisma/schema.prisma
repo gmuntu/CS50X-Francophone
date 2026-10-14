@@ -400,6 +400,10 @@ model FinalProject {
   defenseScore      Int?     // 0 à 5, proposé par Socrate
   defenseFeedback   String?  @db.Text
   defenseCount      Int      @default(0)
+  voiceConsentAt    DateTime? // consentement à l'empreinte vocale
+  voiceRefUrl       String?   // enregistrement de référence (15 s)
+  voiceDefenseUrl   String?   // voix de l'élève pendant la défense
+  voiceMatch        String?   // MATCH | MISMATCH (décision du formateur)
   status            String   @default("SUBMITTED") // SUBMITTED | DEFENDED | VALIDATED | REDO
   reviewedAt        DateTime?
   createdAt         DateTime @default(now())

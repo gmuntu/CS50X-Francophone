@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma';
 import { COURSE_TITLE, PROJECT_PARTS } from '@/lib/courses/final-project';
 import { SIMILARITY_ALERT } from '@/lib/courses/similarity';
 import ProjectActions from './_components/project-actions';
+import VoiceCheck from './_components/voice-check';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,7 +36,7 @@ export default async function AdminProjetsPage() {
       <main className="max-w-5xl mx-auto px-4 py-10 space-y-4">
         <div>
           <h1 className="text-2xl font-extrabold">Projets finaux à valider</h1>
-          <p className="text-sm text-muted-foreground">Quiz mélangés · défense orale avec Socrate · comparaison des projets. Rien n'est sanctionné automatiquement : c'est vous qui décidez.</p>
+          <p className="text-sm text-muted-foreground">Quiz mélangés · défense orale avec Socrate · empreinte vocale · comparaison des projets. Rien n'est sanctionné automatiquement : c'est vous qui décidez.</p>
         </div>
         {projects.length === 0 && <p className="rounded-xl border border-border bg-card p-5 text-sm text-muted-foreground">Aucun projet déposé pour l'instant.</p>}
         {projects.map((p) => {
@@ -62,6 +63,7 @@ export default async function AdminProjetsPage() {
                   ))}
                 </div>
               </details>
+              <VoiceCheck id={p.id} refUrl={p.voiceRefUrl} defenseUrl={p.voiceDefenseUrl} match={p.voiceMatch} />
               {transcript.length > 0 && (
                 <details className="mt-2 text-sm"><summary className="cursor-pointer font-semibold text-blue-700 dark:text-blue-300">Lire la transcription de la défense</summary>
                   <div className="mt-2 space-y-1">{transcript.map((l, i) => <p key={i}><b>{l.who === 'socrate' ? 'Socrate' : 'Élève'} :</b> {l.text}</p>)}</div>
