@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     evalResult = await geminiJson<{ score: number; feedback: string }>(
       `Tu évalues la défense orale d'un projet final (formation SavoirIA). Réponds en JSON {"score": entier 0-5, "feedback": "3 à 5 phrases en français pour le formateur"}.
 Barème : l'élève montre-t-il qu'il a réellement fait CE projet (détails concrets, cohérence avec le projet écrit, explication de ses choix et vérifications) ? 5 = maîtrise évidente ; 3 = correct mais vague ; 0-1 = semble ne pas connaître son projet. Signale toute incohérence entre l'oral et l'écrit.`,
-      `${projectText(project)}\n\n--- TRANSCRIPTION DE LA DÉFENSE ---\n${transcript.map((l: any) => `${l.who === 'eleve' ? 'ÉLÈVE' : 'SOCRATE'} : ${l.text}`).join('\n')}`,
+      `${projectText(project, course)}\n\n--- TRANSCRIPTION DE LA DÉFENSE ---\n${transcript.map((l: any) => `${l.who === 'eleve' ? 'ÉLÈVE' : 'SOCRATE'} : ${l.text}`).join('\n')}`,
     );
   } catch (e) {
     console.error('Évaluation défense', e);

@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 import { prisma } from '@/lib/prisma';
-import { COURSE_TITLE } from '@/lib/courses/final-project';
+import { COURSE_TITLE, PROJECT_PARTS } from '@/lib/courses/final-project';
 import { SIMILARITY_ALERT } from '@/lib/courses/similarity';
 import ProjectActions from './_components/project-actions';
 
@@ -57,10 +57,9 @@ export default async function AdminProjetsPage() {
               {p.defenseFeedback && <p className="mt-2 text-sm"><b>Avis de Socrate :</b> {p.defenseFeedback}</p>}
               <details className="mt-2 text-sm"><summary className="cursor-pointer font-semibold text-blue-700 dark:text-blue-300">Lire le projet</summary>
                 <div className="mt-2 space-y-2 whitespace-pre-wrap text-muted-foreground">
-                  <p><b className="text-foreground">Prompt :</b> {p.prompt}</p>
-                  <p><b className="text-foreground">Réponse de l'IA :</b> {p.aiResponse}</p>
-                  <p><b className="text-foreground">Vérifications :</b> {p.verification}</p>
-                  <p><b className="text-foreground">Version finale :</b> {p.finalVersion}</p>
+                  {(PROJECT_PARTS[p.courseSlug] ?? []).map((part) => (
+                    <p key={part.key}><b className="text-foreground">{part.label} :</b> {p[part.key]}</p>
+                  ))}
                 </div>
               </details>
               {transcript.length > 0 && (

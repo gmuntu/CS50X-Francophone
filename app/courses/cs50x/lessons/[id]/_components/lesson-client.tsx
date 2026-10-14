@@ -11,6 +11,7 @@ import InteractiveQuizModal from '@/components/interactive-quiz-modal';
 import CourseAssistant from '@/components/course-assistant';
 import OfflineLessonButton from '@/components/pwa/offline-lesson-button';
 import NotebookCard from '@/components/notebook-card';
+import FinalProject from '@/components/formations/ia/final-project';
 import WeekPackButton from '@/components/pwa/week-pack-button';
 import BilingualVideo from '@/components/pwa/bilingual-video';
 
@@ -82,6 +83,9 @@ export default function LessonClient({ moduleConfig, lesson, userId }: Props) {
         </motion.div>
 
         <div className="mb-8"><NotebookCard url={moduleConfig?.notebookUrl} /></div>
+
+        {/* Semaine 10 : projet final CS50x + défense orale avec Socrate */}
+        {moduleConfig?.id === 10 && <div className="mb-8"><FinalProject course="cs50x" /></div>}
 
         {/* 2-Columns Grid Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">

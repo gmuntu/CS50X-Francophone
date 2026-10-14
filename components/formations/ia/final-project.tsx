@@ -2,18 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import OralDefense from '@/components/formations/ia/oral-defense';
-import { defensePrompt, COURSE_TITLE, type ProjectFields } from '@/lib/courses/final-project';
+import { defensePrompt, PROJECT_PARTS, type ProjectFields } from '@/lib/courses/final-project';
 
 type Project = ProjectFields & { status: string; defenseCount: number };
 
-const PARTS: { key: keyof ProjectFields; label: string; hint: string }[] = [
-  { key: 'prompt', label: '1. Votre prompt', hint: 'La demande écrite à l’IA, avec la méthode en 5 étapes (tâche, contexte, exemple, format, contrainte).' },
-  { key: 'aiResponse', label: '2. La réponse de l’IA', hint: 'Collez la réponse obtenue, telle quelle.' },
-  { key: 'verification', label: '3. Ce que vous avez vérifié', hint: 'Faits, chiffres, dates, ton, données sensibles… et comment vous avez vérifié.' },
-  { key: 'finalVersion', label: '4. Votre version finale améliorée', hint: 'Votre texte final, et ce que vous avez changé par rapport à la réponse de l’IA.' },
-];
+
 
 export default function FinalProject({ course }: { course: string }) {
+  const PARTS = PROJECT_PARTS[course] ?? [];
   const [project, setProject] = useState<Project | null>(null);
   const [form, setForm] = useState<ProjectFields>({ prompt: '', aiResponse: '', verification: '', finalVersion: '' });
   const [loading, setLoading] = useState(true);
@@ -76,7 +72,7 @@ export default function FinalProject({ course }: { course: string }) {
         <div className="space-y-2">
           {status === 'REDO' && <p className="rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 p-3 text-sm">Votre formateur demande une nouvelle défense orale.</p>}
           <p className="text-sm">Projet déposé ✓. Prenez 10 minutes au calme, avec un micro : Socrate va vous poser 5 questions sur <b>votre</b> projet.</p>
-          <OralDefense course={course} systemPrompt={defensePrompt(COURSE_TITLE[course] ?? '', project)} onDone={load} />
+          <OralDefense course={course} systemPrompt={defensePrompt(course, project)} onDone={load} />
         </div>
       )}
 
