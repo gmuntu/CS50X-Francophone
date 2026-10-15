@@ -19,7 +19,7 @@ export default function ConfidentialitePage() {
         <tr><td>Numéro de téléphone (facultatif)</td><td>Utiliser Socrate par WhatsApp ou SMS</td></tr>
         <tr><td>Progression, résultats de quiz, exercices et projets</td><td>Suivre votre formation, ouvrir les semaines suivantes, délivrer l'attestation</td></tr>
         <tr><td>Vos questions à Socrate (texte et voix)</td><td>Vous répondre. Les enregistrements de voix servent seulement à la réponse et ne sont pas conservés par SavoirIA.</td></tr>
-        <tr><td>Empreinte vocale et voix de la défense orale du projet final (avec votre accord)</td><td>Permettre au formateur de vérifier, à l'écoute, que c'est bien vous qui passez la défense. Stockées chez Vercel, supprimées 6 mois après la validation.</td></tr>
+        <tr><td>Empreinte SavoirIA (3 photos du visage et 15 s de voix), photos et voix prises pendant l'examen oral (avec votre accord)</td><td>Vérifier que c'est bien vous qui passez les examens, par comparaison avec votre empreinte. Stockées chez Vercel, supprimées 6 mois après la fin de la formation.</td></tr>
         <tr><td>Demandes « Me prévenir »</td><td>Vous avertir de l'ouverture d'une formation</td></tr>
       </tbody></table>
 

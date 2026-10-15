@@ -406,6 +406,7 @@ model FinalProject {
   voiceRefUrl       String?   // enregistrement de référence (15 s)
   voiceDefenseUrl   String?   // voix de l'élève pendant la défense
   voiceMatch        String?   // MATCH | MISMATCH (décision du formateur)
+  examFaceUrls      Json?     // photos du visage prises pendant l'examen oral
   status            String   @default("SUBMITTED") // SUBMITTED | DEFENDED | VALIDATED | REDO
   reviewedAt        DateTime?
   createdAt         DateTime @default(now())
@@ -413,4 +414,17 @@ model FinalProject {
 
   @@unique([userId, courseSlug])
   @@index([courseSlug, status])
+}
+
+// Empreinte SavoirIA : visage (3 photos de contrôle « personne vivante ») + voix, créée une fois et verrouillée.
+// La comparaison automatique se fera sur le serveur KVM 2 ; en attendant, le formateur compare à l'écran.
+model IdentityProfile {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  consentAt     DateTime
+  faceUrls      Json     // [face, gauche, sourire]
+  voiceUrl      String
+  resetAllowed  Boolean  @default(false) // un administrateur autorise un nouvel enregistrement
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }

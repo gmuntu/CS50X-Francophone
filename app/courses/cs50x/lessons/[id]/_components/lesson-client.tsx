@@ -11,6 +11,7 @@ import InteractiveQuizModal from '@/components/interactive-quiz-modal';
 import CourseAssistant from '@/components/course-assistant';
 import OfflineLessonButton from '@/components/pwa/offline-lesson-button';
 import NotebookCard from '@/components/notebook-card';
+import IdentityReminder from '@/components/identity/identity-reminder';
 import FinalProject from '@/components/formations/ia/final-project';
 import WeekPackButton from '@/components/pwa/week-pack-button';
 import BilingualVideo from '@/components/pwa/bilingual-video';
@@ -50,6 +51,7 @@ export default function LessonClient({ moduleConfig, lesson, userId }: Props) {
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        <IdentityReminder />
         {/* Breadcrumb & Navigation */}
         <div className="flex items-center justify-between gap-4">
           <Link

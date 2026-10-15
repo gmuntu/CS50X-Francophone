@@ -26,7 +26,7 @@ export async function POST(req: Request) {
   if (!project) return NextResponse.json({ error: "Déposez d'abord votre projet." }, { status: 400 });
   if (project.status === 'VALIDATED') return NextResponse.json({ error: 'Projet déjà validé.' }, { status: 400 });
   if (kind === 'reference' && form?.get('consent') !== 'true') return NextResponse.json({ error: 'Le consentement est obligatoire.' }, { status: 400 });
-  if (kind === 'defense' && !project.voiceRefUrl) return NextResponse.json({ error: "Enregistrez d'abord votre empreinte vocale." }, { status: 400 });
+  if (kind === 'defense' && !(await prisma.identityProfile.findUnique({ where: { userId } }))) return NextResponse.json({ error: "Créez d'abord votre empreinte SavoirIA." }, { status: 400 });
 
   const type = (audio.type || 'audio/webm').split(';')[0];
   const ext = type.includes('mp4') || type.includes('aac') ? 'm4a' : type.includes('ogg') ? 'ogg' : 'webm';

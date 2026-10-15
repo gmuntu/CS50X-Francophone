@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import OralDefense from '@/components/formations/ia/oral-defense';
-import VoiceEnroll from '@/components/formations/ia/voice-enroll';
+import IdentityEnroll from '@/components/identity/identity-enroll';
 import { useSession } from 'next-auth/react';
 import { defensePrompt, PROJECT_PARTS, type ProjectFields } from '@/lib/courses/final-project';
 
@@ -13,6 +13,9 @@ type Project = ProjectFields & { status: string; defenseCount: number; voiceRefU
 export default function FinalProject({ course }: { course: string }) {
   const PARTS = PROJECT_PARTS[course] ?? [];
   const { data: session } = useSession();
+  const [identity, setIdentity] = useState<any>(undefined);
+  const loadIdentity = () => fetch('/api/identite').then((r) => r.json()).then((d) => setIdentity(d?.profile && !d.profile.resetAllowed ? d.profile : null)).catch(() => setIdentity(null));
+  useEffect(() => { loadIdentity(); }, []);
   const [project, setProject] = useState<Project | null>(null);
   const [form, setForm] = useState<ProjectFields>({ prompt: '', aiResponse: '', verification: '', finalVersion: '' });
   const [loading, setLoading] = useState(true);
@@ -34,14 +37,6 @@ export default function FinalProject({ course }: { course: string }) {
       if (!res.ok) throw new Error(d?.error || 'Erreur');
       await load();
     } catch (e: any) { setMsg(e?.message || 'Erreur'); } finally { setSaving(false); }
-  };
-
-  const eraseVoice = async () => {
-    setMsg('');
-    const res = await fetch(`/api/formations/projet/voix?course=${course}`, { method: 'DELETE' });
-    const d = await res.json().catch(() => ({}));
-    if (!res.ok) { setMsg(d?.error || 'Erreur'); return; }
-    await load();
   };
 
   const status = project?.status;
@@ -83,14 +78,10 @@ export default function FinalProject({ course }: { course: string }) {
         <div className="space-y-2">
           {status === 'REDO' && <p className="rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 p-3 text-sm">Votre formateur demande une nouvelle défense orale.</p>}
           <p className="text-sm">Projet déposé ✓. Prenez 10 minutes au calme, avec un micro : Socrate va vous poser 5 questions sur <b>votre</b> projet.</p>
-          {!project.voiceRefUrl
-            ? <VoiceEnroll course={course} name={session?.user?.name || ''} onDone={load} />
+          {identity === undefined ? null : !identity
+            ? <><p className="text-sm font-bold text-blue-700 dark:text-blue-300">Avant l'examen, créez votre empreinte SavoirIA (une seule fois).</p><IdentityEnroll name={session?.user?.name || ''} onDone={loadIdentity} /></>
             : <>
-                <div className="flex flex-wrap items-center gap-2 rounded-xl border border-blue-200 dark:border-blue-900 bg-blue-50/60 dark:bg-blue-950/30 p-3">
-                  <p className="text-sm text-blue-700 dark:text-blue-300 font-bold">✓ Empreinte vocale enregistrée</p>
-                  <audio controls preload="none" src={project.voiceRefUrl} className="h-9" />
-                  <button onClick={eraseVoice} className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-bold">🗑 Effacer et recommencer</button>
-                </div>
+                <p className="text-xs font-bold text-blue-700 dark:text-blue-300">✓ Empreinte SavoirIA vérifiée · caméra et micro requis</p>
                 {msg && <p className="text-sm text-red-600">{msg}</p>}
                 <OralDefense course={course} systemPrompt={defensePrompt(course, project)} onDone={load} />
               </>}
