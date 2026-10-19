@@ -408,6 +408,10 @@ export default function SignupPage() {
         )}
 
         {/* Formulaire Multi-Étapes */}
+        <Link href="/auth/testeur" className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm text-foreground hover:bg-primary/15 transition">
+          <span><strong>Vous êtes testeur ?</strong> Inscription express avec votre code : 4 champs, accès immédiat.</span>
+          <span className="shrink-0 font-bold text-primary">Par ici →</span>
+        </Link>
         <form onSubmit={handleSubmit} className="bg-card border border-border/80 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
           <AnimatePresence mode="wait">
             {/* ========================================================
