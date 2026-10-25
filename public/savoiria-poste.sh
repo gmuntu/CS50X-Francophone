@@ -6,6 +6,7 @@
 #   1. Les outils du cours CS50 (C, Python, SQL), utilisables SANS Internet
 #   2. Socrate hors ligne : Ollama + le modèle Gemma 4 (Google)
 #   3. Le compte « etudiant » qui ouvre SavoirIA automatiquement
+#   4. Socrate vocal hors ligne (Whisper + Piper), via savoiria-voix.sh
 #
 #  Utilisation (une seule fois, avec Internet) :
 #     sudo bash savoiria-poste.sh            -> poste normal
@@ -30,13 +31,13 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 # ---------------------------------------------------------------------
-etape "1/6  Mise à jour du système"
+etape "1/7  Mise à jour du système"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
 apt-get upgrade -y
 
 # ---------------------------------------------------------------------
-etape "2/6  Outils de programmation CS50 (hors ligne)"
+etape "2/7  Outils de programmation CS50 (hors ligne)"
 apt-get install -y build-essential clang make gdb valgrind \
   python3 python3-pip python3-venv sqlite3 git curl wget unzip \
   ca-certificates
@@ -61,7 +62,7 @@ export LDLIBS="-lcrypt -lcs50 -lm"
 EOF
 
 # ---------------------------------------------------------------------
-etape "3/6  Socrate hors ligne : Ollama + $MODELE"
+etape "3/7  Socrate hors ligne : Ollama + $MODELE"
 if ! command -v ollama >/dev/null 2>&1; then
   curl -fsSL https://ollama.com/install.sh | sh
 fi
@@ -82,14 +83,14 @@ echo "Téléchargement du modèle (environ 2 à 7 Go, patience)…"
 ollama pull "$MODELE"
 
 # ---------------------------------------------------------------------
-etape "4/6  Navigateur Chromium"
+etape "4/7  Navigateur Chromium"
 if ! command -v chromium >/dev/null 2>&1 && ! command -v chromium-browser >/dev/null 2>&1; then
   snap install chromium
 fi
 NAV=$(command -v chromium || command -v chromium-browser || echo /snap/bin/chromium)
 
 # ---------------------------------------------------------------------
-etape "5/6  Compte étudiant « $ETUDIANT »"
+etape "5/7  Compte étudiant « $ETUDIANT »"
 if ! id "$ETUDIANT" >/dev/null 2>&1; then
   adduser --disabled-password --gecos "Étudiant SavoirIA" "$ETUDIANT"
   echo "$ETUDIANT:savoiria" | chpasswd
@@ -145,7 +146,11 @@ EOF
 chown -R "$ETUDIANT:$ETUDIANT" "$HOME_ET"
 
 # ---------------------------------------------------------------------
-etape "6/6  Vérifications"
+etape "6/7  Socrate vocal hors ligne (Whisper + Piper)"
+curl -fsSL "$SITE/savoiria-voix.sh" | MODELE="$MODELE" bash || echo "   (voix : à relancer plus tard avec savoiria-voix.sh)"
+
+# ---------------------------------------------------------------------
+etape "7/7  Vérifications"
 OK=1
 echo '#include <cs50.h>
 #include <stdio.h>
