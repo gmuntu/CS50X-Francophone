@@ -38,7 +38,11 @@ export default function PwaRegister() {
     };
     const update = () => {
       setOffline(!navigator.onLine);
-      if (navigator.onLine) sync();
+      if (navigator.onLine) {
+        sync();
+        // SavoirIA hors ligne : met à jour les cours enregistrés dès qu'il y a du Wi-Fi.
+        import('@/lib/auto-sync').then((m) => m.synchroniser(true)).catch(() => {});
+      }
     };
     const onQueue = () => setPending(pendingCount());
     onQueue();
