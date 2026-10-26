@@ -139,17 +139,23 @@ cat > "$DOSSIER/socrate/serveur.py" <<'SOCRATE_FIN'
 """Socrate hors ligne — petit serveur local (SavoirIA).
 
 Écoute sur http://127.0.0.1:8765
-  GET  /          -> l'interface (index.html)
-  POST /demander  -> corps JSON {"texte": "..."} ou {"audio": "<wav en base64>"}
-                     réponse JSON {"question", "reponse", "audio"}
-Chaîne : Whisper (oreilles) -> Gemma via Ollama (cerveau) -> Piper (bouche).
+  GET  /               -> l'interface simple (index.html)
+  GET  /sante          -> {"ok": true, "modele": ...}  (le site SavoirIA s'en sert pour détecter Socrate local)
+  POST /accueil        -> {"audio"}  + préchauffe le cerveau en arrière-plan
+  POST /demander-flux  -> corps JSON {"texte"} ou {"audio": wav base64}
+                          réponse en flux (une ligne JSON par événement) :
+                          {"type":"question","texte"} puis {"type":"phrase","texte","audio"}… puis {"type":"fin"}
+  POST /demander       -> même chose en une seule réponse {"question","reponse","audio"} (compatibilité)
+Chaîne : Whisper (oreilles) -> Gemma via Ollama (cerveau) -> Piper (voix).
 Aucune connexion Internet nécessaire.
 """
 import base64
 import json
 import os
+import re
 import subprocess
 import tempfile
+import threading
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -161,6 +167,13 @@ PIPER = f"{DOSSIER}/piper-venv/bin/piper"
 VOIX = f"{DOSSIER}/voix/socrate.onnx"
 PAGE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "index.html")
 PORT = int(os.environ.get("PORT", "8765"))
+OLLAMA = "http://127.0.0.1:11434/api/generate"
+
+# Sites autorisés à parler au Socrate local (le site SavoirIA et les tests locaux)
+ORIGINES = {
+    "https://www.savoiria.online", "https://savoiria.online",
+    "http://localhost:3000", "http://127.0.0.1:8765",
+}
 
 CONSIGNE = (
     "Tu es Socrate, le tuteur bienveillant de SavoirIA, pour des étudiants qui "
@@ -168,6 +181,7 @@ CONSIGNE = (
     "sans liste, sans symbole ni code compliqué. Utilise une image de la vie "
     "courante, puis termine par une petite question pour faire réfléchir l'étudiant."
 )
+FIN_PHRASE = re.compile(r"(.+?[.!?…])(\s+|$)", re.S)
 
 
 def transcrire(wav: bytes) -> str:
@@ -182,18 +196,10 @@ def transcrire(wav: bytes) -> str:
         return " ".join(r.stdout.split()).strip()
 
 
-def reflechir(question: str) -> str:
-    corps = json.dumps({
-        "model": MODELE, "system": CONSIGNE, "prompt": question,
-        "stream": False, "think": False, "options": {"num_predict": 180},
-    }).encode()
-    req = urllib.request.Request("http://127.0.0.1:11434/api/generate", data=corps,
-                                 headers={"Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=300) as r:
-        return json.load(r).get("response", "").strip()
-
-
 def parler(texte: str) -> str:
+    texte = texte.strip()
+    if not texte:
+        return ""
     with tempfile.TemporaryDirectory() as d:
         sortie = os.path.join(d, "r.wav")
         subprocess.run([PIPER, "--model", VOIX, "--output_file", sortie],
@@ -204,17 +210,78 @@ def parler(texte: str) -> str:
             return base64.b64encode(f.read()).decode()
 
 
+def prechauffer():
+    """Charge le cerveau en mémoire pour que la 1re réponse soit aussi rapide que les autres."""
+    try:
+        corps = json.dumps({"model": MODELE, "prompt": "", "keep_alive": "30m"}).encode()
+        req = urllib.request.Request(OLLAMA, data=corps, headers={"Content-Type": "application/json"})
+        urllib.request.urlopen(req, timeout=300).read()
+    except Exception:
+        pass
+
+
+def penser_en_flux(question: str, contexte: str = ""):
+    """Renvoie la réponse de Gemma phrase par phrase, dès que chaque phrase est complète."""
+    consigne = CONSIGNE + (f"\nContexte de la leçon en cours : {contexte[:1500]}" if contexte else "")
+    corps = json.dumps({
+        "model": MODELE, "system": consigne, "prompt": question,
+        "stream": True, "think": False, "keep_alive": "30m",
+        "options": {"num_predict": 180},
+    }).encode()
+    req = urllib.request.Request(OLLAMA, data=corps, headers={"Content-Type": "application/json"})
+    tampon = ""
+    with urllib.request.urlopen(req, timeout=300) as r:
+        for ligne in r:
+            if not ligne.strip():
+                continue
+            morceau = json.loads(ligne)
+            tampon += morceau.get("response", "")
+            while True:
+                m = FIN_PHRASE.match(tampon)
+                if not m or len(m.group(1).strip()) < 8:
+                    break
+                yield m.group(1).strip()
+                tampon = tampon[m.end():]
+            if morceau.get("done"):
+                break
+    if tampon.strip():
+        yield tampon.strip()
+
+
 class Gestion(BaseHTTPRequestHandler):
+    protocol_version = "HTTP/1.1"
+
     def log_message(self, *args):
         pass
+
+    # --- ouverture contrôlée au site SavoirIA (CORS + accès réseau privé de Chrome) ---
+    def _entetes_site(self):
+        origine = self.headers.get("Origin", "")
+        if origine in ORIGINES:
+            self.send_header("Access-Control-Allow-Origin", origine)
+            self.send_header("Vary", "Origin")
+            self.send_header("Access-Control-Allow-Headers", "Content-Type")
+            self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+            self.send_header("Access-Control-Allow-Private-Network", "true")
+
+    def do_OPTIONS(self):
+        self.send_response(204)
+        self._entetes_site()
+        self.send_header("Content-Length", "0")
+        self.end_headers()
 
     def _json(self, code, data):
         corps = json.dumps(data).encode()
         self.send_response(code)
+        self._entetes_site()
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(corps)))
         self.end_headers()
         self.wfile.write(corps)
+
+    def _lire(self):
+        n = int(self.headers.get("Content-Length", "0"))
+        return json.loads(self.rfile.read(n) or b"{}")
 
     def do_GET(self):
         if self.path in ("/", "/index.html"):
@@ -226,36 +293,80 @@ class Gestion(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(corps)
         elif self.path == "/sante":
-            self._json(200, {"ok": True})
+            self._json(200, {"ok": True, "modele": MODELE, "voix": True})
         else:
             self._json(404, {"erreur": "introuvable"})
 
+    def _question(self, data):
+        question = (data.get("texte") or "").strip()
+        if not question and data.get("audio"):
+            question = transcrire(base64.b64decode(data["audio"]))
+        return question
+
     def do_POST(self):
         if self.path == "/accueil":
+            threading.Thread(target=prechauffer, daemon=True).start()
             self._json(200, {"audio": parler("Bonjour, je suis Socrate. Appuie sur le bouton bleu et pose-moi ta question.")})
             return
-        if self.path != "/demander":
-            self._json(404, {"erreur": "introuvable"})
+        if self.path == "/demander-flux":
+            self._flux()
             return
+        if self.path == "/demander":
+            try:
+                data = self._lire()
+                question = self._question(data)
+                if not question:
+                    msg = "Je n'ai pas bien entendu. Peux-tu répéter, un peu plus près de l'ordinateur ?"
+                    self._json(200, {"question": "", "reponse": msg, "audio": parler(msg)})
+                    return
+                reponse = " ".join(penser_en_flux(question, data.get("contexte", ""))) or \
+                    "Désolé, je n'arrive pas à réfléchir pour le moment. Réessaie dans un instant."
+                self._json(200, {"question": question, "reponse": reponse, "audio": parler(reponse)})
+            except Exception as e:
+                self._json(200, {"question": "", "reponse": "Oups, un petit souci. Réessaie.", "audio": "", "detail": str(e)})
+            return
+        self._json(404, {"erreur": "introuvable"})
+
+    def _flux(self):
+        self.send_response(200)
+        self._entetes_site()
+        self.send_header("Content-Type", "application/x-ndjson; charset=utf-8")
+        self.send_header("Cache-Control", "no-cache")
+        self.send_header("Transfer-Encoding", "chunked")
+        self.end_headers()
+
+        def envoyer(evt):
+            ligne = (json.dumps(evt) + "\n").encode()
+            self.wfile.write(f"{len(ligne):X}\r\n".encode() + ligne + b"\r\n")
+            self.wfile.flush()
+
         try:
-            n = int(self.headers.get("Content-Length", "0"))
-            data = json.loads(self.rfile.read(n) or b"{}")
-            question = (data.get("texte") or "").strip()
-            if not question and data.get("audio"):
-                question = transcrire(base64.b64decode(data["audio"]))
+            data = self._lire()
+            question = self._question(data)
             if not question:
                 msg = "Je n'ai pas bien entendu. Peux-tu répéter, un peu plus près de l'ordinateur ?"
-                self._json(200, {"question": "", "reponse": msg, "audio": parler(msg)})
-                return
-            try:
-                reponse = reflechir(question)
-            except Exception:
-                reponse = ""
-            if not reponse:
-                reponse = "Désolé, je n'arrive pas à réfléchir pour le moment. Réessaie dans un instant."
-            self._json(200, {"question": question, "reponse": reponse, "audio": parler(reponse)})
+                envoyer({"type": "question", "texte": ""})
+                envoyer({"type": "phrase", "texte": msg, "audio": parler(msg)})
+            else:
+                envoyer({"type": "question", "texte": question})
+                rien = True
+                for phrase in penser_en_flux(question, data.get("contexte", "")):
+                    rien = False
+                    envoyer({"type": "phrase", "texte": phrase, "audio": parler(phrase)})
+                if rien:
+                    msg = "Désolé, je n'arrive pas à réfléchir pour le moment. Réessaie dans un instant."
+                    envoyer({"type": "phrase", "texte": msg, "audio": parler(msg)})
         except Exception as e:  # on ne plante jamais devant l'étudiant
-            self._json(200, {"question": "", "reponse": "Oups, un petit souci. Réessaie.", "audio": "", "detail": str(e)})
+            try:
+                envoyer({"type": "phrase", "texte": "Oups, un petit souci. Réessaie.", "audio": "", "detail": str(e)})
+            except Exception:
+                pass
+        try:
+            envoyer({"type": "fin"})
+            self.wfile.write(b"0\r\n\r\n")
+            self.wfile.flush()
+        except Exception:
+            pass
 
 
 if __name__ == "__main__":
@@ -317,16 +428,47 @@ function ajouter(texte, qui, audio) {
 function jouer(b64) { if (b64) new Audio('data:audio/wav;base64,' + b64).play().catch(() => {}); }
 function afficher(e, a, cl) { etat.textContent = e; aide.textContent = a; micro.className = cl || ''; }
 
+// File d'attente des phrases : Socrate dit chaque phrase dès qu'elle est prête, dans l'ordre
+let fileAudio = Promise.resolve();
+function enchainer(b64) {
+  if (!b64) return;
+  fileAudio = fileAudio.then(() => new Promise(fin => {
+    const a = new Audio('data:audio/wav;base64,' + b64);
+    a.onended = fin; a.onerror = fin; a.play().catch(fin);
+  }));
+}
+
 async function demander(corps) {
-  occupe = true; afficher('Socrate réfléchit…', 'Patiente quelques secondes 🙂', 'attente');
+  occupe = true; afficher('Socrate réfléchit…', 'Il va commencer à parler dans un instant 🙂', 'attente');
+  let bulle = null, tout = [];
   try {
-    const r = await fetch('/demander', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(corps)});
-    const d = await r.json();
-    if (d.question && corps.audio) ajouter(d.question, 'u');
-    ajouter(d.reponse, 's', d.audio); jouer(d.audio);
+    const r = await fetch('/demander-flux', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(corps)});
+    const lecteur = r.body.getReader(), dec = new TextDecoder(); let reste = '';
+    while (true) {
+      const {value, done} = await lecteur.read(); if (done) break;
+      reste += dec.decode(value, {stream: true});
+      const lignes = reste.split('\n'); reste = lignes.pop();
+      for (const l of lignes) {
+        if (!l.trim()) continue;
+        const e = JSON.parse(l);
+        if (e.type === 'question' && e.texte && corps.audio) ajouter(e.texte, 'u');
+        if (e.type === 'phrase') {
+          if (!bulle) { bulle = document.createElement('div'); bulle.className = 'm s'; chat.appendChild(bulle); afficher('Socrate parle…', 'Écoute bien 👂', 'attente'); }
+          bulle.textContent = (bulle.textContent ? bulle.textContent + ' ' : '') + e.texte;
+          chat.scrollTop = chat.scrollHeight;
+          if (e.audio) tout.push(e.audio);
+          enchainer(e.audio);
+        }
+      }
+    }
+    if (bulle && tout.length) {
+      const b = document.createElement('button'); b.className = 'reecouter'; b.textContent = '🔊 Réécouter';
+      b.onclick = () => tout.forEach(enchainer); bulle.appendChild(b);
+    }
   } catch (e) {
     ajouter("Je n'arrive pas à répondre. Redémarre Socrate depuis son icône.", 's');
   }
+  await fileAudio;
   occupe = false; afficher('Appuie pour parler', 'ou écris ta question ✏️');
 }
 
@@ -378,6 +520,8 @@ fetch('/accueil', {method: 'POST'}).then(r => r.json()).then(d => jouer(d.audio)
 </body></html>
 SOCRATE_FIN
 chmod -R a+rX "$DOSSIER"
+# Redémarre Socrate s'il tournait déjà, pour prendre la nouvelle version
+pkill -f "$DOSSIER/socrate/serveur.py" 2>/dev/null || true
 snap connect chromium:audio-record 2>/dev/null || true
 
 # Lanceur : démarre le petit serveur local si besoin, puis ouvre la fenêtre
