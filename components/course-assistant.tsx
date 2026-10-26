@@ -11,6 +11,10 @@ import {
 } from 'lucide-react';
 import type { CourseModuleConfig } from '@/config/course-modules';
 import InteractiveQuizModal from '@/components/interactive-quiz-modal';
+import {
+  detecterMode, demanderSocrateLocal, pcm16VersWav, noterQuestion,
+  questionsEnAttente, viderQuestionsEnAttente, type ModeSocrate,
+} from '@/lib/socrate-local';
 
 type DayType = 'MONDAY' | 'WEDNESDAY' | 'FRIDAY';
 
@@ -84,6 +88,9 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
   const [isListening, setIsListening] = useState(false);
   const [speakingIdx, setSpeakingIdx] = useState<number | null>(null);
   const [isDayLoading, setIsDayLoading] = useState(false);
+  // Socrate hors ligne : 'en-ligne' (Gemini), 'local' (ordinateur SavoirIA), 'pause' (aucun)
+  const [mode, setMode] = useState<ModeSocrate>('en-ligne');
+  const [enAttente, setEnAttente] = useState(0);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const dayAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -160,6 +167,21 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
   }, []);
 
   useEffect(() => () => stopAllSpeech(), [stopAllSpeech]);
+
+  // Détecte la connexion et la présence d'un Socrate local, et suit les changements.
+  useEffect(() => {
+    let actif = true;
+    const verifier = async () => {
+      const m = await detecterMode();
+      if (!actif) return;
+      setMode(m);
+      setEnAttente(m === 'en-ligne' ? questionsEnAttente().length : 0);
+    };
+    verifier();
+    window.addEventListener('online', verifier);
+    window.addEventListener('offline', verifier);
+    return () => { actif = false; window.removeEventListener('online', verifier); window.removeEventListener('offline', verifier); };
+  }, []);
 
   // Fallback : synthèse vocale du navigateur (utilisée si Google Cloud TTS indisponible).
   const speak = useCallback((text: string, onEnd?: () => void) => {
@@ -461,6 +483,11 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
   const startListening = () => {
     stopAllSpeech();
     unlockAudio();
+    if (mode === 'local') { ecouterLocal(); return; }
+    if (mode === 'pause') {
+      setMessages((prev) => [...prev, { role: 'assistant', content: "Sans Internet, je ne peux pas t'écouter sur cet appareil. **Écris ta question** : je la garde pour plus tard 📝" }]);
+      return;
+    }
     const SR: any = typeof window !== 'undefined'
       ? (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
       : null;
@@ -498,12 +525,91 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
     }
   };
 
+  // --- Socrate local (ordinateur SavoirIA, sans Internet) ---
+  const contexteLecon = () =>
+    [moduleConfig?.title, (currentScript as any)?.cleanTtsText ?? (currentScript as any)?.summary]
+      .filter(Boolean).join(' — ').slice(0, 1500);
+
+  const demanderLocal = async (corps: { texte?: string; audio?: string }, base: Message[], parle: boolean) => {
+    setLoading(true);
+    stopAllSpeech();
+    const gen = ++speechGenRef.current;
+    let historique = base;
+    let reponse = '';
+    let file = Promise.resolve();
+    try {
+      await demanderSocrateLocal(
+        { ...corps, contexte: contexteLecon() },
+        (question) => {
+          if (corps.audio && question) {
+            historique = [...base, { role: 'user', content: question }];
+            setMessages(historique);
+          }
+        },
+        (phrase, audio) => {
+          reponse = reponse ? `${reponse} ${phrase}` : phrase;
+          const idx = historique.length;
+          setMessages([...historique, { role: 'assistant', content: reponse }]);
+          if ((parle || corps.audio) && audio) {
+            setSpeakingIdx(idx);
+            file = file.then(() => (gen === speechGenRef.current ? playBase64(audio).catch(() => {}) : undefined));
+          }
+        },
+      );
+      await file;
+    } catch {
+      setMessages([...historique, { role: 'assistant', content: "⚠️ Socrate ne répond pas sur cet ordinateur. Ferme puis rouvre SavoirIA." }]);
+    } finally {
+      if (gen === speechGenRef.current) setSpeakingIdx(null);
+      setLoading(false);
+    }
+  };
+
+  // Micro hors ligne : on enregistre, puis Whisper (sur l'ordinateur) écrit la question.
+  const ecouterLocal = async () => {
+    if (recorderRef.current) { recorderRef.current.stop(); return; }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mime = ['audio/webm;codecs=opus', 'audio/mp4'].find((m) => MediaRecorder.isTypeSupported?.(m)) || '';
+      const rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+      const morceaux: Blob[] = [];
+      rec.ondataavailable = (e) => e.data.size && morceaux.push(e.data);
+      rec.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        recorderRef.current = null;
+        setIsListening(false);
+        try {
+          const wav = pcm16VersWav(await toPcm16(new Blob(morceaux, { type: rec.mimeType })));
+          await demanderLocal({ audio: wav }, messages, true);
+        } catch {
+          setMessages((prev) => [...prev, { role: 'assistant', content: "Je n'ai pas bien entendu. Réessaie, ou écris ta question." }]);
+        }
+      };
+      recorderRef.current = rec;
+      setIsListening(true);
+      rec.start();
+      setTimeout(() => recorderRef.current === rec && rec.stop(), 30000); // 30 s maximum
+    } catch {
+      setIsListening(false);
+      alert("Impossible d'accéder au micro. Autorise le micro dans ton navigateur.");
+    }
+  };
+
   const sendMessage = async (text: string, fromVoice = false) => {
     const trimmed = text?.trim?.();
     if (!trimmed || loading) return;
     const newMessages: Message[] = [...messages, { role: 'user', content: trimmed }];
     setMessages(newMessages);
     setInput('');
+    if (mode === 'pause') {
+      noterQuestion(trimmed, moduleConfig?.title ?? '');
+      setMessages([...newMessages, { role: 'assistant', content: "Je ne peux pas répondre sans Internet sur cet appareil. J'ai **noté ta question** 📝 : tu pourras me la reposer dès que tu seras connecté." }]);
+      return;
+    }
+    if (mode === 'local') {
+      await demanderLocal({ texte: trimmed }, newMessages, fromVoice);
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch('/api/tutor', {
@@ -550,6 +656,17 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
       }
     } catch (err) {
       console.error('Tutor error:', err);
+      // Internet coupé en pleine question : on essaie le Socrate de l'ordinateur.
+      const m = await detecterMode();
+      if (m !== 'en-ligne') {
+        setMode(m);
+        setLoading(false);
+        setMessages(newMessages);
+        if (m === 'local') { await demanderLocal({ texte: trimmed }, newMessages, fromVoice); return; }
+        noterQuestion(trimmed, moduleConfig?.title ?? '');
+        setMessages([...newMessages, { role: 'assistant', content: "Internet vient de se couper. J'ai **noté ta question** 📝 pour plus tard." }]);
+        return;
+      }
       setMessages((prev) => [
         ...(prev ?? []),
         { role: 'assistant', content: "⚠️ Socrate rencontre une difficulté temporaire de connexion à son moteur d'IA. Veuillez réessayer dans quelques instants." },
@@ -735,10 +852,47 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
             </div>
             <span className="text-xs sm:text-sm font-bold text-foreground">Discussion avec Socrate</span>
           </div>
-          <span className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> En ligne
-          </span>
+          {mode === 'en-ligne' && (
+            <span className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> En ligne
+            </span>
+          )}
+          {mode === 'local' && (
+            <span className="text-[10px] font-bold text-amber-700 bg-amber-500/15 px-2 py-0.5 rounded-full">✈ Socrate local · sans Internet</span>
+          )}
+          {mode === 'pause' && (
+            <span className="text-[10px] font-bold text-rose-700 bg-rose-500/10 px-2 py-0.5 rounded-full">En pause</span>
+          )}
         </div>
+
+        {mode === 'local' && (
+          <div className="text-xs font-semibold text-amber-800 bg-amber-100 border border-amber-200 rounded-xl px-3 py-2">
+            ✈ Pas d&apos;Internet : Socrate continue de t&apos;aider grâce à cet ordinateur.
+          </div>
+        )}
+        {mode === 'pause' && (
+          <div className="text-xs font-semibold text-rose-800 bg-rose-100 border border-rose-200 rounded-xl px-3 py-2">
+            ✈ Pas d&apos;Internet : tu peux lire la leçon et écouter le podcast. Socrate reviendra dès que tu seras connecté.
+          </div>
+        )}
+        {mode === 'en-ligne' && enAttente > 0 && (
+          <div className="text-xs text-primary bg-primary/10 border border-primary/20 rounded-xl px-3 py-2 flex items-center justify-between gap-2">
+            <span>📝 Tu as noté {enAttente} question{enAttente > 1 ? 's' : ''} sans Internet.</span>
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => {
+                const liste = questionsEnAttente().map((q) => `- ${q.question}`).join('\n');
+                viderQuestionsEnAttente();
+                setEnAttente(0);
+                sendMessage(`Voici les questions que j'ai notées sans Internet :\n${liste}`);
+              }}
+              className="font-bold underline shrink-0"
+            >
+              Les poser maintenant
+            </button>
+          </div>
+        )}
 
         <div className="flex-1 overflow-y-auto py-2 space-y-3.5 max-h-[420px] custom-scrollbar pr-1">
           {messages.map((m, idx) => (
@@ -817,7 +971,7 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Pose ta question à Socrate..."
+            placeholder={mode === 'pause' ? 'Note ta question pour plus tard…' : 'Pose ta question à Socrate...'}
             className="flex-1 min-w-0 bg-background border border-border/80 rounded-xl px-3.5 py-2 text-xs sm:text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition shadow-inner"
             autoComplete="off"
           />
