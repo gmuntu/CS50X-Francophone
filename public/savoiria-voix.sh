@@ -524,6 +524,17 @@ chmod -R a+rX "$DOSSIER"
 pkill -f "$DOSSIER/socrate/serveur.py" 2>/dev/null || true
 snap connect chromium:audio-record 2>/dev/null || true
 
+# Autoriser le site SavoirIA à parler au Socrate de cet ordinateur (Chromium : « accès au réseau local »)
+for D in /etc/chromium-browser/policies/managed /etc/chromium/policies/managed; do
+  mkdir -p "$D"
+  cat > "$D/savoiria.json" <<'EOF'
+{
+  "LocalNetworkAccessAllowedForUrls": ["https://www.savoiria.online", "https://savoiria.online"],
+  "AudioCaptureAllowedUrls": ["https://www.savoiria.online", "https://savoiria.online", "http://127.0.0.1:8765"]
+}
+EOF
+done
+
 # Lanceur : démarre le petit serveur local si besoin, puis ouvre la fenêtre
 cat > /usr/local/bin/socrate <<EOF
 #!/usr/bin/env bash
