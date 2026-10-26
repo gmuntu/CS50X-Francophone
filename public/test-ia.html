@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Test de vitesse — Socrate dans le navigateur</title>
+<style>
+:root{--bleu:#2563eb;--fond:#eef3fb;--carte:#fff;--txt:#0f172a;--gris:#64748b;--ok:#16a34a;--ko:#dc2626}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--fond);color:var(--txt)}
+main{max-width:860px;margin:0 auto;padding:20px 16px 40px}
+h1{color:var(--bleu);font-size:26px;margin:4px 0}.sous{color:var(--gris);margin:0 0 18px}
+.carte{background:var(--carte);border:1px solid #dbe4f3;border-radius:16px;padding:18px;margin-bottom:16px}
+h2{font-size:18px;margin:0 0 10px}
+.ligne{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid #eef2f7;font-size:15px}
+.ligne:last-child{border:0}.v{font-weight:700;text-align:right}
+.ok{color:var(--ok)}.ko{color:var(--ko)}
+label.fichier{display:block;border:2px dashed #93c5fd;border-radius:14px;padding:18px;text-align:center;cursor:pointer;font-size:16px}
+label.fichier input{display:none}
+button{background:var(--bleu);color:#fff;border:0;border-radius:12px;padding:12px 18px;font-size:16px;font-weight:700;cursor:pointer}
+button:disabled{background:#94a3b8;cursor:wait}
+textarea{width:100%;min-height:70px;font-size:15px;padding:10px;border:1px solid #cbd5e1;border-radius:12px}
+#sortie{white-space:pre-wrap;background:#f8fafc;border-radius:12px;padding:12px;min-height:60px;font-size:15px;line-height:1.5}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:8px 6px;border-bottom:1px solid #e2e8f0;text-align:left}
+th{color:var(--gris);font-weight:700}
+.aide{font-size:14px;color:var(--gris);line-height:1.5}
+.etat{margin-top:10px;font-weight:700}
+.boutons{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+</style></head><body><main>
+<h1>Test de vitesse : Socrate dans le navigateur</h1>
+<p class="sous">Mesure, sur cet appareil, la vitesse d'un modèle Gemma qui tourne <b>sans serveur</b>, directement dans le navigateur.</p>
+
+<div class="carte"><h2>1. Cet appareil</h2><div id="appareil">Analyse…</div></div>
+
+<div class="carte"><h2>2. Choisir le modèle</h2>
+  <label class="fichier"><input type="file" id="fichier" accept=".task,.bin">
+    📂 <b>Cliquez ici</b> et choisissez le fichier du modèle<br>
+    <span class="aide">gemma3-1b-it-int4-web.task &nbsp;ou&nbsp; gemma-4-E2B-it-web.task</span></label>
+  <div class="etat" id="etatChargement"></div>
+</div>
+
+<div class="carte"><h2>3. Lancer le test</h2>
+  <textarea id="question">Explique en français simple, en 3 phrases, ce qu'est une variable en programmation, avec un exemple de la vie courante.</textarea>
+  <div class="boutons"><button id="lancer" disabled>▶ Lancer le test</button></div>
+  <div class="etat" id="etatTest"></div>
+  <h2 style="margin-top:14px">Réponse de Socrate</h2>
+  <div id="sortie"></div>
+</div>
+
+<div class="carte"><h2>4. Résultats</h2>
+  <table><thead><tr><th>Modèle</th><th>Chargement</th><th>1er mot</th><th>Vitesse</th><th>Verdict</th></tr></thead><tbody id="resultats"></tbody></table>
+  <p class="aide">Repères : <b>plus de 10 mots/s</b> = confortable · <b>4 à 10</b> = utilisable · <b>moins de 4</b> = trop lent pour un étudiant.<br>
+  (1 « token » ≈ ¾ de mot en français.)</p>
+</div>
+</main>
+
+<script type="module">
+const VERSION = '0.10.27';
+const CDN = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai@${VERSION}`;
+const $ = id => document.getElementById(id);
+let llm = null, nomModele = '', tChargement = 0;
+
+// ---------- 1. Appareil ----------
+async function analyser() {
+  const lignes = [];
+  const ajout = (k, v, cl = '') => lignes.push(`<div class="ligne"><span>${k}</span><span class="v ${cl}">${v}</span></div>`);
+  ajout('Navigateur', navigator.userAgent.match(/(Edg|Chrome|Firefox|Safari)\/[\d.]+/)?.[0] || 'inconnu');
+  ajout('Mémoire (estimée)', navigator.deviceMemory ? `${navigator.deviceMemory} Go ou plus` : 'non indiquée');
+  ajout('Processeurs', navigator.hardwareConcurrency || '?');
+  let webgpu = false;
+  if (navigator.gpu) {
+    try {
+      const a = await navigator.gpu.requestAdapter();
+      if (a) {
+        webgpu = true;
+        const info = a.info || (a.requestAdapterInfo ? await a.requestAdapterInfo() : {});
+        ajout('WebGPU', '✅ disponible', 'ok');
+        ajout('Carte graphique', [info.vendor, info.architecture, info.description].filter(Boolean).join(' · ') || 'non indiquée');
+        ajout('Taille max. d\'un bloc mémoire GPU', `${Math.round(a.limits.maxBufferSize / 1048576)} Mo`);
+      }
+    } catch (e) {}
+  }
+  if (!webgpu) ajout('WebGPU', '❌ absent : le test ne peut pas fonctionner ici', 'ko');
+  $('appareil').innerHTML = lignes.join('');
+  return webgpu;
+}
+
+// ---------- 2. Chargement du modèle ----------
+$('fichier').onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  nomModele = f.name; $('lancer').disabled = true;
+  $('etatChargement').textContent = `Chargement de ${f.name} (${(f.size / 1073741824).toFixed(2)} Go)… cela peut prendre 1 à 3 minutes.`;
+  try {
+    if (llm) { llm.close(); llm = null; }
+    const { FilesetResolver, LlmInference } = await import(CDN);
+    const fileset = await FilesetResolver.forGenAiTasks(`${CDN}/wasm`);
+    const t0 = performance.now();
+    llm = await LlmInference.createFromOptions(fileset, {
+      baseOptions: { modelAssetBuffer: f.stream().getReader() },
+      maxTokens: 1024, topK: 40, temperature: 0.7, randomSeed: 1,
+    });
+    tChargement = (performance.now() - t0) / 1000;
+    $('etatChargement').innerHTML = `<span class="ok">✅ Modèle prêt en ${tChargement.toFixed(1)} s</span>`;
+    $('lancer').disabled = false;
+  } catch (err) {
+    $('etatChargement').innerHTML = `<span class="ko">❌ Échec du chargement : ${err.message || err}</span><br>
+      <span class="aide">Souvent : mémoire insuffisante sur cet appareil. Essayez le modèle plus léger (gemma3-1b).</span>`;
+  }
+};
+
+// Format de conversation selon la famille du modèle
+function prompt(q) {
+  const consigne = 'Tu es Socrate, un tuteur bienveillant. Réponds en français simple.';
+  return /gemma-?4/i.test(nomModele)
+    ? `<|turn>user\n${consigne}\n\n${q}<turn|>\n<|turn>model\n`
+    : `<start_of_turn>user\n${consigne}\n\n${q}<end_of_turn>\n<start_of_turn>model\n`;
+}
+
+// ---------- 3. Test ----------
+$('lancer').onclick = () => {
+  if (!llm) return;
+  $('lancer').disabled = true; $('sortie').textContent = '';
+  $('etatTest').textContent = 'Socrate réfléchit…';
+  const t0 = performance.now(); let t1 = 0, texte = '';
+  llm.generateResponse(prompt($('question').value), (partiel, fini) => {
+    if (partiel && !t1) t1 = performance.now();
+    texte += partiel || ''; $('sortie').textContent = texte;
+    if (!fini) return;
+    const fin = performance.now();
+    let tokens; try { tokens = llm.sizeInTokens(texte); } catch { tokens = Math.round(texte.length / 4); }
+    const duree = (fin - (t1 || t0)) / 1000, tps = tokens / Math.max(duree, 0.001), mots = tps * 0.75;
+    const verdict = mots >= 10 ? '<span class="ok">Confortable</span>' : mots >= 4 ? 'Utilisable' : '<span class="ko">Trop lent</span>';
+    $('resultats').insertAdjacentHTML('beforeend',
+      `<tr><td>${nomModele}</td><td>${tChargement.toFixed(1)} s</td><td>${((t1 - t0) / 1000).toFixed(1)} s</td>
+       <td>${tps.toFixed(1)} tokens/s<br><span class="aide">≈ ${mots.toFixed(1)} mots/s</span></td><td>${verdict}</td></tr>`);
+    $('etatTest').innerHTML = `<span class="ok">Terminé : ${tokens} tokens en ${duree.toFixed(1)} s</span>`;
+    $('lancer').disabled = false;
+  });
+};
+
+analyser();
+</script>
+</body></html>

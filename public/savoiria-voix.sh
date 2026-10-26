@@ -20,8 +20,8 @@ set -euo pipefail
 MODELE="${MODELE:-gemma4:e2b}"
 WHISPER="${WHISPER:-base}"
 DOSSIER="/opt/savoiria"
-VOIX_URL="https://huggingface.co/rhasspy/piper-voices/resolve/main/fr/fr_FR/siwis/medium"
-VOIX="fr_FR-siwis-medium"
+VOIX_URL="https://huggingface.co/rhasspy/piper-voices/resolve/main/fr/fr_FR/tom/medium"
+VOIX="fr_FR-tom-medium"
 etape() { echo; echo "==> $*"; }
 
 if [[ $EUID -ne 0 ]]; then
@@ -49,16 +49,23 @@ if ! [ -f "$DOSSIER/whisper/models/ggml-$WHISPER.bin" ]; then
 fi
 
 # ---------------------------------------------------------------------
-etape "3/5  La bouche : Piper (voix française $VOIX)"
+etape "3/5  La bouche : Piper (voix française d'homme)"
 if ! [ -x "$DOSSIER/piper-venv/bin/piper" ]; then
   python3 -m venv "$DOSSIER/piper-venv"
   "$DOSSIER/piper-venv/bin/pip" install --quiet --upgrade pip
   "$DOSSIER/piper-venv/bin/pip" install --quiet piper-tts
 fi
 mkdir -p "$DOSSIER/voix"
-for f in "$VOIX.onnx" "$VOIX.onnx.json"; do
-  [ -f "$DOSSIER/voix/$f" ] || curl -fL -o "$DOSSIER/voix/$f" "$VOIX_URL/$f"
+# Voix d'homme pour Socrate : « tom » (qualité moyenne), sinon « gilles » (secours)
+BASE="https://huggingface.co/rhasspy/piper-voices/resolve/main/fr/fr_FR"
+for V in "tom/medium/fr_FR-tom-medium" "gilles/low/fr_FR-gilles-low"; do
+  if curl -fL -o "$DOSSIER/voix/socrate.onnx.tmp" "$BASE/$V.onnx" \
+     && curl -fL -o "$DOSSIER/voix/socrate.onnx.json" "$BASE/$V.onnx.json"; then
+    mv "$DOSSIER/voix/socrate.onnx.tmp" "$DOSSIER/voix/socrate.onnx"
+    echo "   Voix choisie : $(basename "$V")"; break
+  fi
 done
+[ -f "$DOSSIER/voix/socrate.onnx" ] || { echo "   [ERREUR] Voix d'homme introuvable"; exit 1; }
 
 # ---------------------------------------------------------------------
 etape "4/5  Commande « socrate-vocal » (version Terminal, secours)"
@@ -69,7 +76,7 @@ MODELE="\${MODELE:-$MODELE}"
 WHISPER_BIN="$DOSSIER/whisper/build/bin/whisper-cli"
 WHISPER_MODELE="$DOSSIER/whisper/models/ggml-$WHISPER.bin"
 PIPER="$DOSSIER/piper-venv/bin/piper"
-VOIX="$DOSSIER/voix/$VOIX.onnx"
+VOIX="$DOSSIER/voix/socrate.onnx"
 TMP=\$(mktemp -d)
 trap 'rm -rf "\$TMP"' EXIT
 
@@ -151,7 +158,7 @@ MODELE = os.environ.get("MODELE", "gemma4:e2b")
 WHISPER_BIN = f"{DOSSIER}/whisper/build/bin/whisper-cli"
 WHISPER_MODELE = os.environ.get("WHISPER_MODELE", f"{DOSSIER}/whisper/models/ggml-base.bin")
 PIPER = f"{DOSSIER}/piper-venv/bin/piper"
-VOIX = f"{DOSSIER}/voix/fr_FR-siwis-medium.onnx"
+VOIX = f"{DOSSIER}/voix/socrate.onnx"
 PAGE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "index.html")
 PORT = int(os.environ.get("PORT", "8765"))
 
@@ -434,7 +441,7 @@ done
 echo; echo "==> Vérifications"
 OK=1
 [ -x "$DOSSIER/whisper/build/bin/whisper-cli" ] && echo "   [OK] Whisper (oreilles)" || { echo "   [ERREUR] Whisper"; OK=0; }
-if echo "Bonjour, je suis Socrate." | "$DOSSIER/piper-venv/bin/piper" --model "$DOSSIER/voix/$VOIX.onnx" --output_file /tmp/test_voix.wav >/dev/null 2>&1; then
+if echo "Bonjour, je suis Socrate." | "$DOSSIER/piper-venv/bin/piper" --model "$DOSSIER/voix/socrate.onnx" --output_file /tmp/test_voix.wav >/dev/null 2>&1; then
   echo "   [OK] Piper (bouche) — écoute du test :"; aplay -q /tmp/test_voix.wav 2>/dev/null || true
 else
   echo "   [ERREUR] Piper"; OK=0
