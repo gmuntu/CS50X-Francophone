@@ -29,10 +29,9 @@ export default function Header() {
   // Sous-menu propre à CS50x : visible seulement dans les pages de cette formation.
   const inCs50 = ['/cs50x', '/courses', '/tuteur', '/agora'].some((p) => pathname === p || pathname?.startsWith(p + '/'));
   const cs50Items = [
-    { label: 'Présentation', href: '/cs50x' },
-    { label: 'Semaines', href: '/courses' },
-    { label: 'Socrate', href: '/tuteur' },
-    { label: 'Agora (vocal)', href: '/agora' },
+    { label: '📖 Le programme', href: '/cs50x' },
+    { label: '🎓 Salle de cours', href: '/tuteur' },
+    { label: '🎙️ Parler à Socrate', href: '/agora' },
   ];
 
   return (
@@ -182,7 +181,7 @@ export default function Header() {
             {cs50Items.map((it) => (
               <Link key={it.href} href={it.href}
                 className={`shrink-0 rounded-lg px-3 py-1.5 ${pathname === it.href || pathname?.startsWith(it.href + '/') ? 'bg-card text-blue-700 dark:text-blue-300 shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>
-                {it.label === 'Socrate' || it.label.startsWith('Agora') ? <Mic className="inline w-3.5 h-3.5 mr-1 -mt-0.5" /> : null}{it.label}
+                {it.label}
               </Link>
             ))}
           </div>

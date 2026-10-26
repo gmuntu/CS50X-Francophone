@@ -106,9 +106,9 @@ export default function TuteurClient({ role, contentByModule }: Props) {
               <div>
                 <h1 className="text-xl font-extrabold text-foreground tracking-tight flex items-center gap-2">
                   <span className="w-2.5 h-2.5 rounded-full bg-primary" />
-                  Socrate · SavoirIA
+                  Salle de cours
                 </h1>
-                <p className="text-xs text-muted-foreground font-medium mt-0.5">Informatique en français</p>
+                <p className="text-xs text-muted-foreground font-medium mt-0.5">CS50x en français · avec Socrate</p>
               </div>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
                 Tuteur
@@ -166,7 +166,7 @@ export default function TuteurClient({ role, contentByModule }: Props) {
         {/* ===================== ZONE CENTRALE ===================== */}
         <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 space-y-6 overflow-y-auto">
           <a href="/agora" className="flex items-center justify-between gap-3 rounded-2xl border border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/30 px-4 py-3 hover:bg-blue-100 dark:hover:bg-blue-950/50">
-            <span className="text-sm"><b className="text-blue-800 dark:text-blue-200">🎙️ Agora : parler à Socrate de vive voix</b><span className="hidden sm:inline text-muted-foreground"> · conversation en direct, vous pouvez l'interrompre</span></span>
+            <span className="text-sm"><b className="text-blue-800 dark:text-blue-200">🎙️ Parler à Socrate de vive voix</b><span className="hidden sm:inline text-muted-foreground"> · conversation en direct, vous pouvez l'interrompre</span></span>
             <span className="text-sm font-bold text-blue-700 dark:text-blue-300">Ouvrir →</span>
           </a>
           {/* En-tête du module */}

@@ -23,7 +23,7 @@ export default function BetaClient() {
       <main className="max-w-5xl mx-auto px-4 py-8 flex flex-col gap-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-extrabold">Agora</h1>
+            <h1 className="text-2xl font-extrabold">🎙️ Parler à Socrate</h1>
             <p className="text-sm text-muted-foreground">La salle de classe où vous discutez de vive voix avec Socrate.</p>
           </div>
           <Link href="/tuteur" className="text-sm underline text-muted-foreground">Revenir au tuteur classique</Link>
