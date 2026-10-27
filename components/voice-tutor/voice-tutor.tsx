@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Mic, MicOff, Loader2, Volume2, AlertTriangle } from 'lucide-react';
 import { useGeminiLive } from '@/hooks/useGeminiLive';
-import { detecterMode, demanderSocrateLocal, pcm16VersWav, type ModeSocrate } from '@/lib/socrate-local';
+import { detecterMode, demanderSocrateLocal, pcm16VersWav, ORDINATEUR_LOCAL, type ModeSocrate } from '@/lib/socrate-local';
 
 interface Props {
   moduleId: number;
@@ -52,7 +52,8 @@ export default function VoiceTutor({ moduleId, onActive, context: given, systemP
   const [mode, setMode] = useState<ModeSocrate>('en-ligne');
   useEffect(() => {
     let actif = true;
-    const verifier = async () => { const m = await detecterMode(); if (actif) setMode(m); };
+    // Sur l'ordinateur SavoirIA, la conversation vocale passe toujours par Gemma + Whisper + Piper.
+    const verifier = async () => { const m = ORDINATEUR_LOCAL ? 'local' : await detecterMode(); if (actif) setMode(m); };
     verifier();
     window.addEventListener('online', verifier);
     window.addEventListener('offline', verifier);

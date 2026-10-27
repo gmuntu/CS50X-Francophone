@@ -13,7 +13,7 @@ import type { CourseModuleConfig } from '@/config/course-modules';
 import InteractiveQuizModal from '@/components/interactive-quiz-modal';
 import {
   detecterMode, demanderSocrateLocal, pcm16VersWav, noterQuestion,
-  questionsEnAttente, viderQuestionsEnAttente, type ModeSocrate,
+  questionsEnAttente, viderQuestionsEnAttente, ORDINATEUR_LOCAL, type ModeSocrate,
 } from '@/lib/socrate-local';
 
 type DayType = 'MONDAY' | 'WEDNESDAY' | 'FRIDAY';
@@ -484,6 +484,8 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
     stopAllSpeech();
     unlockAudio();
     if (mode === 'local') { ecouterLocal(); return; }
+    // Ordinateur SavoirIA : on enregistre et Whisper (sur la machine) écrit la question.
+    if (ORDINATEUR_LOCAL) { startRecordingFallback(); return; }
     if (mode === 'pause') {
       setMessages((prev) => [...prev, { role: 'assistant', content: "Sans Internet, je ne peux pas t'écouter sur cet appareil. **Écris ta question** : je la garde pour plus tard 📝" }]);
       return;
@@ -854,7 +856,7 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
           </div>
           {mode === 'en-ligne' && (
             <span className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> En ligne
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> {ORDINATEUR_LOCAL ? 'Gemma · sur cet ordinateur' : 'En ligne'}
             </span>
           )}
           {mode === 'local' && (
