@@ -77,6 +77,24 @@ export async function saveLesson(lesson: Omit<SavedLesson, 'savedAt'>, onProgres
   return { failed };
 }
 
+/** Enregistre une page « outil » (salle de cours, Agora, accueil hors ligne…) avec ses fichiers techniques. */
+export async function savePage(path: string) {
+  const page = await fetch(path, { credentials: 'include' });
+  if (!page.ok || page.redirected) return false;
+  const html = await page.clone().text();
+  await (await caches.open(PAGES_CACHE)).put(absolute(path), page);
+  try {
+    const assets = Array.from(new Set(html.match(/\/_next\/static\/[^"'\s)]+/g) ?? []));
+    const stat = await caches.open(STATIC_CACHE);
+    await Promise.all(assets.map(async (a) => {
+      if (await stat.match(absolute(a))) return;
+      const r = await fetch(a).catch(() => null);
+      if (r?.ok) await stat.put(absolute(a), r);
+    }));
+  } catch {}
+  return true;
+}
+
 export async function removeLesson(id: number) {
   const list = await listSavedLessons();
   const target = list.find((l) => l.id === id);

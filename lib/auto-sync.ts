@@ -5,7 +5,7 @@
 // puis on enregistre sur l'appareil toutes les semaines ouvertes des formations, podcasts compris.
 // Le travail reprend là où il s'était arrêté si la connexion se coupe.
 
-import { saveLesson, listSavedLessons, offlineSupported, type SavedLesson } from '@/lib/offline';
+import { saveLesson, savePage, listSavedLessons, offlineSupported, type SavedLesson } from '@/lib/offline';
 import { flushQueue } from '@/lib/sync-queue';
 
 export const FORMATIONS = [
@@ -25,6 +25,7 @@ export interface EtatSync {
 
 const CLE = 'savoiria-auto-sync';
 export const EVT_SYNC = 'savoiria-auto-sync-change';
+export const PAGES_OUTILS = ['/hors-ligne', '/tuteur', '/agora', '/cs50x', '/dashboard', '/formations'];
 const INTERVALLE_MS = 12 * 60 * 60 * 1000; // au plus toutes les 12 h
 
 let etat: EtatSync = { enCours: false, enPause: false, etape: '', fait: 0, total: 0 };
@@ -91,6 +92,10 @@ export async function synchroniser(auto = false): Promise<void> {
       const { lessons } = await r.json();
       for (const l of lessons ?? []) aFaire.push({ formation: f.titre, lecon: l });
     }
+
+    // Les pages « outils » de l'application, pour qu'elles s'ouvrent aussi sans Internet
+    publier({ etape: "Enregistrement de l'application…" });
+    for (const p of PAGES_OUTILS) await savePage(p).catch(() => false);
 
     publier({ total: aFaire.length });
     for (let i = 0; i < aFaire.length; i++) {
