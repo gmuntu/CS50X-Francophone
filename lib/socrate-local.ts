@@ -5,6 +5,9 @@ export const SOCRATE_LOCAL = 'http://127.0.0.1:8765';
 
 export type ModeSocrate = 'en-ligne' | 'local' | 'pause';
 
+/** Vrai quand SavoirIA tourne sur l'ordinateur lui-même (installation hors ligne avec Gemma). */
+export const ORDINATEUR_LOCAL = process.env.NEXT_PUBLIC_SAVOIRIA_LOCAL === '1';
+
 /** Vrai si l'ordinateur a un Socrate local qui répond. */
 export async function socrateLocalDisponible(delaiMs = 1500): Promise<boolean> {
   if (typeof window === 'undefined') return false;
@@ -22,6 +25,8 @@ export async function socrateLocalDisponible(delaiMs = 1500): Promise<boolean> {
 
 /** Choisit le bon « cerveau » : Internet -> Gemini ; sinon Socrate local s'il existe ; sinon pause. */
 export async function detecterMode(): Promise<ModeSocrate> {
+  // Sur l'ordinateur SavoirIA, le serveur du site parle déjà à Gemma : le chemin normal fonctionne.
+  if (ORDINATEUR_LOCAL) return 'en-ligne';
   if (typeof navigator !== 'undefined' && navigator.onLine) return 'en-ligne';
   return (await socrateLocalDisponible()) ? 'local' : 'pause';
 }
