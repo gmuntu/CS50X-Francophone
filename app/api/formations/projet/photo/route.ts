@@ -24,6 +24,7 @@ export async function POST(req: Request) {
     await prisma.finalProject.update({ where: { id: project.id }, data: { examFaceUrls: [...list, url] } });
     return NextResponse.json({ ok: true });
   } catch (e: any) {
-    return NextResponse.json({ error: e?.message || 'Erreur' }, { status: 500 });
+    console.error('[photo examen]', e);
+    return NextResponse.json({ error: 'La photo n\'a pas pu être enregistrée.' }, { status: 500 });
   }
 }

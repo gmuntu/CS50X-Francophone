@@ -9,6 +9,7 @@ import ProjectActions from './_components/project-actions';
 import VoiceCheck from './_components/voice-check';
 import ResetIdentity from './_components/reset-identity';
 import { faceList } from '@/lib/identity';
+import { lienMedia } from '@/lib/blob';
 
 export const dynamic = 'force-dynamic';
 
@@ -71,15 +72,15 @@ export default async function AdminProjetsPage() {
                 <p className="text-sm font-bold mb-2">🤳 Visage : empreinte (à gauche) et photos de l'examen (à droite)</p>
                 {ident(p.userId) ? (
                   <div className="flex flex-wrap items-center gap-2">
-                    {faceList(ident(p.userId)!.faceUrls).map((u) => <img key={u} src={u} alt="" className="h-20 w-20 rounded-lg object-cover -scale-x-100 border-2 border-blue-600" />)}
+                    {faceList(ident(p.userId)!.faceUrls).map((u) => <img key={u} src={lienMedia(u)} alt="" className="h-20 w-20 rounded-lg object-cover -scale-x-100 border-2 border-blue-600" />)}
                     <span className="mx-1 text-muted-foreground">↔</span>
-                    {faceList(p.examFaceUrls).length ? faceList(p.examFaceUrls).map((u) => <img key={u} src={u} alt="" className="h-20 w-20 rounded-lg object-cover -scale-x-100" />) : <span className="text-xs text-muted-foreground">pas encore de photo d'examen</span>}
+                    {faceList(p.examFaceUrls).length ? faceList(p.examFaceUrls).map((u) => <img key={u} src={lienMedia(u)} alt="" className="h-20 w-20 rounded-lg object-cover -scale-x-100" />) : <span className="text-xs text-muted-foreground">pas encore de photo d'examen</span>}
                   </div>
                 ) : <p className="text-xs text-muted-foreground">Pas encore d'empreinte SavoirIA.</p>}
                 <p className="mt-2 text-xs text-muted-foreground">La comparaison automatique (visage et voix) s'activera avec le serveur KVM 2. {ident(p.userId) && <>Empreinte du {ident(p.userId)!.createdAt.toLocaleDateString('fr-FR')}.</>}</p>
                 {ident(p.userId) && <ResetIdentity userId={p.userId} allowed={ident(p.userId)!.resetAllowed} />}
               </div>
-              <VoiceCheck id={p.id} refUrl={ident(p.userId)?.voiceUrl ?? p.voiceRefUrl} defenseUrl={p.voiceDefenseUrl} match={p.voiceMatch} />
+              <VoiceCheck id={p.id} refUrl={lienMedia(ident(p.userId)?.voiceUrl ?? p.voiceRefUrl)} defenseUrl={lienMedia(p.voiceDefenseUrl)} match={p.voiceMatch} />
               {transcript.length > 0 && (
                 <details className="mt-2 text-sm"><summary className="cursor-pointer font-semibold text-blue-700 dark:text-blue-300">Lire la transcription de la défense</summary>
                   <div className="mt-2 space-y-1">{transcript.map((l, i) => <p key={i}><b>{l.who === 'socrate' ? 'Socrate' : 'Élève'} :</b> {l.text}</p>)}</div>
