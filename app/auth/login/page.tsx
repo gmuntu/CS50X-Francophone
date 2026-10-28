@@ -28,6 +28,12 @@ function LoginForm() {
       setError('Erreur lors de la communication avec le fournisseur d\'authentification.');
     } else if (urlError === 'OAuthAccountNotLinked') {
       setError('Cette adresse email est déjà associée à un autre mode de connexion.');
+    } else if (urlError === 'en_attente') {
+      setError("Votre inscription est en cours de validation par l'administration.");
+    } else if (urlError === 'acces_expire') {
+      setError('Votre accès testeur est arrivé à expiration.');
+    } else if (urlError === 'AccessDenied') {
+      setError('Connexion refusée pour ce compte.');
     } else if (urlError === 'Configuration') {
       setError('Configuration OAuth incomplète sur le serveur.');
     } else if (urlError) {

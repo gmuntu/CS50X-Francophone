@@ -5,6 +5,7 @@ import GitHub from 'next-auth/providers/github';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import { tropDEssais } from '@/lib/quota';
 
 // Sur Vercel ou en production, supprimer toute valeur localhost de NEXTAUTH_URL
 // afin que Auth.js / NextAuth utilise dynamiquement l'en-tête Host réel
@@ -45,6 +46,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // Connexion standard Email + Mot de passe
         if (!credentials?.password) return null;
         const candidatePassword = String(credentials.password);
+
+        // Anti force brute : 10 essais par heure et par adresse
+        if (await tropDEssais('login', normalizedEmail, 10)) return null;
 
         const queryEmails = [normalizedEmail];
 
@@ -107,17 +111,39 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           GitHub({
             clientId: process.env.AUTH_GITHUB_ID,
             clientSecret: process.env.AUTH_GITHUB_SECRET,
-            allowDangerousEmailAccountLinking: true,
+            allowDangerousEmailAccountLinking: false,
           }),
         ]
       : []),
   ],
   callbacks: {
+    // Google / GitHub : seulement pour un compte déjà inscrit, validé et non suspendu.
+    async signIn({ user, account }) {
+      if (!account || account.provider === 'credentials') return true;
+      const email = String(user?.email ?? '').trim().toLowerCase();
+      if (!email) return false;
+      const u = await prisma.user.findUnique({ where: { email }, select: { status: true, role: true, accessExpiresAt: true } });
+      if (!u) return '/auth/signup?oauth=inscription';
+      if (u.status === 'SUSPENDED') return false;
+      if (u.status === 'PENDING' && u.role !== 'ADMIN') return '/auth/login?error=en_attente';
+      if (u.accessExpiresAt && new Date(u.accessExpiresAt).getTime() <= Date.now()) return '/auth/login?error=acces_expire';
+      return true;
+    },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
         token.role = (user as any).role ?? 'STUDENT';
         token.accessExp = (user as any).accessExpiresAt ?? null;
+        token.verifie = Date.now();
+      }
+      // Toutes les 5 minutes : rôle et statut relus en base (suspension ou retrait de droits immédiats).
+      if (token.id && Date.now() - Number(token.verifie ?? 0) > 5 * 60_000) {
+        try {
+          const u = await prisma.user.findUnique({ where: { id: token.id as string }, select: { role: true, status: true } });
+          if (!u || u.status === 'SUSPENDED') return null;
+          token.role = u.role;
+          token.verifie = Date.now();
+        } catch {}
       }
       // Accès testeur expiré : la session se ferme d'elle-même, même si l'appli était restée ouverte.
       if (typeof token.accessExp === 'number' && Date.now() >= token.accessExp) {

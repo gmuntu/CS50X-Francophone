@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
+import { quotaIA } from '@/lib/quota';
 import { synthesizeLine, type PodcastSpeaker } from '@/lib/podcast-voices';
 
 /**
@@ -17,6 +18,7 @@ export async function POST(request: Request) {
     if (!session?.user) {
       return NextResponse.json({ fallback: true, error: 'Non authentifié' }, { status: 401 });
     }
+    { const bloque = await quotaIA(session.user as any, 'speech'); if (bloque) return bloque; }
 
     const { text, voice, speaker, test } = await request.json();
 

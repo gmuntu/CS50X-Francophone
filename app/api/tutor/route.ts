@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
+import { quotaIA } from '@/lib/quota';
 import { CS50_MODULES } from '@/config/course-modules';
 import { prisma } from '@/lib/prisma';
 import { readCourseSource } from '@/lib/content-generator';
@@ -27,9 +28,14 @@ export async function POST(request: NextRequest) {
         headers: { 'Content-Type': 'application/json' },
       });
     }
+    { const bloque = await quotaIA(session.user as any, 'tutor'); if (bloque) return bloque; }
 
     const body = await request.json();
-    const { messages, moduleId, course, week } = body ?? {};
+    const { moduleId, course, week } = body ?? {};
+    // Garde-fou coût : 30 derniers messages, 4 000 caractères chacun au maximum.
+    const messages = (Array.isArray(body?.messages) ? body.messages : []).slice(-30).map((m: any) => ({
+      ...m, content: String(m?.content ?? '').slice(0, 4000),
+    }));
     const isIa = course === IA_SLUG;
 
     const mod = CS50_MODULES?.find?.((m: any) => m?.id === moduleId);

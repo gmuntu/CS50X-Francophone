@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
+import { quotaIA } from '@/lib/quota';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,6 +41,7 @@ async function pickLiveModel(key: string): Promise<string | null> {
 export async function POST() {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: 'Non connecté' }, { status: 401 });
+    { const bloque = await quotaIA(session.user as any, 'live'); if (bloque) return bloque; }
 
   const key = process.env.GEMINI_API_KEY;
   if (!key) return NextResponse.json({ error: 'GEMINI_API_KEY absente' }, { status: 500 });
