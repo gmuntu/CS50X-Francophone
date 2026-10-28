@@ -15,6 +15,8 @@ export async function GET() {
 }
 
 // Création de l'empreinte : 3 photos (face, tête tournée, sourire) + voix. Verrouillée ensuite.
+const AUDIO_OK = ['audio/webm', 'audio/ogg', 'audio/mp4', 'audio/aac', 'audio/mpeg', 'audio/wav'];
+
 export async function POST(req: Request) {
   const session = await auth();
   const userId = session?.user?.id;
@@ -26,7 +28,7 @@ export async function POST(req: Request) {
   if (form?.get('consent') !== 'true') return NextResponse.json({ error: 'Le consentement est obligatoire.' }, { status: 400 });
   const faces = [0, 1, 2].map((i) => form?.get(`face${i}`));
   const voice = form?.get('voice');
-  if (faces.some((f) => !(f instanceof Blob) || (f as Blob).size < 3000)) return NextResponse.json({ error: 'Photos manquantes.' }, { status: 400 });
+  if (faces.some((f) => !(f instanceof Blob) || (f as Blob).size < 3000 || (f as Blob).size > 1_500_000)) return NextResponse.json({ error: 'Photos manquantes.' }, { status: 400 });
   if (!(voice instanceof Blob) || voice.size < 2000) return NextResponse.json({ error: 'Enregistrement de la voix manquant.' }, { status: 400 });
   if (voice.size > 3_000_000) return NextResponse.json({ error: 'Enregistrement trop long.' }, { status: 413 });
 
@@ -34,6 +36,7 @@ export async function POST(req: Request) {
     const faceUrls: string[] = [];
     for (let i = 0; i < 3; i++) faceUrls.push(await uploadBlob(`identite/${userId}-face${i}.jpg`, await (faces[i] as Blob).arrayBuffer(), 'image/jpeg'));
     const vtype = (voice.type || 'audio/webm').split(';')[0];
+    if (!AUDIO_OK.includes(vtype)) return NextResponse.json({ error: 'Format audio non accepté.' }, { status: 400 });
     const voiceUrl = await uploadBlob(`identite/${userId}-voix.${vtype.includes('mp4') ? 'm4a' : 'webm'}`, await voice.arrayBuffer(), vtype);
     if (existing) for (const u of [...faceList(existing.faceUrls), existing.voiceUrl]) await deleteBlob(u);
     await prisma.identityProfile.upsert({
@@ -43,6 +46,7 @@ export async function POST(req: Request) {
     });
     return NextResponse.json({ ok: true });
   } catch (e: any) {
-    return NextResponse.json({ error: e?.message || 'Erreur' }, { status: 500 });
+    console.error('[identite]', e);
+    return NextResponse.json({ error: "L'enregistrement a échoué. Réessayez." }, { status: 500 });
   }
 }

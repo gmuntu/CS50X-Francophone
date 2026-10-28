@@ -9,6 +9,8 @@ export const maxDuration = 60;
 const MAX = 4_300_000; // limite d'envoi Vercel ≈ 4,5 Mo
 
 // Empreinte vocale : enregistrement de référence (kind=reference) ou voix de la défense (kind=defense).
+const AUDIO_OK = ['audio/webm', 'audio/ogg', 'audio/mp4', 'audio/aac', 'audio/mpeg', 'audio/wav'];
+
 export async function POST(req: Request) {
   const session = await auth();
   const userId = session?.user?.id;
@@ -29,6 +31,7 @@ export async function POST(req: Request) {
   if (kind === 'defense' && !(await prisma.identityProfile.findUnique({ where: { userId } }))) return NextResponse.json({ error: "Créez d'abord votre empreinte SavoirIA." }, { status: 400 });
 
   const type = (audio.type || 'audio/webm').split(';')[0];
+  if (!AUDIO_OK.includes(type)) return NextResponse.json({ error: 'Format audio non accepté.' }, { status: 400 });
   const ext = type.includes('mp4') || type.includes('aac') ? 'm4a' : type.includes('ogg') ? 'ogg' : 'webm';
   try {
     const url = await uploadBlob(`voix/${course}/${userId}-${kind}.${ext}`, await audio.arrayBuffer(), type);
@@ -40,7 +43,8 @@ export async function POST(req: Request) {
     });
     return NextResponse.json({ ok: true });
   } catch (e: any) {
-    return NextResponse.json({ error: e?.message || 'Erreur' }, { status: 500 });
+    console.error('[voix]', e);
+    return NextResponse.json({ error: "L'enregistrement a échoué. Réessayez." }, { status: 500 });
   }
 }
 
