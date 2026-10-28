@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { sendEmail } from '@/lib/email';
+import { tropDEssais } from '@/lib/quota';
 
 /**
  * POST: Demander un code / token de réinitialisation de mot de passe
@@ -28,7 +29,8 @@ export async function POST(request: NextRequest) {
       message:
         "Si un compte existe pour cette adresse, un code de réinitialisation vous sera transmis par email ou par l'administration.",
     });
-    if (!user) return genericResponse;
+    // 3 demandes de code par heure et par adresse au maximum
+    if (!user || (await tropDEssais('reset-demande', normalizedEmail, 3))) return genericResponse;
 
     // Code à 8 caractères (sans caractères ambigus), valable 1 heure
     const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
@@ -68,6 +70,10 @@ export async function PUT(request: NextRequest) {
   try {
     const { email, token, newPassword, confirmPassword } = await request.json();
 
+    // 5 essais de code par heure et par adresse : au-delà, il faut redemander un code
+    if (email && (await tropDEssais('reset-essai', String(email).trim(), 5))) {
+      return NextResponse.json({ error: 'Trop d\'essais. Réessayez dans une heure.' }, { status: 429 });
+    }
     if (!email || !token || !newPassword) {
       return NextResponse.json(
         { error: 'Email, code/token et nouveau mot de passe sont obligatoires.' },

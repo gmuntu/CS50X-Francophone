@@ -6,13 +6,15 @@
 #
 #  Prérequis : savoiria-poste.sh et savoiria-voix.sh déjà installés.
 #  Utilisation (une fois, avec Internet) :
-#     curl -fsSL https://www.savoiria.online/savoiria-local.sh | sudo bash
+#     curl -fsSL https://www.savoiria.online/savoiria-local.sh | sudo CONTENU_SYNC_CLE=... bash
 #  Mise à jour ensuite : automatique chaque jour dès qu'Internet est là
 #  (ou à la main : sudo savoiria-maj).
 # =====================================================================
 set -euo pipefail
 
 MODELE="${MODELE:-gemma4:e2b}"
+# Clé de synchronisation du contenu (la même que CONTENU_SYNC_CLE sur Vercel)
+CONTENU_SYNC_CLE="${CONTENU_SYNC_CLE:-$(cat /var/lib/savoiria/.contenu-cle 2>/dev/null || true)}"
 DEPOT="https://github.com/gmuntu/CS50X-Francophone.git"
 DOSSIER="/opt/savoiria"
 SITE_DIR="$DOSSIER/site"
@@ -78,12 +80,16 @@ MODELE=$MODELE
 # Les clés Google ne servent pas : les appels sont envoyés vers l'IA locale.
 GEMINI_API_KEY=local
 GOOGLE_TTS_API_KEY=local
+# Contenu pédagogique récupéré du serveur en ligne à chaque mise à jour
+SAVOIRIA_SERVEUR=https://www.savoiria.online
+CONTENU_SYNC_CLE=$CONTENU_SYNC_CLE
 EOF
+mkdir -p /var/lib/savoiria && [ -n "$CONTENU_SYNC_CLE" ] && { echo "$CONTENU_SYNC_CLE" > /var/lib/savoiria/.contenu-cle; chmod 600 /var/lib/savoiria/.contenu-cle; }
 chown -R savoiria:savoiria "$SITE_DIR"
 
 # ---------------------------------------------------------------------
 etape "5/7  Construction du site (5 à 15 minutes)"
-sudo -u savoiria bash -c "cd '$SITE_DIR' && npm ci --no-audit --no-fund && npm run build"
+sudo -u savoiria bash -c "cd '$SITE_DIR' && npm ci --no-audit --no-fund && npx prisma generate && npx prisma db push --skip-generate && npx tsx --require dotenv/config scripts/importer-contenu.ts; npm run build"
 
 # Compte étudiant local (actif tout de suite)
 sudo -u savoiria bash -c "cd '$SITE_DIR' && node -e \"
@@ -120,15 +126,20 @@ EOF
 # Mise à jour : code + reconstruction, quand Internet est disponible
 cat > /usr/local/bin/savoiria-maj <<EOF
 #!/usr/bin/env bash
-curl -fsI --max-time 10 https://github.com >/dev/null 2>&1 || { echo "Pas d'Internet : mise à jour plus tard."; exit 0; }
+# Met à jour SavoirIA (code + contenu des cours) quand Internet est disponible.
+curl -fsI --max-time 10 https://www.savoiria.online >/dev/null 2>&1 || { echo "Pas d'Internet : mise à jour plus tard."; exit 0; }
 cd "$SITE_DIR"
 AVANT=\$(git rev-parse HEAD)
 git fetch --depth 1 origin main && git reset --hard origin/main
-[ "\$(git rev-parse HEAD)" = "\$AVANT" ] && { echo "SavoirIA est déjà à jour."; exit 0; }
 chown -R savoiria:savoiria "$SITE_DIR"
-sudo -u savoiria bash -c "npm ci --no-audit --no-fund && npm run build" && systemctl restart savoiria-site
+AUDIO_AVANT=\$(ls public/hors-ligne-audio 2>/dev/null | wc -l)
+sudo -u savoiria bash -c "npm ci --no-audit --no-fund && npx prisma generate && npx prisma db push --skip-generate && npx tsx --require dotenv/config scripts/importer-contenu.ts"
+AUDIO_APRES=\$(ls public/hors-ligne-audio 2>/dev/null | wc -l)
+if [ "\$(git rev-parse HEAD)" != "\$AVANT" ] || [ "\$AUDIO_APRES" != "\$AUDIO_AVANT" ] || [ ! -d .next ]; then
+  sudo -u savoiria bash -c "npm run build" && systemctl restart savoiria-site
+fi
 ollama pull "$MODELE" >/dev/null 2>&1 || true
-echo "SavoirIA mis à jour."
+echo "SavoirIA est à jour."
 EOF
 chmod +x /usr/local/bin/savoiria-maj
 cat > /etc/systemd/system/savoiria-maj.service <<'EOF'

@@ -428,3 +428,11 @@ model IdentityProfile {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
+
+// Compteurs anti-abus : quotas IA par jour, tentatives de connexion par heure.
+model Compteur {
+  cle       String   @id // ex. "ia:tutor:<userId>:2026-10-28" ou "login:<email>:2026-10-28T14"
+  nombre    Int      @default(0)
+  expireLe  DateTime
+  @@index([expireLe])
+}

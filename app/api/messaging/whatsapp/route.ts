@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
 
 function validSignature(raw: string, header: string | null) {
   const secret = process.env.WHATSAPP_APP_SECRET;
-  if (!secret) return true; // à configurer en production
+  if (!secret) return false; // sans secret Meta, on refuse tout (sécurité)
   if (!header?.startsWith('sha256=')) return false;
   const expected = 'sha256=' + createHmac('sha256', secret).update(raw, 'utf8').digest('hex');
   const a = Buffer.from(header), b = Buffer.from(expected);

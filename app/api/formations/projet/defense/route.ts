@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
+import { quotaIA } from '@/lib/quota';
 import { prisma } from '@/lib/prisma';
 import { geminiJson } from '@/lib/gemini-json';
 import { projectText } from '@/lib/courses/final-project';
@@ -12,6 +13,7 @@ export async function POST(req: Request) {
   const session = await auth();
   const userId = session?.user?.id;
   if (!userId) return NextResponse.json({ error: 'Non connecté' }, { status: 401 });
+    { const bloque = await quotaIA(session!.user as any, 'defense'); if (bloque) return bloque; }
   const body = await req.json().catch(() => ({}));
   const course = String(body?.course || '');
   const transcript = (Array.isArray(body?.transcript) ? body.transcript : [])

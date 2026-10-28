@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
+import { quotaIA } from '@/lib/quota';
 
 /**
  * Reconnaissance vocale (voix → texte) via Google Cloud Speech-to-Text.
@@ -11,6 +12,7 @@ import { auth } from '@/auth';
 export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
+    { const bloque = await quotaIA(session.user as any, 'stt'); if (bloque) return bloque; }
 
   const apiKey = process.env.GOOGLE_TTS_API_KEY?.trim();
   if (!apiKey) return NextResponse.json({ error: 'Reconnaissance vocale non configurée' }, { status: 503 });
