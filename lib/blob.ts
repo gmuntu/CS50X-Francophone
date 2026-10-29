@@ -27,7 +27,7 @@ export async function uploadBlob(pathname: string, body: ArrayBuffer, contentTyp
   const d = await res.json().catch(() => ({}));
   if (!res.ok || !d?.url) {
     console.error('[blob] envoi refusé', res.status, d?.error?.message);
-    throw new Error("Le fichier n'a pas pu être enregistré.");
+    throw new Error(`Le fichier n'a pas pu être enregistré (${res.status} ${d?.error?.code ?? ''} ${d?.error?.message ?? ''}).`);
   }
   return d.url as string;
 }

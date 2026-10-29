@@ -25,6 +25,16 @@ export async function POST() {
   if (me?.role !== 'ADMIN') return Response.json({ error: 'Interdit' }, { status: 403 });
   if (!process.env.PRIVE_READ_WRITE_TOKEN) return Response.json({ error: 'PRIVE_READ_WRITE_TOKEN manquant sur Vercel.' }, { status: 400 });
 
+  try {
+    return await migrer();
+  } catch (e: any) {
+    console.error('[migrer-medias]', e);
+    // Page réservée à l'admin : on affiche la cause pour pouvoir corriger.
+    return new Response(`<p style="font-family:sans-serif">❌ Erreur : ${String(e?.message ?? e).replace(/</g, '&lt;')}</p>`, { status: 500, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+  }
+}
+
+async function migrer() {
   let fichiers = 0;
   const vider = async () => { for (const u of aSupprimer) await deleteBlob(u); aSupprimer = []; };
   for (const p of await prisma.identityProfile.findMany()) {
