@@ -174,6 +174,10 @@ ORIGINES = {
     "https://www.savoiria.online", "https://savoiria.online",
     "http://localhost:3000", "http://127.0.0.1:8765",
 }
+# Le serveur ne répond qu'à lui-même (protection contre le « DNS rebinding »)
+HOTES = {f"127.0.0.1:{PORT}", f"localhost:{PORT}"}
+TAILLE_MAX = 10 * 1024 * 1024          # 10 Mo : bien assez pour 30 s de voix
+UNE_A_LA_FOIS = threading.Semaphore(1)  # une seule réflexion à la fois : l'ordinateur ne sature pas
 
 CONSIGNE = (
     "Tu es Socrate, le tuteur bienveillant de SavoirIA, pour des étudiants qui "
@@ -280,10 +284,29 @@ class Gestion(BaseHTTPRequestHandler):
         self.wfile.write(corps)
 
     def _lire(self):
-        n = int(self.headers.get("Content-Length", "0"))
+        n = int(self.headers.get("Content-Length", "0") or 0)
+        if n > TAILLE_MAX:
+            raise ValueError("trop gros")
         return json.loads(self.rfile.read(n) or b"{}")
 
+    def _autorise(self, post=False):
+        """Refuse les appels qui ne viennent pas de SavoirIA ou de cet ordinateur."""
+        if self.headers.get("Host", "") not in HOTES:
+            return False
+        origine = self.headers.get("Origin")
+        if origine and origine not in ORIGINES:
+            return False
+        # Exiger du JSON oblige le navigateur à demander la permission (CORS) avant d'envoyer.
+        if post and not self.headers.get("Content-Type", "").startswith("application/json"):
+            return False
+        if post and int(self.headers.get("Content-Length", "0") or 0) > TAILLE_MAX:
+            return False
+        return True
+
     def do_GET(self):
+        if not self._autorise():
+            self._json(403, {"erreur": "interdit"})
+            return
         if self.path in ("/", "/index.html"):
             with open(PAGE, "rb") as f:
                 corps = f.read()
@@ -304,14 +327,19 @@ class Gestion(BaseHTTPRequestHandler):
         return question
 
     def do_POST(self):
+        if not self._autorise(post=True):
+            self._json(403, {"erreur": "interdit"})
+            return
         if self.path == "/accueil":
             threading.Thread(target=prechauffer, daemon=True).start()
             self._json(200, {"audio": parler("Bonjour, je suis Socrate. Appuie sur le bouton bleu et pose-moi ta question.")})
             return
         if self.path == "/demander-flux":
-            self._flux()
+            with UNE_A_LA_FOIS:
+                self._flux()
             return
         if self.path == "/demander":
+            UNE_A_LA_FOIS.acquire()
             try:
                 data = self._lire()
                 question = self._question(data)
@@ -323,7 +351,10 @@ class Gestion(BaseHTTPRequestHandler):
                     "Désolé, je n'arrive pas à réfléchir pour le moment. Réessaie dans un instant."
                 self._json(200, {"question": question, "reponse": reponse, "audio": parler(reponse)})
             except Exception as e:
-                self._json(200, {"question": "", "reponse": "Oups, un petit souci. Réessaie.", "audio": "", "detail": str(e)})
+                print("erreur :", e, flush=True)
+                self._json(200, {"question": "", "reponse": "Oups, un petit souci. Réessaie.", "audio": ""})
+            finally:
+                UNE_A_LA_FOIS.release()
             return
         self._json(404, {"erreur": "introuvable"})
 
@@ -358,7 +389,8 @@ class Gestion(BaseHTTPRequestHandler):
                     envoyer({"type": "phrase", "texte": msg, "audio": parler(msg)})
         except Exception as e:  # on ne plante jamais devant l'étudiant
             try:
-                envoyer({"type": "phrase", "texte": "Oups, un petit souci. Réessaie.", "audio": "", "detail": str(e)})
+                print("erreur :", e, flush=True)
+                envoyer({"type": "phrase", "texte": "Oups, un petit souci. Réessaie.", "audio": ""})
             except Exception:
                 pass
         try:
@@ -515,7 +547,7 @@ document.getElementById('form').onsubmit = e => {
   ajouter(q, 'u'); t.value = ''; demander({texte: q});
 };
 // Socrate dit bonjour à voix haute à l'ouverture
-fetch('/accueil', {method: 'POST'}).then(r => r.json()).then(d => jouer(d.audio)).catch(() => {});
+fetch('/accueil', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: '{}'}).then(r => r.json()).then(d => jouer(d.audio)).catch(() => {});
 </script>
 </body></html>
 SOCRATE_FIN
