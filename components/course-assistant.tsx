@@ -3,8 +3,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneLight } from 'react-syntax-highlighter/dist/cjs/styles/prism';
+import SyntaxHighlighter from '@/components/code-bloc-lazy';
 import {
   Mic, Send, Play, Square, Download, NotebookPen, ScrollText,
   ChevronDown, ChevronUp, Volume2, Landmark, Lightbulb, Code2, Loader2,
@@ -73,6 +72,33 @@ function chunkText(text: string, maxLen = 1800, firstLen = 220): string[] {
   if (cur.trim()) chunks.push(cur.trim());
   return chunks;
 }
+
+
+// Bulle de message mémorisée : les anciens messages ne sont pas redessinés à chaque mot reçu.
+const MessageMarkdown = React.memo(function MessageMarkdown({ content }: { content: string }) {
+  return (
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      components={{
+        code({ className, children, ...props }: any) {
+          const match = /language-(\w+)/.exec(className || '');
+          return match ? (
+            <div className="my-2 rounded-xl overflow-hidden border border-slate-800 shadow-sm">
+              <SyntaxHighlighter language={match[1]} customStyle={{ margin: 0, fontSize: '0.72rem' }}>
+                {String(children).replace(/\n$/, '')}
+              </SyntaxHighlighter>
+            </div>
+          ) : (
+            <code className="bg-primary/10 px-1.5 py-0.5 rounded text-primary font-mono text-[11px] font-semibold" {...props}>
+              {children}
+            </code>
+          );
+        },
+      }}
+    >
+      {content}
+    </ReactMarkdown>  );
+});
 
 export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }: Props) {
   const moduleId = moduleConfig?.id ?? 0;
@@ -623,33 +649,42 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let assistantContent = '';
+      let tampon = ''; // ligne coupée entre deux paquets réseau (fréquent en 3G)
+      let affichage = 0;
+      const afficher = () => {
+        affichage = 0;
+        const contenu = assistantContent;
+        setMessages((prev) => {
+          const updated = [...(prev ?? [])];
+          if (updated.length > 0) updated[updated.length - 1] = { role: 'assistant', content: contenu };
+          return updated;
+        });
+      };
       setMessages([...newMessages, { role: 'assistant', content: '' }]);
-      while (true) {
+      lecture: while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk?.split?.('\n') ?? [];
+        tampon += decoder.decode(value, { stream: true });
+        const lines = tampon.split('\n');
+        tampon = lines.pop() ?? '';
         for (const line of lines) {
-          if (line?.startsWith?.('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') break;
-            try {
-              const parsed = JSON.parse(data);
-              const delta =
-                parsed?.choices?.[0]?.delta?.content ??
-                parsed?.candidates?.[0]?.content?.parts?.[0]?.text ??
-                parsed?.text ??
-                '';
-              assistantContent += delta;
-              setMessages((prev) => {
-                const updated = [...(prev ?? [])];
-                if (updated.length > 0) updated[updated.length - 1] = { role: 'assistant', content: assistantContent };
-                return updated;
-              });
-            } catch {}
-          }
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6).trim();
+          if (data === '[DONE]') break lecture;
+          try {
+            const parsed = JSON.parse(data);
+            assistantContent +=
+              parsed?.choices?.[0]?.delta?.content ??
+              parsed?.candidates?.[0]?.content?.parts?.[0]?.text ??
+              parsed?.text ??
+              '';
+          } catch {}
         }
+        // Au plus un affichage par image (≈ 60 par seconde) : les petits téléphones ne saccadent plus.
+        if (!affichage) affichage = requestAnimationFrame(afficher);
       }
+      if (affichage) cancelAnimationFrame(affichage);
+      afficher();
       if (fromVoice && assistantContent.trim()) {
         const idx = newMessages.length;
         stopAllSpeech();
@@ -911,27 +946,7 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
                     : 'bg-muted/40 text-foreground border border-border/70 rounded-bl-sm'
                 }`}>
                   <div className="prose-cs50-chat">
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                      components={{
-                        code({ className, children, ...props }: any) {
-                          const match = /language-(\w+)/.exec(className || '');
-                          return match ? (
-                            <div className="my-2 rounded-xl overflow-hidden border border-slate-800 shadow-sm">
-                              <SyntaxHighlighter language={match[1]} style={oneLight as any} customStyle={{ margin: 0, fontSize: '0.72rem' }}>
-                                {String(children).replace(/\n$/, '')}
-                              </SyntaxHighlighter>
-                            </div>
-                          ) : (
-                            <code className="bg-primary/10 px-1.5 py-0.5 rounded text-primary font-mono text-[11px] font-semibold" {...props}>
-                              {children}
-                            </code>
-                          );
-                        },
-                      }}
-                    >
-                      {m.content}
-                    </ReactMarkdown>
+                    <MessageMarkdown content={m.content} />
                   </div>
                 </div>
               </div>

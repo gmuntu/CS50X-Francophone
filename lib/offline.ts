@@ -114,8 +114,27 @@ export async function clearOfflineData() {
     await flushQueue();
     clearQueue();
   } catch {}
+  // Données personnelles gardées dans le navigateur (contexte de Socrate, questions notées, synchro)
+  try {
+    for (const k of Object.keys(localStorage)) {
+      if (k.startsWith('socrate-') || k.startsWith('savoiria-auto-sync')) localStorage.removeItem(k);
+    }
+  } catch {}
   if (!offlineSupported()) return;
   await Promise.all([caches.delete(PAGES_CACHE), caches.delete(AUDIO_CACHE), caches.delete(META_CACHE)]);
+}
+
+/**
+ * Appareil partagé : si un autre élève se connecte, on efface d'abord ce que le précédent
+ * avait enregistré (pages, podcasts, questions), même s'il n'a pas cliqué sur « Déconnexion ».
+ */
+export async function verifierChangementEleve(userId: string | undefined) {
+  if (!userId) return;
+  try {
+    const avant = localStorage.getItem('savoiria-eleve');
+    if (avant && avant !== userId) await clearOfflineData();
+    localStorage.setItem('savoiria-eleve', userId);
+  } catch {}
 }
 
 /** Clé de cache d'une réplique de podcast générée (formations SavoirIA sans fichier MP3). */

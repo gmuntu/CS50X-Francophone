@@ -25,7 +25,7 @@ export default async function AdminProjetsPage() {
   if (!session?.user) redirect('/auth/login');
   if (!['ADMIN', 'INSTRUCTOR'].includes((session.user as any)?.role)) redirect('/admin');
 
-  const projects = await prisma.finalProject.findMany({ orderBy: [{ status: 'asc' }, { updatedAt: 'desc' }] });
+  const projects = await prisma.finalProject.findMany({ orderBy: [{ status: 'asc' }, { updatedAt: 'desc' }], take: 200 });
   const ids = Array.from(new Set(projects.flatMap((p) => [p.userId, p.similarToUserId].filter(Boolean) as string[])));
   const users = await prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true, name: true, firstName: true, lastName: true, email: true } });
   const idents = await prisma.identityProfile.findMany({ where: { userId: { in: projects.map((p) => p.userId) } } });

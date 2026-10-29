@@ -26,7 +26,7 @@ export default async function AttestationPage({ params }: { params: Promise<{ id
         <div className="flex h-full flex-col items-center justify-between rounded-sm border-[6px] border-double border-blue-700 px-10 py-8 text-center text-slate-900">
           <div className="flex items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/logo-mark.png" alt="" className="h-14 w-14" />
+            <img src="/brand/logo-mark.webp" alt="" className="h-14 w-14" />
             <span className="text-3xl font-extrabold">Savoir<span className="text-sky-500">IA</span></span>
           </div>
           <div>

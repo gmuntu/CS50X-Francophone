@@ -45,7 +45,13 @@ export async function POST(req: Request) {
 
   // Comparaison avec les autres projets de la même formation.
   const mine = projectText(data as any, course);
-  const others = await prisma.finalProject.findMany({ where: { courseSlug: course, NOT: { userId } } });
+  // Seulement les champs utiles à la comparaison (pas les photos, voix, transcriptions…)
+  const others = await prisma.finalProject.findMany({
+    where: { courseSlug: course, NOT: { userId } },
+    select: { userId: true, prompt: true, aiResponse: true, verification: true, finalVersion: true },
+    orderBy: { updatedAt: 'desc' },
+    take: 2000,
+  });
   let best = 0, bestUser: string | null = null;
   for (const o of others) {
     const s = similarity(mine, projectText(o, course));
