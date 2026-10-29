@@ -11,7 +11,7 @@ const STATIC_VERSION = 'v4-logo-s'; // si on change : changer aussi STATIC_CACHE
 const STATIC = `savoiria-static-${STATIC_VERSION}`;
 const AUDIO = 'savoiria-audio'; // non versionné : on garde les podcasts téléchargés entre les mises à jour
 const OFFLINE_URL = '/hors-ligne';
-const PRECACHE = [OFFLINE_URL, '/icons/icon-192.png', '/icons/icon-512.png', '/icons/favicon-64.png', '/brand/logo-mark.png', '/brand/logo-mark-light.png'];
+const PRECACHE = [OFFLINE_URL, '/icons/icon-192.png', '/icons/icon-512.png', '/icons/favicon-64.png', '/brand/logo-mark.webp', '/brand/logo-mark-light.webp'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(STATIC).then((c) => c.addAll(PRECACHE)).then(() => self.skipWaiting()));
@@ -21,11 +21,22 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
       .then((keys) => Promise.all(keys.filter((k) => ![PAGES, STATIC, AUDIO].includes(k)).map((k) => caches.delete(k))))
+      .then(() => nettoyerStatic().catch(() => {}))
       .then(() => self.clients.claim())
   );
 });
 
 const NAV_TIMEOUT = 4000;
+
+// Les fichiers techniques s'accumulent à chaque mise à jour du site : on garde les plus récents
+// (environ 30 Mo) pour ne pas remplir les téléphones à petite mémoire.
+const STATIC_MAX = 1500;
+async function nettoyerStatic() {
+  const c = await caches.open(STATIC);
+  const cles = (await c.keys()).filter((r) => new URL(r.url).pathname.startsWith('/_next/static/'));
+  const trop = cles.length - STATIC_MAX;
+  for (let i = 0; i < trop; i++) await c.delete(cles[i]); // les plus anciens d'abord
+}
 
 async function navigate(req, url) {
   const key = pageKey(req.url);

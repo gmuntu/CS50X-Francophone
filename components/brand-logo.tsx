@@ -5,9 +5,9 @@ export function BrandMark({ className = 'w-9 h-9' }: { className?: string }) {
   return (
     <span className={`relative inline-block shrink-0 ${className}`}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/brand/logo-mark.png" alt="SavoirIA" className="w-full h-full object-contain dark:hidden" />
+      <img src="/brand/logo-mark.webp" alt="SavoirIA" className="w-full h-full object-contain dark:hidden" />
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/brand/logo-mark-light.png" alt="" aria-hidden className="w-full h-full object-contain hidden dark:block" />
+      <img src="/brand/logo-mark-light.webp" alt="" aria-hidden className="w-full h-full object-contain hidden dark:block" />
     </span>
   );
 }

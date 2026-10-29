@@ -1,16 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CloudDownload, Menu, X, BookOpen, LogOut, User, LayoutDashboard, GraduationCap, Shield, Mic } from 'lucide-react';
 import Link from 'next/link';
 import { BrandMark, BrandName } from '@/components/brand-logo';
 import { useSession, signOut } from 'next-auth/react';
-import { clearOfflineData } from '@/lib/offline';
+import { clearOfflineData, verifierChangementEleve } from '@/lib/offline';
 import { usePathname } from 'next/navigation';
 
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { data: session } = useSession();
+  // Appareil partagé : on efface les données du précédent élève si quelqu'un d'autre se connecte
+  useEffect(() => { verifierChangementEleve(session?.user?.id).catch(() => {}); }, [session?.user?.id]);
   const pathname = usePathname();
   const role = (session?.user as any)?.role;
 

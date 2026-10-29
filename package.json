@@ -3,9 +3,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && (prisma db push --skip-generate || echo 'ATTENTION: base de donnees injoignable, tables non mises a jour') && (npx prisma db seed || echo 'ATTENTION: contenu de base non installe') && next build",
+    "build": "prisma generate && node scripts/preparer-base.mjs && next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "db:seed": "prisma db seed"
   },
   "prisma": {
     "seed": "tsx --require dotenv/config scripts/safe-seed.ts"

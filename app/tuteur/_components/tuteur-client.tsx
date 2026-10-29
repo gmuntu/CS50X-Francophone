@@ -4,8 +4,7 @@ import { useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneLight } from 'react-syntax-highlighter/dist/cjs/styles/prism';
+import SyntaxHighlighter from '@/components/code-bloc-lazy';
 import Header from '@/components/header';
 import CourseAssistant from '@/components/course-assistant';
 import BilingualVideo from '@/components/pwa/bilingual-video';
@@ -282,7 +281,7 @@ export default function TuteurClient({ role, contentByModule }: Props) {
                           const match = /language-(\w+)/.exec(className || '');
                           return match ? (
                             <div className="my-4 rounded-xl overflow-hidden border border-border shadow-sm">
-                              <SyntaxHighlighter language={match[1]} style={oneLight as any} customStyle={{ margin: 0, fontSize: '0.8rem', padding: '1rem' }}>
+                              <SyntaxHighlighter language={match[1]} customStyle={{ margin: 0, fontSize: '0.8rem', padding: '1rem' }}>
                                 {String(children).replace(/\n$/, '')}
                               </SyntaxHighlighter>
                             </div>
@@ -359,7 +358,7 @@ export default function TuteurClient({ role, contentByModule }: Props) {
                           </span>
                         </div>
                         <div className="rounded-xl overflow-hidden border border-border shadow-sm">
-                          <SyntaxHighlighter language={(ex?.language || 'text').toLowerCase()} style={oneLight as any} customStyle={{ margin: 0, fontSize: '0.78rem', padding: '1rem' }}>
+                          <SyntaxHighlighter language={(ex?.language || 'text').toLowerCase()} customStyle={{ margin: 0, fontSize: '0.78rem', padding: '1rem' }}>
                             {String(ex?.code ?? '')}
                           </SyntaxHighlighter>
                         </div>
