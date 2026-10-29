@@ -23,16 +23,27 @@ const WHISPER_MODELE = process.env.WHISPER_MODELE || `${DOSSIER}/whisper/models/
 type Part = { text?: string };
 type Content = { role?: string; parts?: Part[] };
 
+// Une seule tâche lourde à la fois (Whisper, Piper) : un ordinateur de 8 Go ne doit pas saturer.
+let file: Promise<unknown> = Promise.resolve();
+function unAUn<T>(tache: () => Promise<T>): Promise<T> {
+  const suite = file.then(tache, tache);
+  file = suite.catch(() => undefined);
+  return suite;
+}
+const AUDIO_MAX = 10 * 1024 * 1024; // 10 Mo
+const DELAI_GEMMA = 120_000;
+
 function executer(cmd: string, args: string[], entree?: string, delaiMs = 180_000): Promise<string> {
-  return new Promise((ok, ko) => {
-    const p = spawn(cmd, args);
+  return unAUn(() => new Promise<string>((ok, ko) => {
+    // stderr ignoré : s'il se remplissait, le programme resterait bloqué
+    const p = spawn(cmd, args, { stdio: ['pipe', 'pipe', 'ignore'] });
     let sortie = '';
     const t = setTimeout(() => { p.kill('SIGKILL'); ko(new Error('délai dépassé')); }, delaiMs);
     p.stdout.on('data', (d) => (sortie += d));
     p.on('error', (e) => { clearTimeout(t); ko(e); });
     p.on('close', (code) => { clearTimeout(t); code === 0 ? ok(sortie) : ko(new Error(`${cmd} : code ${code}`)); });
-    if (entree !== undefined) p.stdin.end(entree);
-  });
+    p.stdin.end(entree ?? '');
+  }));
 }
 
 // ---------- Gemini -> Gemma (Ollama) ----------
@@ -56,6 +67,12 @@ function optionsOllama(corps: any) {
   };
 }
 
+/** Réponse claire quand Gemma ne répond pas (Ollama arrêté, ordinateur surchargé). */
+const indisponible = () => new Response(
+  JSON.stringify({ error: { code: 503, message: "L'IA locale (Gemma) ne répond pas. Redémarre l'ordinateur ou réessaie dans une minute." } }),
+  { status: 503, headers: { 'Content-Type': 'application/json' } },
+);
+
 const enGemini = (texte: string) => ({
   candidates: [{ content: { role: 'model', parts: [{ text: texte }] }, finishReason: 'STOP' }],
 });
@@ -69,10 +86,12 @@ async function gemmaComplet(corps: any): Promise<Response> {
       model: MODELE, messages: versMessagesOllama(corps), stream: false, think: false,
       keep_alive: '30m', options: optionsOllama(corps), ...(json ? { format: 'json' } : {}),
     }),
-  });
-  const d = await r.json().catch(() => ({}));
+    signal: AbortSignal.timeout(DELAI_GEMMA),
+  }).catch(() => null);
+  const d = r ? await r.json().catch(() => ({})) : {};
   const texte = d?.message?.content ?? '';
-  return new Response(JSON.stringify(enGemini(texte)), { status: r.ok ? 200 : 502, headers: { 'Content-Type': 'application/json' } });
+  if (!r?.ok || !texte) return indisponible();
+  return new Response(JSON.stringify(enGemini(texte)), { status: 200, headers: { 'Content-Type': 'application/json' } });
 }
 
 async function gemmaFlux(corps: any): Promise<Response> {
@@ -83,8 +102,9 @@ async function gemmaFlux(corps: any): Promise<Response> {
       model: MODELE, messages: versMessagesOllama(corps), stream: true, think: false,
       keep_alive: '30m', options: optionsOllama(corps),
     }),
-  });
-  if (!r.ok || !r.body) return new Response('Gemma indisponible', { status: 502 });
+    signal: AbortSignal.timeout(DELAI_GEMMA),
+  }).catch(() => null);
+  if (!r?.ok || !r.body) return indisponible();
   const lecteur = r.body.getReader();
   const dec = new TextDecoder();
   const enc = new TextEncoder();
@@ -92,7 +112,9 @@ async function gemmaFlux(corps: any): Promise<Response> {
   // Ollama envoie une ligne JSON par morceau ; on la ré-émet au format SSE de Gemini.
   const flux = new ReadableStream({
     async pull(ctrl) {
-      const { value, done } = await lecteur.read();
+      let morceau;
+      try { morceau = await lecteur.read(); } catch { ctrl.close(); return; } // délai dépassé en cours de route
+      const { value, done } = morceau;
       if (done) { ctrl.close(); return; }
       reste += dec.decode(value, { stream: true });
       const lignes = reste.split('\n');
@@ -147,7 +169,9 @@ function pcmVersWav(pcm: Buffer, taux: number): Buffer {
 async function reconnaissance(corps: any): Promise<Response> {
   const dossier = await mkdtemp(path.join(tmpdir(), 'savoiria-stt-'));
   try {
-    const brut = Buffer.from(String(corps?.audio?.content ?? ''), 'base64');
+    const contenu = String(corps?.audio?.content ?? '');
+    if (contenu.length > AUDIO_MAX * 1.4) throw new Error('enregistrement trop long');
+    const brut = Buffer.from(contenu, 'base64');
     const wav = brut.subarray(0, 4).toString() === 'RIFF' ? brut : pcmVersWav(brut, corps?.config?.sampleRateHertz || 16000);
     const fichier = path.join(dossier, 'q.wav');
     await writeFile(fichier, wav);

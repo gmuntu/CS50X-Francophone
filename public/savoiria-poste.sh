@@ -71,7 +71,7 @@ fi
 mkdir -p /etc/systemd/system/ollama.service.d
 cat > /etc/systemd/system/ollama.service.d/savoiria.conf <<EOF
 [Service]
-Environment="OLLAMA_ORIGINS=$SITE,https://savoiria.online,http://localhost:*"
+Environment="OLLAMA_ORIGINS=$SITE,https://savoiria.online,http://localhost:3000"
 Environment="OLLAMA_KEEP_ALIVE=30m"
 EOF
 systemctl daemon-reload
@@ -93,8 +93,13 @@ NAV=$(command -v chromium || command -v chromium-browser || echo /snap/bin/chrom
 etape "5/7  Compte étudiant « $ETUDIANT »"
 if ! id "$ETUDIANT" >/dev/null 2>&1; then
   adduser --disabled-password --gecos "Étudiant SavoirIA" "$ETUDIANT"
-  echo "$ETUDIANT:savoiria" | chpasswd
-  echo "   Mot de passe provisoire : savoiria (à changer)"
+  # Mot de passe différent sur chaque ordinateur, noté dans un fichier lisible par l'administrateur seul
+  MDP_ET=$(tr -dc 'a-hjkmnp-z2-9' </dev/urandom | head -c 8)
+  echo "$ETUDIANT:$MDP_ET" | chpasswd
+  install -d -m 700 /root/savoiria
+  echo "Compte Linux $ETUDIANT : $MDP_ET" >> /root/savoiria/mots-de-passe.txt
+  chmod 600 /root/savoiria/mots-de-passe.txt
+  echo "   Mot de passe du compte $ETUDIANT : $MDP_ET  (aussi dans /root/savoiria/mots-de-passe.txt)"
 fi
 
 # Connexion automatique au démarrage (GNOME / GDM)
