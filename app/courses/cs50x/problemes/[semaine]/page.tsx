@@ -8,6 +8,7 @@ import BilingualVideo from '@/components/pwa/bilingual-video';
 import { CS50_MODULES } from '@/config/course-modules';
 import { getProblemWeek } from '@/config/cs50-problems';
 import Cs50Credit from '../_components/cs50-credit';
+import ProblemSocrate from '../_components/problem-socrate';
 
 const VIDEO_LABEL = { presentation: 'Présentation', explication: 'Explication pas à pas' } as const;
 
@@ -61,7 +62,7 @@ export default async function ProblemesSemainePage({ params }: { params: Promise
           </div>
         ) : (
           <div className="space-y-6">
-            {week.problems.map((p) => (
+            {week.problems.map((p, i) => (
               <section key={p.slug} id={p.slug} className="bg-card border border-border/80 rounded-2xl p-5 sm:p-6 shadow-soft-sm space-y-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="space-y-1">
@@ -91,6 +92,7 @@ export default async function ProblemesSemainePage({ params }: { params: Promise
                 ) : (
                   <p className="text-xs text-muted-foreground italic">Pas de vidéo pour cet exercice : les consignes officielles suffisent.</p>
                 )}
+                <ProblemSocrate week={week.week} slug={p.slug} name={p.level ? `${p.name} (version ${p.level})` : p.name} index={i} />
               </section>
             ))}
           </div>
