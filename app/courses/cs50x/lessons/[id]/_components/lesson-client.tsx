@@ -81,6 +81,12 @@ export default function LessonClient({ moduleConfig, lesson, userId }: Props) {
           </div>
           <h1 className="text-2xl sm:text-4xl font-extrabold text-foreground tracking-tight">{moduleConfig?.title}</h1>
           <OfflineLessonButton lessonId={moduleConfig?.id} title={moduleConfig?.title} audioUrls={offlineAudio} />
+          <Link
+            href={`/courses/cs50x/problemes/${moduleConfig?.id}`}
+            className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl bg-primary/10 text-primary border border-primary/20 hover:bg-primary/15 transition"
+          >
+            🧩 Problèmes de la semaine
+          </Link>
           <p className="text-sm sm:text-base text-muted-foreground max-w-3xl leading-relaxed">{moduleConfig?.description}</p>
         </motion.div>
 
