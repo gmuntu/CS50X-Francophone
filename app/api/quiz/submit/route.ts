@@ -43,10 +43,13 @@ export async function POST(request: NextRequest) {
     }
     const passed = total > 0 ? (score / total) >= 0.7 : false;
 
+    // Sans connexion : on donne la note, mais rien n'est enregistré (évite de remplir la base de faux résultats).
+    if (!userId) return NextResponse.json({ score, total, passed });
+
     const attempt = await prisma.quizAttempt.create({
       data: {
         quizId,
-        userId: userId ?? null,
+        userId,
         answers: answers ?? {},
         score,
         total,

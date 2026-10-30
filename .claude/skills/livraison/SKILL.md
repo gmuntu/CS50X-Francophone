@@ -19,15 +19,15 @@ Le propriétaire ne connaît pas le code. À chaque étape, dis-lui en une phras
   `env -u DATABASE_URL -u VERCEL_ENV npm run build`
 - Si le build échoue : arrête-toi et explique l'erreur.
 
-## 3. Vérifier les types
+## 3. Vérifier la qualité du code
 
-Le build ne vérifie pas les erreurs de types (`ignoreBuildErrors: true` dans `next.config.js`). Lance donc `npx tsc --noEmit -p .`.
-- Ne signale comme bloquantes que les erreurs situées dans les fichiers modifiés par la branche (`git diff --name-only main...HEAD`). Les autres existaient déjà : mentionne-les seulement en une ligne.
+Le build vérifie déjà les erreurs de types : s'il passe, elles sont réglées. Lance ensuite `npx eslint .`.
+- Ne signale comme bloquantes que les erreurs de lint situées dans les fichiers modifiés par la branche (`git diff --name-only main...HEAD`). Les autres existaient déjà : mentionne-les seulement en une ligne.
 
 ## 4. Ranger
 
-Le build et `tsc` modifient tout seuls des fichiers générés. Annule-les pour qu'ils n'entrent pas dans la PR :
-`git checkout -- next-env.d.ts tsconfig.tsbuildinfo`
+Le build modifie tout seul `next-env.d.ts`. Annule ce changement pour qu'il n'entre pas dans la PR :
+`git checkout -- next-env.d.ts`
 Si `npm install` a modifié `package-lock.json` alors que la branche ne touche pas aux bibliothèques, demande au propriétaire s'il faut l'inclure.
 
 ## 5. Relecture sécurité (obligatoire, avant tout envoi)

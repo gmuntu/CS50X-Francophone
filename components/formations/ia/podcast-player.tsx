@@ -58,7 +58,7 @@ export default function PodcastPlayer({ lines, course, week }: { lines: IaLine[]
       if (gen !== genRef.current) return;
       next = i + 1 < lines.length ? synth(lines[i + 1], i + 1) : Promise.resolve(null);
       if (!buf) continue;
-      const audio: AudioBuffer = await new Promise((res, rej) => ctx.decodeAudioData(buf, res, rej)).catch(() => null as any);
+      const audio = await new Promise<AudioBuffer>((res, rej) => ctx.decodeAudioData(buf, res, rej)).catch(() => null);
       if (!audio || gen !== genRef.current) continue;
       setState('playing');
       setCurrent(i);
