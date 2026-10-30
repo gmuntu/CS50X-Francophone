@@ -7,3 +7,6 @@ node_modules
 !.env.example
 
 .DS_Store
+
+# Fichier généré par TypeScript à chaque build
+*.tsbuildinfo

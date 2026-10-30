@@ -21,9 +21,6 @@ const nextConfig = {
   },
   productionBrowserSourceMaps: false,
   outputFileTracingRoot: path.join(__dirname),
-  typescript: {
-    ignoreBuildErrors: true,
-  },
   images: { unoptimized: true },
   outputFileTracingIncludes: {
     '/**': ['./node_modules/.prisma/client/**'],
