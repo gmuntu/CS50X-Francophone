@@ -30,7 +30,7 @@ etape "1/5  Vérifications"
 [ "$(uname -s)" = "Darwin" ] && [ "$(uname -m)" = "arm64" ] || { echo "Ce script est fait pour un Mac Apple Silicon (M1, M2…)."; exit 1; }
 command -v brew >/dev/null || { echo "Installez d'abord Homebrew : https://brew.sh"; exit 1; }
 case "$WHISPER_TAILLE" in base|small) ;; *) echo "WHISPER_TAILLE doit valoir base ou small"; exit 1 ;; esac
-case "$DOSSIER" in *[\&\<\>\"]*) echo "Le chemin du dossier ne doit contenir ni &, ni <, ni >, ni guillemet."; exit 1 ;; esac
+case "$DOSSIER" in *[\&\<\>\"\']*) echo "Le chemin du dossier ne doit contenir ni &, ni <, ni >, ni guillemet, ni apostrophe."; exit 1 ;; esac
 PY=""
 for p in python3.13 python3.12 python3.11 python3; do
   if command -v "$p" >/dev/null && "$p" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)'; then PY="$p"; break; fi
