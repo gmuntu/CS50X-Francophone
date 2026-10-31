@@ -152,18 +152,20 @@ async function piper(texte: string, femme: boolean): Promise<string> {
   }
 }
 
+const VOIX_AUDIO_MAX = 20 * 1024 * 1024; // 20 Mo : bien plus que 2 minutes de voix
+
 /** Voix naturelle (serveur Qwen3-TTS de cet ordinateur) -> WAV en base64, ou null si indisponible. */
-async function voixNaturelle(texte: string): Promise<string | null> {
+async function voixNaturelle(texte: string, femme: boolean): Promise<string | null> {
   try {
     const r = await fetch(`${VOIX_LOCALE}/tts`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ texte: texte.slice(0, 2000) }),
-      signal: AbortSignal.timeout(90_000),
+      body: JSON.stringify({ texte: texte.slice(0, 2000), voix: femme ? 'femme' : 'homme' }),
+      signal: AbortSignal.timeout(60_000),
     });
-    if (!r.ok) return null;
+    if (!r.ok || Number(r.headers.get('content-length') ?? 0) > VOIX_AUDIO_MAX) return null;
     const audio = Buffer.from(await r.arrayBuffer());
-    return audio.length > 44 ? audio.toString('base64') : null;
+    return audio.length > 44 && audio.length <= VOIX_AUDIO_MAX ? audio.toString('base64') : null;
   } catch {
     return null;
   }
@@ -174,9 +176,9 @@ async function synthese(corps: any): Promise<Response> {
   const nomVoix = String(corps?.voice?.name ?? '');
   // Les voix féminines du site (l'étudiante des podcasts) -> voix de femme ; tout le reste -> Socrate.
   const femme = /Aoede|Kore|Leda|Zephyr|Callirrhoe|Autonoe|Despina|Erinome|Laomedeia|Pulcherrima|Vindemiatrix|Achernar|Gacrux|Sulafat/i.test(nomVoix);
-  // Socrate : d'abord la voix naturelle (Qwen3-TTS) ; si elle ne répond pas, Piper prend le relais.
-  if (VOIX_LOCALE && !femme && texte.trim()) {
-    const audio = await voixNaturelle(texte);
+  // D'abord la voix naturelle (Qwen3-TTS : Socrate / l'étudiante) ; si elle ne répond pas, Piper prend le relais.
+  if (VOIX_LOCALE && texte.trim()) {
+    const audio = await voixNaturelle(texte, femme);
     if (audio) return new Response(JSON.stringify({ audioContent: audio }), { status: 200, headers: { 'Content-Type': 'application/json' } });
   }
   try {
