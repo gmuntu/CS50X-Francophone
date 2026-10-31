@@ -18,7 +18,9 @@ bash scripts/poste-mac/installer-voix.sh
 - Pour une meilleure reconnaissance du micro : `WHISPER_TAILLE=small bash scripts/poste-mac/installer-voix.sh` (470 Mo au lieu de 148).
 - À la fin, le script affiche **trois lignes à ajouter dans `.env.local`**, puis il faut reconstruire le site (`npm run build`) et le relancer.
 
-Le serveur de voix démarre ensuite tout seul à chaque ouverture de session. Il **n'écoute que le Mac lui-même** (`127.0.0.1:8766`), fabrique une voix à la fois, refuse les textes de plus de 2 000 caractères et n'écrit aucun texte d'élève dans ses journaux.
+Le serveur de voix démarre ensuite tout seul à chaque ouverture de session. Il **n'écoute que le Mac lui-même** (`127.0.0.1:8766`), n'accepte que des demandes JSON adressées à cette adresse, fabrique une voix à la fois (réponse « occupé » après 30 s d'attente), refuse les textes de plus de 2 000 caractères et n'écrit aucun texte d'élève dans ses journaux.
+
+Les téléchargements sont contrôlés : versions Python figées (`requirements-voix.txt`), modèle de voix figé à une version précise, et empreinte SHA-256 du modèle Whisper vérifiée (un fichier abîmé ou modifié est refusé).
 
 ## Vérifier
 
