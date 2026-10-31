@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Mic, MicOff, Loader2, Volume2, AlertTriangle } from 'lucide-react';
 import { useGeminiLive } from '@/hooks/useGeminiLive';
-import { detecterMode, demanderSocrateLocal, pcm16VersWav, ORDINATEUR_LOCAL, type ModeSocrate } from '@/lib/socrate-local';
+import { detecterMode, demanderSocrateLocal, demanderSocrateSite, pcm16VersWav, ORDINATEUR_LOCAL, type ModeSocrate } from '@/lib/socrate-local';
 
 interface Props {
   moduleId: number;
@@ -75,7 +75,7 @@ export default function VoiceTutor({ moduleId, onActive, context: given, systemP
     : status === 'error' ? 'bg-amber-600 hover:bg-amber-700'
     : 'bg-primary hover:bg-primary/90';
 
-  if (mode !== 'en-ligne') return <SocrateLocal mode={mode} context={context} onActive={onActive} />;
+  if (mode !== 'en-ligne') return <SocrateLocal mode={mode} context={context} moduleId={moduleId} onActive={onActive} />;
 
   return (
     <div className="flex flex-col gap-2 p-4 rounded-2xl border border-border/80 bg-card">
@@ -105,7 +105,7 @@ export default function VoiceTutor({ moduleId, onActive, context: given, systemP
 // ---------------------------------------------------------------------------
 // Socrate vocal sur l'ordinateur SavoirIA (sans Internet) : appuyer pour parler,
 // appuyer encore pour envoyer ; Socrate répond phrase par phrase, à voix haute.
-function SocrateLocal({ mode, context, onActive }: { mode: ModeSocrate; context: string; onActive?: () => void }) {
+function SocrateLocal({ mode, context, moduleId, onActive }: { mode: ModeSocrate; context: string; moduleId: number; onActive?: () => void }) {
   const [etat, setEtat] = useState<'idle' | 'listening' | 'thinking' | 'speaking'>('idle');
   const [question, setQuestion] = useState('');
   const [reponse, setReponse] = useState('');
@@ -142,8 +142,9 @@ function SocrateLocal({ mode, context, onActive }: { mode: ModeSocrate; context:
     setEtat('thinking'); setQuestion(''); setReponse('');
     let file = Promise.resolve();
     try {
-      await demanderSocrateLocal(
-        { audio: audioWav, contexte: context },
+      // Sur l'ordinateur SavoirIA : le site lui-même (Whisper + Gemma + voix) ; sinon le petit serveur vocal local.
+      await (ORDINATEUR_LOCAL ? demanderSocrateSite : demanderSocrateLocal)(
+        { audio: audioWav, contexte: context, moduleId },
         (q) => setQuestion(q),
         (phrase, audio) => {
           setReponse((r) => (r ? `${r} ${phrase}` : phrase));
@@ -171,7 +172,8 @@ function SocrateLocal({ mode, context, onActive }: { mode: ModeSocrate; context:
         catch { setReponse("Je n'ai pas bien entendu. Réessaie."); setEtat('idle'); }
       };
       rec.current = r; r.start(); setEtat('listening'); onActive?.();
-      setTimeout(() => rec.current === r && r.stop(), 30000);
+      // 20 s au plus sur le poste : la route /api/stt refuse les enregistrements plus longs.
+      setTimeout(() => rec.current === r && r.stop(), ORDINATEUR_LOCAL ? 20000 : 30000);
     } catch {
       setReponse("Impossible d'accéder au micro de cet ordinateur.");
     }

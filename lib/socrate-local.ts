@@ -49,6 +49,70 @@ export function pcm16VersWav(pcmB64: string, taux = 16000): string {
 }
 
 /**
+ * Sur l'ordinateur SavoirIA, le site a déjà Whisper, Gemma et la voix de Socrate :
+ * on passe par ses routes (micro -> /api/stt, réponse -> /api/tutor, voix -> /api/speech).
+ * Marche aussi depuis un autre appareil relié au poste par le Wi-Fi.
+ */
+export async function demanderSocrateSite(
+  corps: { audio: string; contexte?: string; moduleId?: number },
+  surQuestion: (texte: string) => void,
+  surPhrase: (texte: string, audioB64: string) => void,
+): Promise<void> {
+  const stt = await fetch('/api/stt', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ audio: corps.audio, format: 'pcm16' }),
+  });
+  const question = String((await stt.json().catch(() => ({})))?.transcript ?? '').trim();
+  if (!stt.ok) throw new Error('Reconnaissance vocale indisponible');
+  surQuestion(question);
+  if (!question) { surPhrase("Je n'ai pas bien entendu. Réessaie en parlant un peu plus près du micro.", ''); return; }
+
+  const contexte = (corps.contexte ?? '').slice(0, 2500);
+  const r = await fetch('/api/tutor', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      moduleId: corps.moduleId,
+      messages: [{ role: 'user', content: contexte
+        ? `(Question posée à voix haute : réponds en 2 à 4 phrases courtes, sans code ni liste.)\nContexte : ${contexte}\n\nQuestion : ${question}`
+        : `(Question posée à voix haute : réponds en 2 à 4 phrases courtes, sans code ni liste.)\n${question}` }],
+    }),
+  });
+  if (!r.ok || !r.body) throw new Error('Socrate indisponible');
+
+  // Chaque phrase complète est lue dès qu'elle arrive, dans l'ordre.
+  const dire = async (phrase: string) => {
+    const texte = phrase.replace(/[*_#`>]/g, '').trim();
+    if (!texte) return;
+    let audio = '';
+    try {
+      const s = await fetch('/api/speech', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: texte }) });
+      audio = String((await s.json().catch(() => ({})))?.audioContent ?? '');
+    } catch {}
+    surPhrase(texte, audio);
+  };
+  const lecteur = r.body.getReader();
+  const dec = new TextDecoder();
+  let reste = '';
+  let texte = '';
+  for (;;) {
+    const { value, done } = await lecteur.read();
+    if (done) break;
+    reste += dec.decode(value, { stream: true });
+    const lignes = reste.split('\n');
+    reste = lignes.pop() ?? '';
+    for (const l of lignes) {
+      if (!l.startsWith('data: ') || l.includes('[DONE]')) continue;
+      try { texte += JSON.parse(l.slice(6))?.choices?.[0]?.delta?.content ?? ''; } catch {}
+    }
+    const fin = texte.search(/[.!?…](\s|$)(?![\s\S]*[.!?…](\s|$))/);
+    if (fin >= 0) { const phrases = texte.slice(0, fin + 1); texte = texte.slice(fin + 1); await dire(phrases); }
+  }
+  await dire(texte);
+}
+
+/**
  * Pose une question au Socrate local. La réponse arrive phrase par phrase,
  * chacune avec son audio (voix de Socrate) prêt à jouer.
  */
