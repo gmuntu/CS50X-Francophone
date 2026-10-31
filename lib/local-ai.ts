@@ -15,6 +15,8 @@ const DOSSIER = process.env.SAVOIRIA_DOSSIER || '/opt/savoiria';
 const OLLAMA = process.env.OLLAMA_URL || 'http://127.0.0.1:11434';
 const MODELE = process.env.MODELE || 'gemma4:e2b';
 const PIPER = `${DOSSIER}/piper-venv/bin/piper`;
+// Voix naturelle (Qwen3-TTS) servie sur cet ordinateur, si elle est installée. Sinon : Piper.
+const VOIX_LOCALE = process.env.VOIX_LOCALE_URL?.trim().replace(/\/$/, '') || '';
 const VOIX_HOMME = `${DOSSIER}/voix/socrate.onnx`;
 const VOIX_FEMME = `${DOSSIER}/voix/etudiante.onnx`;
 const WHISPER = `${DOSSIER}/whisper/build/bin/whisper-cli`;
@@ -150,11 +152,33 @@ async function piper(texte: string, femme: boolean): Promise<string> {
   }
 }
 
+/** Voix naturelle (serveur Qwen3-TTS de cet ordinateur) -> WAV en base64, ou null si indisponible. */
+async function voixNaturelle(texte: string): Promise<string | null> {
+  try {
+    const r = await fetch(`${VOIX_LOCALE}/tts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ texte: texte.slice(0, 2000) }),
+      signal: AbortSignal.timeout(90_000),
+    });
+    if (!r.ok) return null;
+    const audio = Buffer.from(await r.arrayBuffer());
+    return audio.length > 44 ? audio.toString('base64') : null;
+  } catch {
+    return null;
+  }
+}
+
 async function synthese(corps: any): Promise<Response> {
   const texte = String(corps?.input?.text ?? corps?.input?.ssml ?? '').replace(/<[^>]+>/g, ' ').slice(0, 4000);
   const nomVoix = String(corps?.voice?.name ?? '');
   // Les voix féminines du site (l'étudiante des podcasts) -> voix de femme ; tout le reste -> Socrate.
   const femme = /Aoede|Kore|Leda|Zephyr|Callirrhoe|Autonoe|Despina|Erinome|Laomedeia|Pulcherrima|Vindemiatrix|Achernar|Gacrux|Sulafat/i.test(nomVoix);
+  // Socrate : d'abord la voix naturelle (Qwen3-TTS) ; si elle ne répond pas, Piper prend le relais.
+  if (VOIX_LOCALE && !femme && texte.trim()) {
+    const audio = await voixNaturelle(texte);
+    if (audio) return new Response(JSON.stringify({ audioContent: audio }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  }
   try {
     const audio = await piper(texte, femme);
     return new Response(JSON.stringify({ audioContent: audio }), { status: 200, headers: { 'Content-Type': 'application/json' } });

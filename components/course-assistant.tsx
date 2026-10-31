@@ -272,7 +272,8 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
     currentAudioRef.current = audio;
     audio.onended = () => resolve();
     audio.onerror = () => reject(new Error('Erreur de lecture audio'));
-    audio.src = 'data:audio/mpeg;base64,' + b64;
+    // Hors ligne, la voix locale renvoie du WAV (« RIFF » = « UklGR » en base64) ; en ligne, du MP3.
+    audio.src = (b64.startsWith('UklGR') ? 'data:audio/wav;base64,' : 'data:audio/mpeg;base64,') + b64;
     audio.play().catch(reject);
   });
 
