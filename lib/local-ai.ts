@@ -110,22 +110,28 @@ async function gemmaFlux(corps: any): Promise<Response> {
   const enc = new TextEncoder();
   let reste = '';
   // Ollama envoie une ligne JSON par morceau ; on la ré-émet au format SSE de Gemini.
+  // On lit jusqu'à avoir du texte à transmettre ou la fin : un pull qui ne transmet rien n'est
+  // jamais rappelé, et la réponse resterait ouverte (dernier morceau d'Ollama : contenu vide).
   const flux = new ReadableStream({
     async pull(ctrl) {
-      let morceau;
-      try { morceau = await lecteur.read(); } catch { ctrl.close(); return; } // délai dépassé en cours de route
-      const { value, done } = morceau;
-      if (done) { ctrl.close(); return; }
-      reste += dec.decode(value, { stream: true });
-      const lignes = reste.split('\n');
-      reste = lignes.pop() ?? '';
-      for (const l of lignes) {
-        if (!l.trim()) continue;
-        try {
-          const m = JSON.parse(l);
-          const t = m?.message?.content ?? '';
-          if (t) ctrl.enqueue(enc.encode(`data: ${JSON.stringify(enGemini(t))}\n\n`));
-        } catch {}
+      for (;;) {
+        let morceau;
+        try { morceau = await lecteur.read(); } catch { ctrl.close(); return; } // délai dépassé en cours de route
+        const { value, done } = morceau;
+        if (done) { ctrl.close(); return; }
+        reste += dec.decode(value, { stream: true });
+        const lignes = reste.split('\n');
+        reste = lignes.pop() ?? '';
+        let transmis = false;
+        for (const l of lignes) {
+          if (!l.trim()) continue;
+          try {
+            const m = JSON.parse(l);
+            const t = m?.message?.content ?? '';
+            if (t) { ctrl.enqueue(enc.encode(`data: ${JSON.stringify(enGemini(t))}\n\n`)); transmis = true; }
+          } catch {}
+        }
+        if (transmis) return;
       }
     },
   });
