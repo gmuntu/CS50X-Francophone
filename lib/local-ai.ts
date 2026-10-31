@@ -21,6 +21,7 @@ const VOIX_HOMME = `${DOSSIER}/voix/socrate.onnx`;
 const VOIX_FEMME = `${DOSSIER}/voix/etudiante.onnx`;
 const WHISPER = `${DOSSIER}/whisper/build/bin/whisper-cli`;
 const WHISPER_MODELE = process.env.WHISPER_MODELE || `${DOSSIER}/whisper/models/ggml-base.bin`;
+const VOCABULAIRE_COURS = 'Socrate, cours CS50 en français : boucle while, boucle for, printf, variable, fonction, tableau, pointeur, langage C, Python, SQL.';
 
 type Part = { text?: string };
 type Content = { role?: string; parts?: Part[] };
@@ -207,7 +208,9 @@ async function reconnaissance(corps: any): Promise<Response> {
     const wav = brut.subarray(0, 4).toString() === 'RIFF' ? brut : pcmVersWav(brut, corps?.config?.sampleRateHertz || 16000);
     const fichier = path.join(dossier, 'q.wav');
     await writeFile(fichier, wav);
-    const texte = (await executer(WHISPER, ['-m', WHISPER_MODELE, '-l', 'fr', '-nt', '-np', '-f', fichier]))
+    // -ng : processeur seul (sur Mac, préparer la puce graphique prenait ~20 s à chaque question) ;
+    // --prompt : vocabulaire du cours, pour que « while », « printf »… soient bien reconnus.
+    const texte = (await executer(WHISPER, ['-m', WHISPER_MODELE, '-l', 'fr', '-nt', '-np', '-ng', '--prompt', VOCABULAIRE_COURS, '-f', fichier]))
       .split(/\s+/).join(' ').trim();
     return new Response(JSON.stringify({ results: texte ? [{ alternatives: [{ transcript: texte }] }] : [] }), {
       status: 200, headers: { 'Content-Type': 'application/json' },
