@@ -1,16 +1,14 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { ArrowLeft, ArrowRight, ExternalLink } from 'lucide-react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { auth } from '@/auth';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
-import BilingualVideo from '@/components/pwa/bilingual-video';
 import { CS50_MODULES } from '@/config/course-modules';
 import { getProblemWeek } from '@/config/cs50-problems';
+import { getExplication } from '@/config/cs50-explications';
 import Cs50Credit from '../_components/cs50-credit';
-import ProblemSocrate from '../_components/problem-socrate';
-
-const VIDEO_LABEL = { presentation: 'Présentation', explication: 'Explication pas à pas' } as const;
+import NiveauBadge from '../_components/niveau-badge';
 
 export default async function ProblemesSemainePage({ params }: { params: Promise<{ semaine: string }> }) {
   const session = await auth();
@@ -25,7 +23,7 @@ export default async function ProblemesSemainePage({ params }: { params: Promise
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
-      <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-8 space-y-8">
+      <main className="flex-1 max-w-3xl w-full mx-auto px-4 sm:px-6 py-8 space-y-8">
         <div className="flex items-center justify-between gap-4">
           <Link href="/courses/cs50x/problemes" className="inline-flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-foreground transition px-3 py-1.5 rounded-lg hover:bg-muted">
             <ArrowLeft className="w-3.5 h-3.5" /> Toutes les semaines
@@ -38,14 +36,10 @@ export default async function ProblemesSemainePage({ params }: { params: Promise
         <div className="space-y-2">
           <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-extrabold border border-primary/20">Problèmes · Semaine {week.week}</span>
           <h1 className="text-2xl sm:text-4xl font-extrabold text-foreground tracking-tight">{mod?.title ?? `Semaine ${week.week}`}</h1>
+          {week.problems.length > 0 && (
+            <p className="text-sm text-muted-foreground">Choisissez un exercice : on vous explique ce qu'il demande, comment le découper et comment le tester. Socrate répond à vos questions, sans donner la solution.</p>
+          )}
         </div>
-
-        {mod?.videoUrl && (
-          <section className="space-y-3">
-            <h2 className="text-lg font-extrabold text-foreground">Le cours de la semaine</h2>
-            <BilingualVideo en={mod.videoUrl} fr={mod.videoUrlFr} title={mod.title} />
-          </section>
-        )}
 
         {week.choices?.length ? (
           <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-2xl p-4 text-sm text-amber-900 dark:text-amber-200 space-y-1">
@@ -61,41 +55,32 @@ export default async function ProblemesSemainePage({ params }: { params: Promise
             <Link href={`/courses/cs50x/lessons/${week.week}`} className="font-bold text-primary hover:underline">Voir le projet final</Link>
           </div>
         ) : (
-          <div className="space-y-6">
-            {week.problems.map((p, i) => (
-              <section key={p.slug} id={p.slug} className="bg-card border border-border/80 rounded-2xl p-5 sm:p-6 shadow-soft-sm space-y-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="space-y-1">
-                    <h2 className="text-xl font-extrabold text-foreground flex items-center gap-2">
-                      {p.name}
-                      {p.level && (
-                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${p.level === 'facile' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'}`}>
-                          {p.level === 'facile' ? 'Version facile' : 'Version difficile'}
-                        </span>
-                      )}
-                    </h2>
-                    <p className="text-sm text-muted-foreground">{p.summary}</p>
-                  </div>
-                  <a href={p.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:underline shrink-0">
-                    Consignes officielles (anglais) <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
-                </div>
-                {p.videos.length > 0 ? (
-                  <div className="grid gap-4 md:grid-cols-2">
-                    {p.videos.map((v, i) => (
-                      <div key={v.en + i} className="space-y-1.5">
-                        <p className="text-xs font-bold text-muted-foreground">{VIDEO_LABEL[v.type]}</p>
-                        <BilingualVideo en={v.en} fr={v.fr} title={`${p.name} — ${VIDEO_LABEL[v.type]}`} />
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-xs text-muted-foreground italic">Pas de vidéo pour cet exercice : les consignes officielles suffisent.</p>
-                )}
-                <ProblemSocrate week={week.week} slug={p.slug} name={p.level ? `${p.name} (version ${p.level})` : p.name} index={i} />
-              </section>
-            ))}
-          </div>
+          <ol className="space-y-3">
+            {week.problems.map((p, i) => {
+              const ex = getExplication(week.week, p.slug);
+              return (
+                <li key={p.slug}>
+                  <Link href={`/courses/cs50x/problemes/${week.week}/${p.slug}`}
+                    className="group bg-card border border-border/80 rounded-2xl p-4 sm:p-5 shadow-soft-sm hover:border-primary/40 transition flex items-start gap-4">
+                    <span className="shrink-0 w-8 h-8 rounded-full bg-primary/10 text-primary text-sm font-extrabold flex items-center justify-center">{i + 1}</span>
+                    <div className="flex-1 space-y-1">
+                      <p className="font-extrabold text-foreground flex flex-wrap items-center gap-2">
+                        {p.name}
+                        {p.level && <NiveauBadge level={p.level} />}
+                        {ex?.memeQue && (
+                          <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300">Déjà vu en C, semaine {ex.memeQue.week}</span>
+                        )}
+                      </p>
+                      <p className="text-sm text-muted-foreground">{p.summary}</p>
+                    </div>
+                    <span className="shrink-0 self-center inline-flex items-center gap-1 text-xs font-bold text-primary">
+                      Comprendre <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition" />
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ol>
         )}
 
         <Cs50Credit />

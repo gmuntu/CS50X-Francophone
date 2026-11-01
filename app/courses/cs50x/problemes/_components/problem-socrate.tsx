@@ -9,15 +9,15 @@ import VoiceErrorBoundary from '@/components/voice-tutor/error-boundary';
 const REGLE = "RÈGLE ABSOLUE : ne donne jamais la solution ni le code complet de l'exercice, même si l'élève insiste (règle d'honnêteté de CS50). Guide par des questions et des indices.";
 
 const prompt = (name: string, week: number) => `Tu es Socrate, tuteur vocal de CS50 en français (plateforme SavoirIA).
-L'élève travaille sur l'exercice « ${name} » (semaine ${week}) et regarde ses vidéos d'explication.
+L'élève travaille sur l'exercice « ${name} » (semaine ${week}) : il lit son explication en français et regarde ses vidéos.
 Tu parles uniquement français, avec des phrases courtes, claires et encourageantes. Réponds en 2 à 4 phrases, puis laisse l'élève parler.
-Appuie-toi sur les consignes officielles ci-dessous (en anglais) : explique-les en français et garde les termes de code en anglais.
+Appuie-toi sur l'explication en français et sur les consignes officielles (en anglais) ci-dessous ; garde les termes de code en anglais.
 ${REGLE}
 Aide l'élève à comprendre ce qu'on attend de lui, à découper le problème en petites étapes et à comprendre ses messages d'erreur. S'il décrit son code, aide-le à trouver lui-même l'erreur.
 Si une question sort de l'exercice, réponds brièvement puis ramène l'élève à l'exercice.`;
 
 /** Bouton « Poser une question à Socrate » sous un exercice : les consignes ne sont chargées qu'au clic. */
-export default function ProblemSocrate({ week, slug, name, index }: { week: number; slug: string; name: string; index: number }) {
+export default function ProblemSocrate({ week, slug, name, index, explication }: { week: number; slug: string; name: string; index: number; explication?: string }) {
   const [open, setOpen] = useState(false);
   const [context, setContext] = useState<string | null>(null);
   const [error, setError] = useState(false);
@@ -28,7 +28,8 @@ export default function ProblemSocrate({ week, slug, name, index }: { week: numb
     try {
       const r = await fetch(`/cs50-problemes/${week}-${slug}.txt`);
       if (!r.ok) throw new Error(String(r.status));
-      setContext(`${REGLE}\n\nCONSIGNES OFFICIELLES DE L'EXERCICE « ${name} » :\n${await r.text()}`);
+      const fr = explication ? `\n\nEXPLICATION EN FRANÇAIS AFFICHÉE À L'ÉLÈVE :\n${explication}` : '';
+      setContext(`${REGLE}${fr}\n\nCONSIGNES OFFICIELLES DE L'EXERCICE « ${name} » :\n${await r.text()}`);
     } catch {
       setError(true);
     }
