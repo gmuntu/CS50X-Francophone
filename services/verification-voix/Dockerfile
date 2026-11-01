@@ -1,5 +1,6 @@
 # Service de vérification vocale SavoirIA : une boîte isolée, sans données, sans Internet une fois construite.
-FROM python:3.12-slim-bookworm
+# Image officielle figée par son empreinte (python:3.12-slim-bookworm).
+FROM python:3.12-slim-bookworm@sha256:e697c81897302a4c4333bade000d98038fbb21eb064f8ee1fd42d02ebcd9d337
 
 # Modèles téléchargés une seule fois, à la construction, et vérifiés par leur empreinte SHA-256.
 ARG VOIX_URL=https://github.com/k2-fsa/sherpa-onnx/releases/download/speaker-recongition-models/3dspeaker_speech_eres2net_base_sv_zh-cn_3dspeaker_16k.onnx

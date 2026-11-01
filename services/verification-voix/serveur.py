@@ -27,7 +27,10 @@ SEUIL_MEME = float(os.environ.get("SEUIL_MEME", "0.50"))
 SEUIL_DOUTE = float(os.environ.get("SEUIL_DOUTE", "0.35"))
 
 CORPS_MAX = 1_500_000      # octets par demande
-DUREE_MIN, DUREE_MAX = 1.0, 20.0  # secondes d'audio
+DUREE_MIN, DUREE_MAX = 1.0, 20.0  # secondes d'audio (signature)
+DEFI_MAX = 10.0            # secondes d'audio pour un défi : juste le temps de lire les chiffres
+MOTS_EN_TROP = 2           # mots tolérés en plus des chiffres (« euh », « et »…)
+EN_ATTENTE_MAX = 4         # demandes acceptées en même temps ; au-delà, « occupé » tout de suite
 DIMENSION = 512
 
 if len(CLE) < 32:
@@ -40,6 +43,8 @@ oreilles = sherpa_onnx.OfflineRecognizer.from_whisper(
     tokens=f"{MODELES}/whisper-tokens.txt", language="fr", task="transcribe", num_threads=FILS)
 assert voix.dim == DIMENSION
 verrou = threading.Lock()
+compteur = threading.Lock()
+en_cours = 0
 
 
 class Refus(Exception):
@@ -47,7 +52,7 @@ class Refus(Exception):
         self.code, self.message = code, message
 
 
-def lire_wav(b64: str) -> tuple[np.ndarray, int]:
+def lire_wav(b64: str, duree_max: float = DUREE_MAX) -> tuple[np.ndarray, int]:
     """WAV PCM 16 bits mono (8 à 48 kHz) -> échantillons entre -1 et 1."""
     try:
         brut = base64.b64decode(b64, validate=True)
@@ -55,7 +60,7 @@ def lire_wav(b64: str) -> tuple[np.ndarray, int]:
             if w.getnchannels() != 1 or w.getsampwidth() != 2 or not 8000 <= w.getframerate() <= 48000:
                 raise Refus(400, "audio : WAV mono 16 bits attendu")
             taux = w.getframerate()
-            if w.getnframes() > DUREE_MAX * taux:
+            if w.getnframes() > duree_max * taux:
                 raise Refus(400, "audio trop long")
             donnees = w.readframes(w.getnframes())
     except Refus:
@@ -82,17 +87,30 @@ MOTS = {"zéro": "0", "zero": "0", "un": "1", "une": "1", "deux": "2", "trois": 
         "cinq": "5", "six": "6", "sept": "7", "huit": "8", "neuf": "9"}
 
 
-def chiffres_entendus(a: np.ndarray, taux: int) -> str:
-    """Ce que la personne a lu, réduit aux chiffres : « sept, trois » ou « 7 3 » -> « 73 »."""
+def chiffres_entendus(a: np.ndarray, taux: int) -> tuple[str, int]:
+    """Ce que la personne a lu, réduit aux chiffres (« sept, trois » ou « 7 3 » -> « 73 »),
+    et le nombre de mots qui ne sont pas des chiffres."""
     s = oreilles.create_stream()
     s.accept_waveform(taux, a)
     oreilles.decode_stream(s)
-    texte = s.result.text.lower()
-    return "".join(MOTS.get(m, m if m.isdigit() else "") for m in re.findall(r"[a-zéèû]+|\d+", texte))
+    mots = re.findall(r"[a-zéèûàç]+|\d+", s.result.text.lower())
+    chiffres = "".join(MOTS.get(m, m if m.isdigit() else "") for m in mots)
+    return chiffres, sum(1 for m in mots if m not in MOTS and not m.isdigit())
+
+
+def score_voix(ref: np.ndarray, a: np.ndarray, taux: int) -> float:
+    """Ressemblance avec la signature, sur tout l'enregistrement ET sur chaque moitié :
+    un enregistrement où deux voix se suivent (vieil enregistrement + tricheur) échoue sur une moitié."""
+    scores = [float(ref @ signature_de(a, taux))]
+    if len(a) >= 3 * taux:
+        m = len(a) // 2
+        scores += [float(ref @ signature_de(a[:m], taux)), float(ref @ signature_de(a[m:], taux))]
+    return min(scores)
 
 
 def lire_signature(v) -> np.ndarray:
-    if not isinstance(v, list) or len(v) != DIMENSION or not all(isinstance(x, (int, float)) and math.isfinite(x) for x in v):
+    if not isinstance(v, list) or len(v) != DIMENSION or not all(
+            isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(x) and -10 <= x <= 10 for x in v):
         raise Refus(400, "signature invalide")
     e = np.array(v, dtype=np.float32)
     return e / (np.linalg.norm(e) or 1.0)
@@ -117,11 +135,11 @@ def traiter(chemin: str, d: dict) -> dict:
         if not re.fullmatch(r"\d{4,10}", attendu):
             raise Refus(400, "chiffres invalides")
         ref = lire_signature(d.get("signature"))
-        a, taux = lire_wav(str(d.get("audio", "")))
-        e, lus = avec_verrou(lambda: (signature_de(a, taux), chiffres_entendus(a, taux)))
-        score = float(ref @ e)
+        a, taux = lire_wav(str(d.get("audio", "")), DEFI_MAX)
+        score, (lus, en_trop) = avec_verrou(lambda: (score_voix(ref, a, taux), chiffres_entendus(a, taux)))
         return {
-            "chiffres_ok": lus == attendu,
+            # Les bons chiffres, et presque rien d'autre : pas de long enregistrement ajouté avant ou après.
+            "chiffres_ok": lus == attendu and en_trop <= MOTS_EN_TROP,
             "chiffres_entendus": lus[:20],
             "score": round(score, 3),
             "voix": "meme" if score >= SEUIL_MEME else "doute" if score >= SEUIL_DOUTE else "differente",
@@ -148,9 +166,21 @@ class Gestion(BaseHTTPRequestHandler):
         self._repondre(200, "ok") if self.path == "/sante" else self._repondre(404, "introuvable")
 
     def do_POST(self):
-        jeton = (self.headers.get("Authorization") or "").removeprefix("Bearer ")
-        if not hmac.compare_digest(jeton.encode(), CLE.encode()):
+        global en_cours
+        if not hmac.compare_digest((self.headers.get("Authorization") or "").encode(), f"Bearer {CLE}".encode()):
             return self._repondre(401, {"erreur": "cle"})
+        # Trop de demandes en même temps : « occupé » tout de suite, avant de lire l'audio en mémoire.
+        with compteur:
+            if en_cours >= EN_ATTENTE_MAX:
+                return self._repondre(503, {"erreur": "occupe"})
+            en_cours += 1
+        try:
+            self._traiter_post()
+        finally:
+            with compteur:
+                en_cours -= 1
+
+    def _traiter_post(self):
         if not (self.headers.get("Content-Type") or "").startswith("application/json"):
             return self._repondre(415, {"erreur": "json attendu"})
         try:

@@ -2,7 +2,7 @@
 #   <voix>-0.wav, <voix>-2.wav, <voix>-3.wav : 3 phrases pour la signature
 #   <voix>-1.wav : « sept, trois, neuf, un, quatre, huit »   <voix>-4.wav : « deux, cinq, zéro, six, sept, un »
 # Utilisation : CLE_SERVICE=... python -I tester.py <dossier> [adresse du service]
-import base64, glob, json, os, sys, time, urllib.error, urllib.request
+import base64, glob, io, json, os, sys, time, urllib.error, urllib.request, wave
 from concurrent.futures import ThreadPoolExecutor
 
 dossier = sys.argv[1]
@@ -59,8 +59,21 @@ print("Mauvaise clé :", appel("/verifier", {"audio": audio(f"{v}-1"), "signatur
 print("Signature abîmée :", appel("/verifier", {"audio": audio(f"{v}-1"), "signature": [1.0] * 10, "chiffres": "739148"}))
 print("Audio illisible :", appel("/signature", {"audio": base64.b64encode(b"pas un son").decode()}))
 
+# Tricheur : un vieil enregistrement du vrai étudiant, suivi des chiffres lus par quelqu'un d'autre.
+def coller(*noms):
+    sortie = io.BytesIO()
+    with wave.open(sortie, "wb") as o:
+        for i, n in enumerate(noms):
+            with wave.open(f"{dossier}/{n}.wav") as w:
+                if i == 0:
+                    o.setparams(w.getparams())
+                o.writeframes(w.readframes(w.getnframes()))
+    return base64.b64encode(sortie.getvalue()).decode()
+autre = voix[1]
+print("Vieil enregistrement + chiffres lus par un autre :", appel("/verifier", {"audio": coller(f"{v}-0", f"{autre}-1"), "signature": signatures[v], "chiffres": "739148"}))
+
 # Dix étudiants en même temps : ils attendent leur tour, le service ne s'effondre pas.
 t = time.time()
 with ThreadPoolExecutor(10) as p:
     codes = list(p.map(lambda _: appel("/verifier", {"audio": audio(f"{v}-1"), "signature": signatures[v], "chiffres": "739148"})[0], range(10)))
-print(f"10 demandes simultanées : codes {sorted(set(codes))}, toutes traitées en {time.time() - t:.1f} s")
+print(f"10 demandes simultanées : {codes.count(200)} traitées, {codes.count(503)} « occupé » (à réessayer), en {time.time() - t:.1f} s")
