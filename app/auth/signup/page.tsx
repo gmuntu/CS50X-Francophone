@@ -7,13 +7,12 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { BrandMark, BrandName } from '@/components/brand-logo';
 import {
-  ArrowLeft, ArrowRight, BookOpen, Camera, Check, CheckCircle2,
+  ArrowLeft, ArrowRight, BookOpen, Check,
   Shield, ShieldCheck, AlertTriangle, X, Loader2, RefreshCw,
   User, GraduationCap, CreditCard, Lock, Sparkles, FolderCheck,
   Building2, Phone, Calendar, Globe, ZoomIn
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import FacialCaptureModal from '@/components/facial-capture-modal';
 import GoogleAuthModal from '@/components/google-auth-modal';
 import {
   AFRICAN_COUNTRIES, CountryOption, generateDossierNumber,
@@ -45,7 +44,6 @@ export default function SignupPage() {
     dialCode: defaultCountry.dialCode,
     phone: '',
     dossierNumber: generateDossierNumber(defaultCountry.prefixDossier),
-    photoUrl: '',
     studentType: 'LIBRE' as 'LIBRE' | 'UNIVERSITAIRE',
     university: PARTNER_UNIVERSITIES[0],
     customUniversity: '',
@@ -58,7 +56,6 @@ export default function SignupPage() {
   });
 
   // Modales
-  const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
   const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
   const [providersStatus, setProvidersStatus] = useState<{ hasGoogleOAuth: boolean; hasGithubOAuth: boolean }>({
     hasGoogleOAuth: false,
@@ -144,10 +141,6 @@ export default function SignupPage() {
     }
 
     if (step === 2) {
-      if (!formData.photoUrl) {
-        stepCauses.push("Reconnaissance faciale requise : Veuillez capturer votre photo biométrique pour certifier l'absence de plagiat.");
-        localFieldErrors.photoUrl = "Capture faciale obligatoire.";
-      }
       if (!formData.academicHonorCodeAccepted) {
         stepCauses.push("Charte anti-plagiat non acceptée : Vous devez souscrire à la charte d'intégrité académique pour continuer.");
         localFieldErrors.academicHonorCodeAccepted = "Signature de la charte requise.";
@@ -243,7 +236,6 @@ export default function SignupPage() {
           dialCode: formData.dialCode,
           phone: `${formData.dialCode} ${formData.phone.trim()}`,
           dossierNumber: formData.dossierNumber,
-          photoUrl: formData.photoUrl || null,
           partnerCode: formData.studentType === 'UNIVERSITAIRE' ? formData.partnerCode.trim() : undefined,
           studentType: formData.studentType,
           university: resolvedUniversity,
@@ -306,7 +298,7 @@ export default function SignupPage() {
 
   const stepsInfo = [
     { num: 1, title: 'Identité', subtitle: 'Dossier académique', icon: User },
-    { num: 2, title: 'Biométrie', subtitle: 'Sécurité anti-plagiat', icon: ShieldCheck },
+    { num: 2, title: 'Intégrité', subtitle: 'Charte et identité', icon: ShieldCheck },
     { num: 3, title: 'Scolarité', subtitle: 'Financement & Statut', icon: GraduationCap },
     { num: 4, title: 'Accès', subtitle: 'Identifiants & Validation', icon: Lock },
   ];
@@ -564,7 +556,7 @@ export default function SignupPage() {
             )}
 
             {/* ========================================================
-                ÉTAPE 2 : BIOMÉTRIE & CHARTE ANTI-PLAGIAT
+                ÉTAPE 2 : CHARTE D'INTÉGRITÉ ET VÉRIFICATION D'IDENTITÉ
                 ======================================================== */}
             {currentStep === 2 && (
               <motion.div
@@ -580,75 +572,26 @@ export default function SignupPage() {
                     Étape 2 sur 4
                   </span>
                   <h2 className="text-xl sm:text-2xl font-extrabold text-foreground mt-2 tracking-tight">
-                    Reconnaissance Faciale & Mesures Anti-Plagiat
+                    Charte d'intégrité et vérification d'identité
                   </h2>
                   <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-                    Dispositif officiel d'authentification biométrique garantissant l'intégrité académique et l'originalité des soumissions.
+                    Comment SavoirIA vérifie que c'est bien vous qui rendez vos travaux et passez vos examens.
                   </p>
                 </div>
 
-                {/* Explication Institutionnelle */}
+                {/* Vérification d'identité : expliquée honnêtement, faite après l'inscription */}
                 <div className="p-4 rounded-2xl bg-primary/5 border border-primary/20 flex gap-3 items-start">
                   <ShieldCheck className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                  <p className="text-xs text-foreground/90 leading-relaxed">
-                    <strong className="text-primary font-bold">Sécurité d'identité certifiée :</strong> Votre cliché photographique servira d'empreinte d'identité officielle pour vérifier que les devoirs et examens sont soumis par vous-même, éliminant tout risque de plagiat ou de substitution d'identité.
-                  </p>
-                </div>
-
-                {/* Zone de Capture Photo Biométrique */}
-                <div className="flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-dashed border-border/80 bg-muted/20">
-                  {formData.photoUrl ? (
-                    <div className="flex flex-col items-center gap-4">
-                      <div className="relative w-48 h-48 rounded-2xl overflow-hidden border-2 border-emerald-500 shadow-xl bg-black">
-                        <img
-                          src={formData.photoUrl}
-                          alt="Photo biométrique"
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute top-2 right-2 bg-emerald-600 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow">
-                          <Check className="w-3 h-3" /> Biométrie HD
-                        </div>
-                        <div className="absolute bottom-2 left-2 right-2 bg-black/75 backdrop-blur-md text-white text-[10px] font-mono font-bold px-2 py-0.5 rounded text-center truncate">
-                          {formData.dossierNumber}
-                        </div>
-                      </div>
-
-                      <div className="text-center space-y-1">
-                        <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1">
-                          <CheckCircle2 className="w-4 h-4" /> Photo d'identité biométrique enregistrée
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => setIsPhotoModalOpen(true)}
-                          className="px-4 py-2 rounded-xl text-xs font-bold bg-background border border-border hover:bg-muted text-foreground transition inline-flex items-center gap-1.5 shadow-sm"
-                        >
-                          <RefreshCw className="w-3.5 h-3.5" /> Reprendre la photo
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center space-y-4 max-w-sm">
-                      <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto shadow-inner">
-                        <Camera className="w-8 h-8" />
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-bold text-foreground">Enregistrez votre photo faciale</h3>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Capture directe par webcam (cadrage ovale 1:1, compte à rebours 3s, anti-flou) ou téléphone.
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setIsPhotoModalOpen(true)}
-                        className="px-6 py-3 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs transition shadow-lg shadow-primary/25 inline-flex items-center gap-2"
-                      >
-                        <Camera className="w-4 h-4" /> Déclencher la Reconnaissance Faciale
-                      </button>
-                      {fieldErrors.photoUrl && (
-                        <p className="text-xs text-rose-500 font-bold">{fieldErrors.photoUrl}</p>
-                      )}
-                    </div>
-                  )}
+                  <div className="text-xs text-foreground/90 leading-relaxed space-y-1.5">
+                    <p>
+                      <strong className="text-primary font-bold">Votre empreinte SavoirIA, après l'inscription :</strong> une fois votre compte validé,
+                      vous enregistrerez votre voix (quelques phrases à lire) et une photo de votre visage, avec votre accord.
+                    </p>
+                    <p>
+                      Pour rendre un travail ou passer un examen, vous lirez à voix haute quelques chiffres affichés à l'écran : cela permet de
+                      vérifier que c'est bien vous. En cas de doute, c'est toujours un formateur qui examine, jamais une machine seule qui décide.
+                    </p>
+                  </div>
                 </div>
 
                 {/* Charte d'Intégrité Académique & Engagement Anti-Plagiat */}
@@ -928,17 +871,9 @@ export default function SignupPage() {
                 {/* Synthèse du Dossier Étudiant */}
                 <div className="p-4 rounded-2xl bg-muted/40 border border-border/80 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    {formData.photoUrl ? (
-                      <img
-                        src={formData.photoUrl}
-                        alt="Photo d'identité"
-                        className="w-12 h-12 rounded-xl object-cover border border-emerald-500 shrink-0 shadow-sm"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                        <User className="w-6 h-6" />
-                      </div>
-                    )}
+                    <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                      <User className="w-6 h-6" />
+                    </div>
                     <div>
                       <p className="text-sm font-extrabold text-foreground">
                         {formData.firstName} {formData.lastName}
@@ -1111,19 +1046,6 @@ export default function SignupPage() {
           </p>
         </div>
       </main>
-
-      {/* Modale Webcam & Reconnaissance Faciale */}
-      <FacialCaptureModal
-        isOpen={isPhotoModalOpen}
-        onClose={() => setIsPhotoModalOpen(false)}
-        onCapture={(photo) => {
-          updateField('photoUrl', photo);
-          setIsPhotoModalOpen(false);
-        }}
-        initialPhoto={formData.photoUrl}
-        dossierNumber={formData.dossierNumber}
-        userName={`${formData.firstName} ${formData.lastName}`.trim()}
-      />
 
       {/* Modale Google Auth */}
       <GoogleAuthModal

@@ -73,7 +73,7 @@ export default function DashboardClient({ user }: Props) {
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        {/* Carte d'Étudiant Académique & Biométrie */}
+        {/* Carte d'étudiant */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
@@ -99,7 +99,7 @@ export default function DashboardClient({ user }: Props) {
                 </div>
               )}
               {user.photoUrl && (
-                <span className="absolute bottom-1 right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-card rounded-full" title="Biométrie enregistrée" />
+                <span className="absolute bottom-1 right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-card rounded-full" title="Photo enregistrée" />
               )}
             </div>
 
@@ -131,9 +131,7 @@ export default function DashboardClient({ user }: Props) {
               <div className="flex items-center gap-3 pt-1 text-[11px] text-muted-foreground flex-wrap">
                 <span className="flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400">
                   <ShieldCheck className="w-3.5 h-3.5" />
-                  {user.photoUrl || user.facialVerificationStatus === 'VERIFIED'
-                    ? 'Biométrie certifiée (Anti-plagiat actif)'
-                    : 'Vérification d\'identité'}
+                  {user.facialVerificationStatus === 'VERIFIED' ? 'Identité vérifiée par un formateur' : 'Vérification d\'identité'}
                 </span>
                 {user.email && (
                   <>
