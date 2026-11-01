@@ -1,0 +1,96 @@
+# Essai du service de vérification vocale, avec un dossier d'enregistrements WAV 16 kHz mono :
+#   <voix>-0.wav, <voix>-2.wav, <voix>-3.wav : 3 phrases pour la signature
+#   <voix>-1.wav : « sept, trois, neuf, un, quatre, huit »   <voix>-4.wav : « deux, cinq, zéro, six, sept, un »
+# Utilisation : CLE_SERVICE=... python -I tester.py <dossier> [adresse du service]
+import base64, glob, io, json, os, sys, time, urllib.error, urllib.request, wave
+from concurrent.futures import ThreadPoolExecutor
+
+dossier = sys.argv[1]
+URL = sys.argv[2] if len(sys.argv) > 2 else "http://127.0.0.1:8770"
+CLE = os.environ["CLE_SERVICE"]
+DEFIS = {1: "739148", 4: "250671"}
+
+
+def appel(chemin, corps, cle=CLE):
+    req = urllib.request.Request(URL + chemin, json.dumps(corps).encode(),
+                                 {"Content-Type": "application/json", "Authorization": f"Bearer {cle}"})
+    try:
+        with urllib.request.urlopen(req, timeout=120) as r:
+            return r.status, json.loads(r.read())
+    except urllib.error.HTTPError as e:
+        return e.code, json.loads(e.read() or b"{}")
+
+
+def audio(nom):
+    return base64.b64encode(open(f"{dossier}/{nom}.wav", "rb").read()).decode()
+
+
+def moyenne(sigs):
+    s = [sum(x) / len(sigs) for x in zip(*sigs)]
+    n = sum(x * x for x in s) ** 0.5
+    return [x / n for x in s]
+
+
+voix = sorted({os.path.basename(f).rsplit("-", 1)[0] for f in glob.glob(f"{dossier}/*.wav")})
+t = time.time()
+signatures = {v: moyenne([appel("/signature", {"audio": audio(f"{v}-{i}")})[1]["signature"] for i in (0, 2, 3)]) for v in voix}
+print(f"Signatures : {len(voix)} voix, {(time.time() - t) / (3 * len(voix)):.2f} s par enregistrement")
+
+bons, fautes, durees = 0, [], []
+for v in voix:
+    for w in voix:
+        for i, chiffres in DEFIS.items():
+            t = time.time()
+            code, r = appel("/verifier", {"audio": audio(f"{w}-{i}"), "signature": signatures[v], "chiffres": chiffres})
+            durees.append(time.time() - t)
+            attendu = "meme" if v == w else "differente"
+            ok = code == 200 and r["voix"] in ((attendu,) if v == w else ("differente", "doute"))
+            bons += ok
+            if not ok or r["voix"] == "doute":
+                fautes.append(f"{v} contre {w}-{i} : {r}")
+print(f"Vérifications : {bons}/{len(durees)} correctes, {sum(durees) / len(durees):.2f} s en moyenne, {max(durees):.2f} s au plus")
+for f in fautes:
+    print("   à regarder :", f)
+
+v = voix[0]
+print("Mauvais chiffres :", appel("/verifier", {"audio": audio(f"{v}-1"), "signature": signatures[v], "chiffres": "111111"})[1])
+print("Phrase au lieu des chiffres (enregistrement rejoué) :", appel("/verifier", {"audio": audio(f"{v}-0"), "signature": signatures[v], "chiffres": "739148"})[1])
+print("Mauvaise clé :", appel("/verifier", {"audio": audio(f"{v}-1"), "signature": signatures[v], "chiffres": "739148"}, cle="x" * 40))
+print("Signature abîmée :", appel("/verifier", {"audio": audio(f"{v}-1"), "signature": [1.0] * 10, "chiffres": "739148"}))
+print("Audio illisible :", appel("/signature", {"audio": base64.b64encode(b"pas un son").decode()}))
+
+# Tricheur : un vieil enregistrement du vrai étudiant, suivi des chiffres lus par quelqu'un d'autre.
+def coller(*morceaux):
+    """morceaux : (nom, début en s, fin en s ou None[, volume])."""
+    sortie = io.BytesIO()
+    with wave.open(sortie, "wb") as o:
+        for i, (n, debut, fin, *vol) in enumerate(morceaux):
+            with wave.open(f"{dossier}/{n}.wav") as w:
+                if i == 0:
+                    o.setparams(w.getparams())
+                taux = w.getframerate()
+                w.setpos(int(debut * taux))
+                brut = w.readframes((int(fin * taux) if fin else w.getnframes()) - int(debut * taux))
+                if vol:  # même morceau, joué plus bas
+                    import array
+                    ech = array.array("h", brut)
+                    brut = array.array("h", (int(x * vol[0]) for x in ech)).tobytes()
+                o.writeframes(brut)
+    return base64.b64encode(sortie.getvalue()).decode()
+autre = voix[1]
+for titre, morceaux in [
+    ("Vieil enregistrement puis chiffres lus par un autre", [(f"{v}-0", 0, 4), (f"{autre}-1", 0, None)]),
+    ("Chiffres lus par un autre au milieu d'un vieil enregistrement", [(f"{v}-0", 0, 2), (f"{autre}-1", 0, None), (f"{v}-0", 2, 4)]),
+    ("Chiffres lus tout bas par un autre, puis un mot de l'étudiant", [(f"{autre}-1", 0, None, 0.08), (f"{v}-0", 0, 1.5)]),
+    ("Chiffres lus très bas (x0,02) par un autre, puis un mot de l'étudiant", [(f"{autre}-1", 0, None, 0.02), (f"{v}-0", 0, 1.5)]),
+    ("Chiffres lus très bas (x0,01) par un autre, puis un mot de l'étudiant", [(f"{autre}-1", 0, None, 0.01), (f"{v}-0", 0, 1.5)]),
+    ("Autre voix + long silence au milieu", [(f"{autre}-1", 0, 2), (f"{v}-1", 0, None, 0.0), (f"{autre}-1", 2, None)]),
+    ("Vrai étudiant qui attend avant d'arrêter l'enregistrement (silence)", [(f"{v}-1", 0, None), (f"{v}-1", 0, None, 0.0)]),
+]:
+    print(titre, ":", appel("/verifier", {"audio": coller(*morceaux), "signature": signatures[v], "chiffres": "739148"}))
+
+# Dix étudiants en même temps : ils attendent leur tour, le service ne s'effondre pas.
+t = time.time()
+with ThreadPoolExecutor(10) as p:
+    codes = list(p.map(lambda _: appel("/verifier", {"audio": audio(f"{v}-1"), "signature": signatures[v], "chiffres": "739148"})[0], range(10)))
+print(f"10 demandes simultanées : {codes.count(200)} traitées, {codes.count(503)} « occupé » (à réessayer), en {time.time() - t:.1f} s")
