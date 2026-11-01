@@ -18,7 +18,6 @@ export async function POST(request: Request) {
       dialCode,
       phone,
       dossierNumber,
-      photoUrl,
       studentType,
       university,
       paymentMethod,
@@ -163,9 +162,7 @@ export async function POST(request: Request) {
         dialCode: dialCode ? String(dialCode) : null,
         phone: phone ? String(phone).trim() : null,
         dossierNumber: validDossier,
-        photoUrl: photoUrl ? String(photoUrl) : null,
-        // La photo est vérifiée manuellement par l'administration (jamais automatiquement)
-        facialVerificationStatus: 'PENDING',
+        // Plus de photo à l'inscription : le visage « témoin » est pris dans l'empreinte SavoirIA (stockage privé).
         studentType: resolvedType,
         university: resolvedUniversity,
         paymentStatus: resolvedPaymentStatus,
