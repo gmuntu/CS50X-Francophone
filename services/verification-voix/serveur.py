@@ -9,7 +9,8 @@
 # Il ne garde RIEN : ni voix, ni signature, ni texte, ni journal du contenu.
 # C'est SavoirIA qui tire les chiffres, mesure le délai, garde la signature (chiffrée) et décide.
 # Chaque demande doit porter la clé secrète (Authorization: Bearer ...).
-# Une seule vérification à la fois ; au-delà de 20 s d'attente, réponse 503 « occupé ».
+# Une seule vérification à la fois, 4 demandes au plus en attente : au-delà, réponse 503 « occupé ».
+# 16 connexions ouvertes au plus ; une connexion silencieuse est coupée après 10 s.
 
 import base64, hmac, io, json, math, os, re, threading, wave
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -28,6 +29,7 @@ SEUIL_DOUTE = float(os.environ.get("SEUIL_DOUTE", "0.35"))
 
 CORPS_MAX = 1_500_000      # octets par demande
 DUREE_MIN, DUREE_MAX = 1.0, 20.0  # secondes d'audio (signature)
+FENETRE = 2.5             # secondes : taille des morceaux comparés un par un
 DEFI_MAX = 10.0            # secondes d'audio pour un défi : juste le temps de lire les chiffres
 MOTS_EN_TROP = 2           # mots tolérés en plus des chiffres (« euh », « et »…)
 EN_ATTENTE_MAX = 4         # demandes acceptées en même temps ; au-delà, « occupé » tout de suite
@@ -93,18 +95,21 @@ def chiffres_entendus(a: np.ndarray, taux: int) -> tuple[str, int]:
     s = oreilles.create_stream()
     s.accept_waveform(taux, a)
     oreilles.decode_stream(s)
-    mots = re.findall(r"[a-zéèûàç]+|\d+", s.result.text.lower())
+    mots = re.findall(r"[^\W\d_]+|\d+", s.result.text.lower())
     chiffres = "".join(MOTS.get(m, m if m.isdigit() else "") for m in mots)
     return chiffres, sum(1 for m in mots if m not in MOTS and not m.isdigit())
 
 
 def score_voix(ref: np.ndarray, a: np.ndarray, taux: int) -> float:
-    """Ressemblance avec la signature, sur tout l'enregistrement ET sur chaque moitié :
-    un enregistrement où deux voix se suivent (vieil enregistrement + tricheur) échoue sur une moitié."""
+    """Ressemblance avec la signature, sur tout l'enregistrement ET sur des fenêtres de 2,5 s
+    décalées d'1 s : si une autre voix parle à un moment (au début, au milieu ou à la fin),
+    la fenêtre où elle parle fait baisser le score."""
     scores = [float(ref @ signature_de(a, taux))]
-    if len(a) >= 3 * taux:
-        m = len(a) // 2
-        scores += [float(ref @ signature_de(a[:m], taux)), float(ref @ signature_de(a[m:], taux))]
+    fenetre, pas = int(FENETRE * taux), int(1.0 * taux)
+    for debut in range(0, max(1, len(a) - fenetre + 1), pas):
+        morceau = a[debut:debut + fenetre]
+        if float(np.sqrt(np.mean(morceau ** 2))) >= 0.01:  # on ignore les silences
+            scores.append(float(ref @ signature_de(morceau, taux)))
     return min(scores)
 
 
@@ -148,7 +153,7 @@ def traiter(chemin: str, d: dict) -> dict:
 
 
 class Gestion(BaseHTTPRequestHandler):
-    timeout = 30  # une connexion silencieuse ne bloque pas le service
+    timeout = 10  # une connexion silencieuse ne bloque pas le service
 
     def log_message(self, *args):  # aucun contenu dans les journaux
         pass
@@ -200,6 +205,24 @@ class Gestion(BaseHTTPRequestHandler):
             self._repondre(500, {"erreur": "erreur"})
 
 
+class Serveur(ThreadingHTTPServer):
+    """Au plus 16 connexions ouvertes : les suivantes sont fermées tout de suite."""
+    daemon_threads = True
+    places = threading.BoundedSemaphore(16)
+
+    def process_request(self, request, client_address):
+        if not self.places.acquire(blocking=False):
+            self.shutdown_request(request)
+            return
+        super().process_request(request, client_address)
+
+    def process_request_thread(self, request, client_address):
+        try:
+            super().process_request_thread(request, client_address)
+        finally:
+            self.places.release()
+
+
 if __name__ == "__main__":
     print(f"Vérification vocale SavoirIA sur http://{HOTE}:{PORT} ({FILS} processeur(s))", flush=True)
-    ThreadingHTTPServer((HOTE, PORT), Gestion).serve_forever()
+    Serveur((HOTE, PORT), Gestion).serve_forever()

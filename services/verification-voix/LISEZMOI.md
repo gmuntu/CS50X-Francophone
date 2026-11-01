@@ -36,7 +36,7 @@ Les modèles sont téléchargés à la construction de la boîte, et leurs empre
 ## Installation sur le serveur (guidée pas à pas avec le propriétaire)
 
 ```bash
-# dans ce dossier, sur le serveur
+# dans ce dossier, sur le serveur (processeur Intel/AMD : « uname -m » doit répondre x86_64)
 echo "CLE_SERVICE=$(openssl rand -hex 32)" > .env && chmod 600 .env
 docker compose up -d --build
 curl http://127.0.0.1:8770/sante      # doit répondre « ok »
@@ -46,14 +46,14 @@ La même clé est ensuite mise dans Vercel (variable `VOIX_IDENTITE_CLE`).
 
 Pour que SavoirIA en ligne puisse joindre le service, il faudra le rendre accessible en HTTPS par le proxy déjà présent sur le serveur (Traefik, nginx…). Cela se décidera à l'installation, avec trois règles :
 - **ne jamais ouvrir le port 8770 directement sur Internet**, ni en HTTP simple : la signature vocale est une donnée biométrique ;
-- dans le proxy, fixer **des délais courts et une limite de connexions par adresse**, pour qu'un inconnu ne puisse pas occuper le service sans la clé ;
+- dans le proxy, **vérifier la clé ou n'accepter que SavoirIA**, fixer **des délais courts** et **limiter le nombre total de connexions** vers le service (pas seulement par adresse), pour qu'un inconnu ne puisse pas l'occuper sans la clé. Le service lui-même n'accepte que 16 connexions à la fois et coupe une connexion silencieuse après 10 s ;
 - **SavoirIA ne montre jamais le score ni les chiffres entendus à l'élève**, seulement « réussi » ou « à revoir par un formateur ». Il ne les écrit pas non plus dans ses journaux.
 
 ## Protections contre la triche
 
 - **Défi court (10 s au plus) :** juste le temps de lire les chiffres.
 - **Presque rien d'autre que les chiffres :** 2 mots en plus au maximum.
-- **Ressemblance mesurée sur tout l'enregistrement et sur chaque moitié :** un vieil enregistrement de l'étudiant suivi des chiffres lus par quelqu'un d'autre échoue.
+- **Ressemblance mesurée sur tout l'enregistrement et sur chaque morceau de 2,5 s :** si une autre voix parle à un moment, au début, au milieu ou à la fin, le morceau où elle parle fait échouer la vérification.
 
 ## Essai
 
@@ -64,10 +64,10 @@ CLE_SERVICE=... python -I tester.py <dossier>
 ```
 
 Mesures sur un Mac M1, avec 1 seul processeur et 6 voix de synthèse :
-- 72 vérifications sur 72 correctes : aucun imposteur accepté, aucun vrai étudiant refusé ;
-- 2 imposteurs classés « doute », donc envoyés à un formateur ;
-- 0,8 s par vérification ;
-- « Vieil enregistrement + chiffres lus par un autre » : refusé (chiffres en trop, voix différente) ;
+- 72 vérifications : aucun imposteur accepté, aucun vrai étudiant refusé ;
+- 2 cas classés « doute », donc envoyés à un formateur : 1 imposteur et 1 vrai étudiant ;
+- 1 s par vérification ;
+- chiffres lus par un autre avant, après ou au milieu d'un vieil enregistrement de l'étudiant : refusé (voix différente) ;
 - 10 demandes simultanées : 4 traitées, 6 reçoivent « occupé » tout de suite ;
 - environ 680 Mo de mémoire.
 

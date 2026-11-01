@@ -60,17 +60,24 @@ print("Signature abîmée :", appel("/verifier", {"audio": audio(f"{v}-1"), "sig
 print("Audio illisible :", appel("/signature", {"audio": base64.b64encode(b"pas un son").decode()}))
 
 # Tricheur : un vieil enregistrement du vrai étudiant, suivi des chiffres lus par quelqu'un d'autre.
-def coller(*noms):
+def coller(*morceaux):
+    """morceaux : (nom, début en s, fin en s ou None)."""
     sortie = io.BytesIO()
     with wave.open(sortie, "wb") as o:
-        for i, n in enumerate(noms):
+        for i, (n, debut, fin) in enumerate(morceaux):
             with wave.open(f"{dossier}/{n}.wav") as w:
                 if i == 0:
                     o.setparams(w.getparams())
-                o.writeframes(w.readframes(w.getnframes()))
+                taux = w.getframerate()
+                w.setpos(int(debut * taux))
+                o.writeframes(w.readframes((int(fin * taux) if fin else w.getnframes()) - int(debut * taux)))
     return base64.b64encode(sortie.getvalue()).decode()
 autre = voix[1]
-print("Vieil enregistrement + chiffres lus par un autre :", appel("/verifier", {"audio": coller(f"{v}-0", f"{autre}-1"), "signature": signatures[v], "chiffres": "739148"}))
+for titre, morceaux in [
+    ("Vieil enregistrement puis chiffres lus par un autre", [(f"{v}-0", 0, 4), (f"{autre}-1", 0, None)]),
+    ("Chiffres lus par un autre au milieu d'un vieil enregistrement", [(f"{v}-0", 0, 2), (f"{autre}-1", 0, None), (f"{v}-0", 2, 4)]),
+]:
+    print(titre, ":", appel("/verifier", {"audio": coller(*morceaux), "signature": signatures[v], "chiffres": "739148"}))
 
 # Dix étudiants en même temps : ils attendent leur tour, le service ne s'effondre pas.
 t = time.time()
