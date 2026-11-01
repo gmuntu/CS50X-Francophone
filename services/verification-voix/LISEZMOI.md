@@ -46,7 +46,7 @@ La même clé est ensuite mise dans Vercel (variable `VOIX_IDENTITE_CLE`).
 
 Pour que SavoirIA en ligne puisse joindre le service, il faudra le rendre accessible en HTTPS par le proxy déjà présent sur le serveur (Traefik, nginx…). Cela se décidera à l'installation, avec trois règles :
 - **ne jamais ouvrir le port 8770 directement sur Internet**, ni en HTTP simple : la signature vocale est une donnée biométrique ;
-- dans le proxy, **vérifier la clé ou n'accepter que SavoirIA**, fixer **des délais courts** et **limiter le nombre total de connexions** vers le service (pas seulement par adresse), pour qu'un inconnu ne puisse pas l'occuper sans la clé. Le service lui-même n'accepte que 16 connexions à la fois et coupe une connexion silencieuse après 10 s ;
+- dans le proxy, **vérifier la clé ou n'accepter que SavoirIA**, fixer **des délais courts** et **limiter le nombre total de connexions** vers le service (pas seulement par adresse), pour qu'un inconnu ne puisse pas l'occuper sans la clé. Le service lui-même n'accepte que 16 connexions à la fois, coupe une connexion silencieuse après 10 s et toute demande qui n'est pas arrivée en entier après 15 s ;
 - **SavoirIA ne montre jamais le score ni les chiffres entendus à l'élève**, seulement « réussi » ou « à revoir par un formateur ». Il ne les écrit pas non plus dans ses journaux.
 
 ## Protections contre la triche
@@ -68,6 +68,8 @@ Mesures sur un Mac M1, avec 1 seul processeur et 6 voix de synthèse :
 - 2 cas classés « doute », donc envoyés à un formateur : 1 imposteur et 1 vrai étudiant ;
 - 1 s par vérification ;
 - chiffres lus par un autre avant, après ou au milieu d'un vieil enregistrement de l'étudiant : refusé (voix différente) ;
+- chiffres lus tout bas par un complice, suivis d'un mot de l'étudiant : refusé ;
+- connexion qui envoie sa demande au compte-gouttes : coupée après 15 s ;
 - 10 demandes simultanées : 4 traitées, 6 reçoivent « occupé » tout de suite ;
 - environ 680 Mo de mémoire.
 

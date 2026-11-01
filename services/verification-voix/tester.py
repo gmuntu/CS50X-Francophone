@@ -61,21 +61,27 @@ print("Audio illisible :", appel("/signature", {"audio": base64.b64encode(b"pas 
 
 # Tricheur : un vieil enregistrement du vrai étudiant, suivi des chiffres lus par quelqu'un d'autre.
 def coller(*morceaux):
-    """morceaux : (nom, début en s, fin en s ou None)."""
+    """morceaux : (nom, début en s, fin en s ou None[, volume])."""
     sortie = io.BytesIO()
     with wave.open(sortie, "wb") as o:
-        for i, (n, debut, fin) in enumerate(morceaux):
+        for i, (n, debut, fin, *vol) in enumerate(morceaux):
             with wave.open(f"{dossier}/{n}.wav") as w:
                 if i == 0:
                     o.setparams(w.getparams())
                 taux = w.getframerate()
                 w.setpos(int(debut * taux))
-                o.writeframes(w.readframes((int(fin * taux) if fin else w.getnframes()) - int(debut * taux)))
+                brut = w.readframes((int(fin * taux) if fin else w.getnframes()) - int(debut * taux))
+                if vol:  # même morceau, joué plus bas
+                    import array
+                    ech = array.array("h", brut)
+                    brut = array.array("h", (int(x * vol[0]) for x in ech)).tobytes()
+                o.writeframes(brut)
     return base64.b64encode(sortie.getvalue()).decode()
 autre = voix[1]
 for titre, morceaux in [
     ("Vieil enregistrement puis chiffres lus par un autre", [(f"{v}-0", 0, 4), (f"{autre}-1", 0, None)]),
     ("Chiffres lus par un autre au milieu d'un vieil enregistrement", [(f"{v}-0", 0, 2), (f"{autre}-1", 0, None), (f"{v}-0", 2, 4)]),
+    ("Chiffres lus tout bas par un autre, puis un mot de l'étudiant", [(f"{autre}-1", 0, None, 0.08), (f"{v}-0", 0, 1.5)]),
 ]:
     print(titre, ":", appel("/verifier", {"audio": coller(*morceaux), "signature": signatures[v], "chiffres": "739148"}))
 

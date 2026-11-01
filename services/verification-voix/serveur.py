@@ -12,7 +12,7 @@
 # Une seule vérification à la fois, 4 demandes au plus en attente : au-delà, réponse 503 « occupé ».
 # 16 connexions ouvertes au plus ; une connexion silencieuse est coupée après 10 s.
 
-import base64, hmac, io, json, math, os, re, threading, wave
+import base64, hmac, io, json, math, os, re, socket, threading, wave
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import numpy as np
@@ -106,10 +106,15 @@ def score_voix(ref: np.ndarray, a: np.ndarray, taux: int) -> float:
     la fenêtre où elle parle fait baisser le score."""
     scores = [float(ref @ signature_de(a, taux))]
     fenetre, pas = int(FENETRE * taux), int(1.0 * taux)
-    for debut in range(0, max(1, len(a) - fenetre + 1), pas):
-        morceau = a[debut:debut + fenetre]
-        if float(np.sqrt(np.mean(morceau ** 2))) >= 0.01:  # on ignore les silences
-            scores.append(float(ref @ signature_de(morceau, taux)))
+    morceaux = [a[d:d + fenetre] for d in range(0, max(1, len(a) - fenetre + 1), pas)]
+    volumes = [float(np.sqrt(np.mean(m ** 2))) for m in morceaux]
+    # « Silence » = nettement plus bas que le morceau le plus fort du même enregistrement :
+    # une voix enregistrée tout bas n'échappe donc pas à la comparaison.
+    seuil = max(0.003, 0.1 * max(volumes))
+    compares = [m for m, v in zip(morceaux, volumes) if v >= seuil]
+    if len(compares) < len(morceaux) / 2:
+        return 0.0  # trop peu de voix comparable : on ne conclut pas « même personne »
+    scores += [float(ref @ signature_de(m, taux)) for m in compares]
     return min(scores)
 
 
@@ -154,6 +159,23 @@ def traiter(chemin: str, d: dict) -> dict:
 
 class Gestion(BaseHTTPRequestHandler):
     timeout = 10  # une connexion silencieuse ne bloque pas le service
+    DELAI_DEMANDE = 15  # secondes pour envoyer toute la demande, même au compte-gouttes
+
+    def setup(self):
+        super().setup()
+        self._minuteur = threading.Timer(self.DELAI_DEMANDE, self._couper)
+        self._minuteur.daemon = True
+        self._minuteur.start()
+
+    def _couper(self):
+        try:
+            self.connection.shutdown(socket.SHUT_RDWR)
+        except OSError:
+            pass
+
+    def finish(self):
+        self._minuteur.cancel()
+        super().finish()
 
     def log_message(self, *args):  # aucun contenu dans les journaux
         pass
@@ -195,7 +217,9 @@ class Gestion(BaseHTTPRequestHandler):
         if not 0 < taille <= CORPS_MAX:
             return self._repondre(413, {"erreur": "taille invalide"})
         try:
-            d = json.loads(self.rfile.read(taille))
+            corps = self.rfile.read(taille)
+            self._minuteur.cancel()  # demande reçue en entier : le calcul peut prendre son temps
+            d = json.loads(corps)
             if not isinstance(d, dict):
                 raise Refus(400, "json invalide")
             self._repondre(200, traiter(self.path, d))
@@ -214,7 +238,11 @@ class Serveur(ThreadingHTTPServer):
         if not self.places.acquire(blocking=False):
             self.shutdown_request(request)
             return
-        super().process_request(request, client_address)
+        try:
+            super().process_request(request, client_address)
+        except Exception:
+            self.places.release()
+            raise
 
     def process_request_thread(self, request, client_address):
         try:
