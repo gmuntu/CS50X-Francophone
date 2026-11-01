@@ -55,7 +55,7 @@ Pour que SavoirIA en ligne puisse joindre le service, il faudra le rendre access
 - **Presque rien d'autre que les chiffres :** 2 mots en plus au maximum.
 - **Ressemblance mesurée sur tout l'enregistrement et sur chaque morceau de 2,5 s, même chuchoté :** si une autre voix parle à un moment, au début, au milieu ou à la fin, le morceau où elle parle fait échouer la vérification.
 - **Trop peu de voix pour conclure :** jamais « même personne ». Le résultat est « doute » (un formateur regarde), sauf si la voix entendue est nettement différente.
-- **Whisper n'entend que ce que la comparaison des voix a pu juger :** une voix trop basse pour être comparée ne peut pas servir à lire les chiffres.
+- **Whisper n'entend pas la voix vraiment trop basse :** une voix sous le seuil de silence ne peut pas servir à lire les chiffres. Une voix juste au-dessus, qui parle par à-coups, donne au pire « doute » : un formateur regarde.
 
 ## Essai
 

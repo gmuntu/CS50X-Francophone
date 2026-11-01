@@ -171,7 +171,6 @@ def traiter(chemin: str, d: dict) -> dict:
             "chiffres_ok": lus == attendu and en_trop <= MOTS_EN_TROP,
             "chiffres_entendus": lus[:20],
             "score": round(score, 3),
-            # Trop peu de voix pour conclure : « doute » (un formateur regarde), jamais « differente ».
             # Trop peu de voix empêche seulement « meme » : une voix nettement différente reste « differente ».
             "voix": "differente" if score < SEUIL_DOUTE else "meme" if score >= SEUIL_MEME and assez else "doute",
         }
