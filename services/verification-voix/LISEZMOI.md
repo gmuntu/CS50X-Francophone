@@ -54,7 +54,8 @@ Pour que SavoirIA en ligne puisse joindre le service, il faudra le rendre access
 - **Défi court (10 s au plus) :** juste le temps de lire les chiffres.
 - **Presque rien d'autre que les chiffres :** 2 mots en plus au maximum.
 - **Ressemblance mesurée sur tout l'enregistrement et sur chaque morceau de 2,5 s, même chuchoté :** si une autre voix parle à un moment, au début, au milieu ou à la fin, le morceau où elle parle fait échouer la vérification.
-- **Trop peu de voix pour conclure :** le résultat est « doute » (un formateur regarde), jamais « différente ».
+- **Trop peu de voix pour conclure :** jamais « même personne ». Le résultat est « doute » (un formateur regarde), sauf si la voix entendue est nettement différente.
+- **Whisper n'entend que ce que la comparaison des voix a pu juger :** une voix trop basse pour être comparée ne peut pas servir à lire les chiffres.
 
 ## Essai
 
@@ -70,9 +71,11 @@ Mesures sur un Mac M1, avec 1 seul processeur et 6 voix de synthèse :
 - 1 s par vérification ;
 - chiffres lus par un autre avant, après ou au milieu d'un vieil enregistrement de l'étudiant : refusé (voix différente) ;
 - chiffres lus tout bas par un complice, suivis d'un mot de l'étudiant : refusé ;
+- chiffres lus très bas (sous le seuil de comparaison) par un complice : refusés, car Whisper n'entend que ce qui a pu être comparé ;
+- autre voix avec un long silence au milieu : « différente » ;
 - vrai étudiant qui laisse du silence avant d'arrêter l'enregistrement : accepté (le silence au début et à la fin est retiré) ;
 - connexion qui envoie sa demande au compte-gouttes : coupée après 15 s ;
 - 10 demandes simultanées : 4 traitées, 6 reçoivent « occupé » tout de suite ;
 - environ 680 Mo de mémoire.
 
-**Le modèle de voix a été entraîné sur des voix chinoises, et l'essai ne porte que sur 6 voix de synthèse. Ces résultats ne prouvent donc pas encore grand-chose : les seuils (`SEUIL_MEME`, `SEUIL_DOUTE`) devront être réglés sur de vraies voix pendant le pilote.** Une voix imitée par une IA n'est pas détectée : c'est pour cela qu'un formateur décide toujours en cas de doute.
+**Le modèle de voix a été entraîné sur des voix chinoises, et l'essai ne porte que sur 6 voix de synthèse. Ces résultats ne prouvent donc pas encore grand-chose : les seuils (`SEUIL_MEME`, `SEUIL_DOUTE`) devront être réglés sur de vraies voix pendant le pilote.** Il faudra aussi surveiller le bruit de fond des vrais micros (ventilateur, rue), qui peut faire baisser le score d'un étudiant honnête. Une voix imitée par une IA n'est pas détectée : c'est pour cela qu'un formateur décide toujours en cas de doute.

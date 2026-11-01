@@ -103,6 +103,17 @@ def chiffres_entendus(a: np.ndarray, taux: int) -> tuple[str, int]:
 SILENCE = 0.003  # volume en dessous duquel il n'y a vraiment personne qui parle
 
 
+def voix_audible(a: np.ndarray, taux: int) -> np.ndarray:
+    """Met à zéro les tranches de 50 ms sous le plancher : Whisper n'entend que ce que
+    la comparaison des voix peut aussi juger (une voix trop basse ne peut pas lire les chiffres)."""
+    trame = int(0.05 * taux)
+    b = a.copy()
+    for i in range(0, len(b), trame):
+        if float(np.sqrt(np.mean(b[i:i + trame] ** 2))) < SILENCE:
+            b[i:i + trame] = 0
+    return b
+
+
 def sans_silences_aux_bords(a: np.ndarray, taux: int) -> np.ndarray:
     """Retire le vrai silence au début et à la fin (l'élève qui tarde à arrêter l'enregistrement)."""
     trame = int(0.05 * taux)
@@ -154,14 +165,15 @@ def traiter(chemin: str, d: dict) -> dict:
             raise Refus(400, "chiffres invalides")
         ref = lire_signature(d.get("signature"))
         a, taux = lire_wav(str(d.get("audio", "")), DEFI_MAX)
-        (score, assez), (lus, en_trop) = avec_verrou(lambda: (score_voix(ref, a, taux), chiffres_entendus(a, taux)))
+        (score, assez), (lus, en_trop) = avec_verrou(lambda: (score_voix(ref, a, taux), chiffres_entendus(voix_audible(a, taux), taux)))
         return {
             # Les bons chiffres, et presque rien d'autre : pas de long enregistrement ajouté avant ou après.
             "chiffres_ok": lus == attendu and en_trop <= MOTS_EN_TROP,
             "chiffres_entendus": lus[:20],
             "score": round(score, 3),
             # Trop peu de voix pour conclure : « doute » (un formateur regarde), jamais « differente ».
-            "voix": "meme" if score >= SEUIL_MEME and assez else "doute" if score >= SEUIL_DOUTE or not assez else "differente",
+            # Trop peu de voix empêche seulement « meme » : une voix nettement différente reste « differente ».
+            "voix": "differente" if score < SEUIL_DOUTE else "meme" if score >= SEUIL_MEME and assez else "doute",
         }
     raise Refus(404, "introuvable")
 
