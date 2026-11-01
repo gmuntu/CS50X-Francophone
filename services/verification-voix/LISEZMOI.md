@@ -53,7 +53,8 @@ Pour que SavoirIA en ligne puisse joindre le service, il faudra le rendre access
 
 - **Défi court (10 s au plus) :** juste le temps de lire les chiffres.
 - **Presque rien d'autre que les chiffres :** 2 mots en plus au maximum.
-- **Ressemblance mesurée sur tout l'enregistrement et sur chaque morceau de 2,5 s :** si une autre voix parle à un moment, au début, au milieu ou à la fin, le morceau où elle parle fait échouer la vérification.
+- **Ressemblance mesurée sur tout l'enregistrement et sur chaque morceau de 2,5 s, même chuchoté :** si une autre voix parle à un moment, au début, au milieu ou à la fin, le morceau où elle parle fait échouer la vérification.
+- **Trop peu de voix pour conclure :** le résultat est « doute » (un formateur regarde), jamais « différente ».
 
 ## Essai
 
@@ -65,10 +66,11 @@ CLE_SERVICE=... python -I tester.py <dossier>
 
 Mesures sur un Mac M1, avec 1 seul processeur et 6 voix de synthèse :
 - 72 vérifications : aucun imposteur accepté, aucun vrai étudiant refusé ;
-- 2 cas classés « doute », donc envoyés à un formateur : 1 imposteur et 1 vrai étudiant ;
+- 3 cas classés « doute », donc envoyés à un formateur : 2 imposteurs et 1 vrai étudiant ;
 - 1 s par vérification ;
 - chiffres lus par un autre avant, après ou au milieu d'un vieil enregistrement de l'étudiant : refusé (voix différente) ;
 - chiffres lus tout bas par un complice, suivis d'un mot de l'étudiant : refusé ;
+- vrai étudiant qui laisse du silence avant d'arrêter l'enregistrement : accepté (le silence au début et à la fin est retiré) ;
 - connexion qui envoie sa demande au compte-gouttes : coupée après 15 s ;
 - 10 demandes simultanées : 4 traitées, 6 reçoivent « occupé » tout de suite ;
 - environ 680 Mo de mémoire.

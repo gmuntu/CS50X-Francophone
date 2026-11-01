@@ -72,7 +72,7 @@ def lire_wav(b64: str, duree_max: float = DUREE_MAX) -> tuple[np.ndarray, int]:
     a = np.frombuffer(donnees, dtype="<i2").astype(np.float32) / 32768.0
     if len(a) < DUREE_MIN * taux:
         raise Refus(400, "audio trop court")
-    if float(np.sqrt(np.mean(a ** 2))) < 0.003:
+    if float(np.sqrt(np.mean(a ** 2))) < SILENCE:
         raise Refus(400, "audio silencieux")
     return a, taux
 
@@ -100,22 +100,30 @@ def chiffres_entendus(a: np.ndarray, taux: int) -> tuple[str, int]:
     return chiffres, sum(1 for m in mots if m not in MOTS and not m.isdigit())
 
 
-def score_voix(ref: np.ndarray, a: np.ndarray, taux: int) -> float:
+SILENCE = 0.003  # volume en dessous duquel il n'y a vraiment personne qui parle
+
+
+def sans_silences_aux_bords(a: np.ndarray, taux: int) -> np.ndarray:
+    """Retire le vrai silence au début et à la fin (l'élève qui tarde à arrêter l'enregistrement)."""
+    trame = int(0.05 * taux)
+    volumes = [float(np.sqrt(np.mean(a[i:i + trame] ** 2))) for i in range(0, len(a) - trame + 1, trame)]
+    parle = [i for i, v in enumerate(volumes) if v >= SILENCE]
+    return a[parle[0] * trame:(parle[-1] + 1) * trame] if parle else a
+
+
+def score_voix(ref: np.ndarray, a: np.ndarray, taux: int) -> tuple[float, bool]:
     """Ressemblance avec la signature, sur tout l'enregistrement ET sur des fenêtres de 2,5 s
     décalées d'1 s : si une autre voix parle à un moment (au début, au milieu ou à la fin),
     la fenêtre où elle parle fait baisser le score."""
+    # Renvoie (score, assez de voix pour conclure).
+    a = sans_silences_aux_bords(a, taux)
     scores = [float(ref @ signature_de(a, taux))]
     fenetre, pas = int(FENETRE * taux), int(1.0 * taux)
     morceaux = [a[d:d + fenetre] for d in range(0, max(1, len(a) - fenetre + 1), pas)]
-    volumes = [float(np.sqrt(np.mean(m ** 2))) for m in morceaux]
-    # « Silence » = nettement plus bas que le morceau le plus fort du même enregistrement :
-    # une voix enregistrée tout bas n'échappe donc pas à la comparaison.
-    seuil = max(0.003, 0.1 * max(volumes))
-    compares = [m for m, v in zip(morceaux, volumes) if v >= seuil]
-    if len(compares) < len(morceaux) / 2:
-        return 0.0  # trop peu de voix comparable : on ne conclut pas « même personne »
+    # Tout morceau où quelqu'un parle est comparé, même tout bas : seul le vrai silence est ignoré.
+    compares = [m for m in morceaux if float(np.sqrt(np.mean(m ** 2))) >= SILENCE]
     scores += [float(ref @ signature_de(m, taux)) for m in compares]
-    return min(scores)
+    return min(scores), len(compares) >= len(morceaux) / 2
 
 
 def lire_signature(v) -> np.ndarray:
@@ -146,13 +154,14 @@ def traiter(chemin: str, d: dict) -> dict:
             raise Refus(400, "chiffres invalides")
         ref = lire_signature(d.get("signature"))
         a, taux = lire_wav(str(d.get("audio", "")), DEFI_MAX)
-        score, (lus, en_trop) = avec_verrou(lambda: (score_voix(ref, a, taux), chiffres_entendus(a, taux)))
+        (score, assez), (lus, en_trop) = avec_verrou(lambda: (score_voix(ref, a, taux), chiffres_entendus(a, taux)))
         return {
             # Les bons chiffres, et presque rien d'autre : pas de long enregistrement ajouté avant ou après.
             "chiffres_ok": lus == attendu and en_trop <= MOTS_EN_TROP,
             "chiffres_entendus": lus[:20],
             "score": round(score, 3),
-            "voix": "meme" if score >= SEUIL_MEME else "doute" if score >= SEUIL_DOUTE else "differente",
+            # Trop peu de voix pour conclure : « doute » (un formateur regarde), jamais « differente ».
+            "voix": "meme" if score >= SEUIL_MEME and assez else "doute" if score >= SEUIL_DOUTE or not assez else "differente",
         }
     raise Refus(404, "introuvable")
 

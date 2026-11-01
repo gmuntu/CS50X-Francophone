@@ -82,6 +82,7 @@ for titre, morceaux in [
     ("Vieil enregistrement puis chiffres lus par un autre", [(f"{v}-0", 0, 4), (f"{autre}-1", 0, None)]),
     ("Chiffres lus par un autre au milieu d'un vieil enregistrement", [(f"{v}-0", 0, 2), (f"{autre}-1", 0, None), (f"{v}-0", 2, 4)]),
     ("Chiffres lus tout bas par un autre, puis un mot de l'étudiant", [(f"{autre}-1", 0, None, 0.08), (f"{v}-0", 0, 1.5)]),
+    ("Vrai étudiant qui attend avant d'arrêter l'enregistrement (silence)", [(f"{v}-1", 0, None), (f"{v}-1", 0, None, 0.0)]),
 ]:
     print(titre, ":", appel("/verifier", {"audio": coller(*morceaux), "signature": signatures[v], "chiffres": "739148"}))
 
