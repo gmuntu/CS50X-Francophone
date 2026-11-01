@@ -16,3 +16,24 @@ services:
     security_opt: ["no-new-privileges:true"]
     ports:
       - "127.0.0.1:8770:8770"   # visible seulement depuis le serveur lui-même
+
+  # Tunnel Cloudflare propre au service vocal (séparé de tout autre tunnel du serveur).
+  # Il sort vers Cloudflare : aucun port n'est ouvert sur le serveur.
+  # Dans Cloudflare, le nom public doit pointer vers http://verification-voix:8770, protégé par Cloudflare Access (jeton de service).
+  tunnel:
+    image: cloudflare/cloudflared:2026.10.7@sha256:4955524aeaa379e154023d5a027c250f7b35041a2e7e950cf13f144bc9b9c5ba
+    container_name: savoiria-tunnel-voix
+    command: tunnel --no-autoupdate run
+    restart: unless-stopped
+    profiles: [tunnel]        # lancé seulement avec : docker compose --profile tunnel up -d
+    env_file:
+      - path: .env.tunnel     # contient TUNNEL_TOKEN (jamais envoyé sur GitHub, ni à personne)
+        required: false       # absent tant que le tunnel n'est pas créé dans Cloudflare
+    depends_on: [verification-voix]
+    mem_limit: 128m
+    memswap_limit: 128m
+    cpus: 0.25
+    pids_limit: 64
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
