@@ -131,7 +131,7 @@ export default function DashboardClient({ user }: Props) {
               <div className="flex items-center gap-3 pt-1 text-[11px] text-muted-foreground flex-wrap">
                 <span className="flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400">
                   <ShieldCheck className="w-3.5 h-3.5" />
-                  {user.facialVerificationStatus === 'VERIFIED' ? 'Identité vérifiée par un formateur' : 'Vérification d\'identité'}
+                  {user.facialVerificationStatus === 'VERIFIED' ? 'Photo validée par l\'administration' : 'Vérification d\'identité'}
                 </span>
                 {user.email && (
                   <>
