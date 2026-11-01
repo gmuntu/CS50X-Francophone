@@ -6,6 +6,7 @@ export interface CourseModuleConfig {
   videoUrl?: string;
   /** Version doublée en français (YouTube, non répertoriée). */
   videoUrlFr?: string;
+  /** Podcast de la semaine (MP3 dans public/podcasts). Aucun pour l'instant : les anciens fichiers étaient vides. */
   podcastUrl?: string;
   notebookUrl?: string;
   difficulty: 'Débutant' | 'Intermédiaire' | 'Avancé';
@@ -33,7 +34,6 @@ export const CS50_MODULES: CourseModuleConfig[] = [
     description: "Transition vers le langage C, syntaxe de base, types de données, conditions et compilation.",
     videoUrl: 'https://www.youtube.com/embed/SlqjA04_dpk',
     videoUrlFr: 'https://www.youtube.com/embed/NsH8PY_WoT8',
-    podcastUrl: '/podcasts/semaine1.mp3',
     notebookUrl: 'https://notebooklm.google.com/notebook/3f36e2f0-5a38-43c5-91a0-76b368627019',
     difficulty: 'Débutant',
     topics: ['Langage C', 'Compilation', 'Variables'],
@@ -46,7 +46,6 @@ export const CS50_MODULES: CourseModuleConfig[] = [
     description: "Exploration des tableaux, mémoire, chaînes de caractères et débogage en C.",
     videoUrl: 'https://www.youtube.com/embed/h5Gc1n8ZuU8',
     videoUrlFr: 'https://www.youtube.com/embed/Ts_r8AK19QU',
-    podcastUrl: '/podcasts/semaine2.mp3',
     notebookUrl: 'https://notebooklm.google.com/notebook/4be4999a-6fce-4c17-93d3-b66d0f9f98eb',
     difficulty: 'Intermédiaire',
     topics: ['Tableaux', 'Chaînes', 'Débogage'],
@@ -59,7 +58,6 @@ export const CS50_MODULES: CourseModuleConfig[] = [
     description: "Complexité algorithmique, recherche linéaire et binaire, tris et récursion.",
     videoUrl: 'https://www.youtube.com/embed/6Svu_ae5ebk',
     videoUrlFr: 'https://www.youtube.com/embed/Z26bcyDI4-U',
-    podcastUrl: '/podcasts/semaine3.mp3',
     notebookUrl: 'https://notebooklm.google.com/notebook/087eec10-568f-476e-93a1-7784e53c7a55',
     difficulty: 'Intermédiaire',
     topics: ['Big-O', 'Tri', 'Récursion'],
@@ -72,7 +70,6 @@ export const CS50_MODULES: CourseModuleConfig[] = [
     description: "Pointeurs, allocation dynamique, gestion de la mémoire et manipulation de fichiers.",
     videoUrl: 'https://www.youtube.com/embed/db0H0U13YsA',
     videoUrlFr: 'https://www.youtube.com/embed/svmsj_bjSYA',
-    podcastUrl: '/podcasts/semaine4.mp3',
     notebookUrl: 'https://notebooklm.google.com/notebook/89d2916a-c08c-4da0-93bd-ffae8a1ebecd',
     difficulty: 'Avancé',
     topics: ['Pointeurs', 'malloc', 'Valgrind'],
@@ -85,7 +82,6 @@ export const CS50_MODULES: CourseModuleConfig[] = [
     description: "Listes chaînées, arbres binaires, tables de hachage et Tries.",
     videoUrl: 'https://www.youtube.com/embed/PmAI76OGE_E',
     videoUrlFr: 'https://www.youtube.com/embed/lfolfGtrK2A',
-    podcastUrl: '/podcasts/semaine5.mp3',
     notebookUrl: 'https://notebooklm.google.com/notebook/f8826302-5ef7-4970-b979-7d87a2196e22',
     difficulty: 'Avancé',
     topics: ['Listes', 'Hash Tables', 'Tries'],
@@ -98,7 +94,6 @@ export const CS50_MODULES: CourseModuleConfig[] = [
     description: "Transition vers Python, typage dynamique, structures natives et projet ADN.",
     videoUrl: 'https://www.youtube.com/embed/Rl0ludWTLxs',
     videoUrlFr: 'https://www.youtube.com/embed/fGBJsvNTkVw',
-    podcastUrl: '/podcasts/semaine6.mp3',
     notebookUrl: 'https://notebooklm.google.com/notebook/0af54950-3af4-45ac-bf76-b8f44613c079',
     difficulty: 'Intermédiaire',
     topics: ['Python', 'Listes', 'Dictionnaires'],
@@ -111,7 +106,6 @@ export const CS50_MODULES: CourseModuleConfig[] = [
     description: "Bases de données relationnelles, requêtes SQL, jointures et sécurité.",
     videoUrl: 'https://www.youtube.com/embed/oqRU2So6Z2Y',
     videoUrlFr: 'https://www.youtube.com/embed/2soubRuIBxA',
-    podcastUrl: '/podcasts/semaine7.mp3',
     notebookUrl: 'https://notebooklm.google.com/notebook/69cb4cda-a672-43f3-ba88-901968509476',
     difficulty: 'Intermédiaire',
     topics: ['SQL', 'Jointures', 'Index'],
@@ -124,7 +118,6 @@ export const CS50_MODULES: CourseModuleConfig[] = [
     description: "Conception de pages web interactives, DOM et développement front-end.",
     videoUrl: 'https://www.youtube.com/embed/yYst7puZXjw',
     videoUrlFr: 'https://www.youtube.com/embed/LcxuRVBNRn8',
-    podcastUrl: '/podcasts/semaine8.mp3',
     notebookUrl: 'https://notebooklm.google.com/notebook/68cdde5b-64e2-4d9e-a261-ccb816ef6041',
     difficulty: 'Intermédiaire',
     topics: ['HTML', 'CSS', 'JavaScript'],
@@ -137,7 +130,6 @@ export const CS50_MODULES: CourseModuleConfig[] = [
     description: "Développement back-end avec Flask, routes, sessions et authentification.",
     videoUrl: 'https://www.youtube.com/embed/am7POvSZ4GE',
     videoUrlFr: 'https://www.youtube.com/embed/dFDuy7QFFuA',
-    podcastUrl: '/podcasts/semaine9.mp3',
     notebookUrl: 'https://notebooklm.google.com/notebook/fab775cc-c5d4-4df4-bf2e-8608d8216585',
     difficulty: 'Avancé',
     topics: ['Flask', 'Sessions', 'Jinja2'],
@@ -150,7 +142,6 @@ export const CS50_MODULES: CourseModuleConfig[] = [
     description: "Sécurité informatique, cryptographie, HTTPS et bonnes pratiques.",
     videoUrl: 'https://www.youtube.com/embed/ApQTgFkf8TU',
     videoUrlFr: 'https://www.youtube.com/embed/QnG-UY1aKlw',
-    podcastUrl: '/podcasts/semaine10.mp3',
     notebookUrl: 'https://notebooklm.google.com/notebook/c694a329-339d-4aa0-b1e4-5ad5788fccd4',
     difficulty: 'Avancé',
     topics: ['Sécurité', 'Cryptographie', 'HTTPS'],
