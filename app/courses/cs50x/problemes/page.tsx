@@ -24,8 +24,9 @@ export default async function ProblemesPage() {
           </span>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight">Les problèmes, semaine par semaine</h1>
           <p className="text-muted-foreground max-w-3xl leading-relaxed">
-            Chaque semaine, mettez en pratique le cours avec les exercices officiels de CS50. Regardez les vidéos d'explication, puis
-            essayez par vous-même : Socrate est là pour vous guider sans donner la réponse. À terminer avant le {CS50_PROBLEMS_DEADLINE}.
+            Chaque semaine, mettez en pratique le cours avec les exercices officiels de CS50. Pour chaque exercice, une explication en
+            français vous dit ce qu'on attend de vous, comment découper le problème, les pièges à éviter et comment tester votre travail.
+            Ensuite, essayez par vous-même : Socrate vous guide sans donner la réponse. À terminer avant le {CS50_PROBLEMS_DEADLINE}.
           </p>
         </div>
 
