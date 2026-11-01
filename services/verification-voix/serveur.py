@@ -1,0 +1,175 @@
+# Service de vérification vocale SavoirIA.
+#
+# Deux questions, rien d'autre :
+#   POST /signature  {"audio": WAV base64}                         -> signature vocale (512 nombres)
+#   POST /verifier   {"audio", "signature": [...], "chiffres": "739148"}
+#                    -> la voix correspond-elle à la signature ? a-t-on lu les bons chiffres ?
+#   GET  /sante      -> "ok"
+#
+# Il ne garde RIEN : ni voix, ni signature, ni texte, ni journal du contenu.
+# C'est SavoirIA qui tire les chiffres, mesure le délai, garde la signature (chiffrée) et décide.
+# Chaque demande doit porter la clé secrète (Authorization: Bearer ...).
+# Une seule vérification à la fois ; au-delà de 20 s d'attente, réponse 503 « occupé ».
+
+import base64, hmac, io, json, math, os, re, threading, wave
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+import numpy as np
+import sherpa_onnx
+
+PORT = int(os.environ.get("PORT", "8770"))
+HOTE = os.environ.get("HOTE", "127.0.0.1")
+CLE = os.environ.get("CLE_SERVICE", "")
+FILS = int(os.environ.get("FILS", "1"))  # processeurs utilisés pour le calcul
+MODELES = os.environ.get("MODELES", "/modeles")
+# Seuils de ressemblance (0 à 1), à régler sur de vraies voix pendant le pilote.
+SEUIL_MEME = float(os.environ.get("SEUIL_MEME", "0.50"))
+SEUIL_DOUTE = float(os.environ.get("SEUIL_DOUTE", "0.35"))
+
+CORPS_MAX = 1_500_000      # octets par demande
+DUREE_MIN, DUREE_MAX = 1.0, 20.0  # secondes d'audio
+DIMENSION = 512
+
+if len(CLE) < 32:
+    raise SystemExit("CLE_SERVICE manquante ou trop courte (32 caractères au moins).")
+
+voix = sherpa_onnx.SpeakerEmbeddingExtractor(sherpa_onnx.SpeakerEmbeddingExtractorConfig(
+    model=f"{MODELES}/voix.onnx", num_threads=FILS))
+oreilles = sherpa_onnx.OfflineRecognizer.from_whisper(
+    encoder=f"{MODELES}/whisper-encoder.int8.onnx", decoder=f"{MODELES}/whisper-decoder.int8.onnx",
+    tokens=f"{MODELES}/whisper-tokens.txt", language="fr", task="transcribe", num_threads=FILS)
+assert voix.dim == DIMENSION
+verrou = threading.Lock()
+
+
+class Refus(Exception):
+    def __init__(self, code: int, message: str):
+        self.code, self.message = code, message
+
+
+def lire_wav(b64: str) -> tuple[np.ndarray, int]:
+    """WAV PCM 16 bits mono (8 à 48 kHz) -> échantillons entre -1 et 1."""
+    try:
+        brut = base64.b64decode(b64, validate=True)
+        with wave.open(io.BytesIO(brut)) as w:
+            if w.getnchannels() != 1 or w.getsampwidth() != 2 or not 8000 <= w.getframerate() <= 48000:
+                raise Refus(400, "audio : WAV mono 16 bits attendu")
+            taux = w.getframerate()
+            if w.getnframes() > DUREE_MAX * taux:
+                raise Refus(400, "audio trop long")
+            donnees = w.readframes(w.getnframes())
+    except Refus:
+        raise
+    except Exception:
+        raise Refus(400, "audio illisible")
+    a = np.frombuffer(donnees, dtype="<i2").astype(np.float32) / 32768.0
+    if len(a) < DUREE_MIN * taux:
+        raise Refus(400, "audio trop court")
+    if float(np.sqrt(np.mean(a ** 2))) < 0.003:
+        raise Refus(400, "audio silencieux")
+    return a, taux
+
+
+def signature_de(a: np.ndarray, taux: int) -> np.ndarray:
+    s = voix.create_stream()
+    s.accept_waveform(taux, a)
+    s.input_finished()
+    e = np.array(voix.compute(s), dtype=np.float32)
+    return e / (np.linalg.norm(e) or 1.0)
+
+
+MOTS = {"zéro": "0", "zero": "0", "un": "1", "une": "1", "deux": "2", "trois": "3", "quatre": "4",
+        "cinq": "5", "six": "6", "sept": "7", "huit": "8", "neuf": "9"}
+
+
+def chiffres_entendus(a: np.ndarray, taux: int) -> str:
+    """Ce que la personne a lu, réduit aux chiffres : « sept, trois » ou « 7 3 » -> « 73 »."""
+    s = oreilles.create_stream()
+    s.accept_waveform(taux, a)
+    oreilles.decode_stream(s)
+    texte = s.result.text.lower()
+    return "".join(MOTS.get(m, m if m.isdigit() else "") for m in re.findall(r"[a-zéèû]+|\d+", texte))
+
+
+def lire_signature(v) -> np.ndarray:
+    if not isinstance(v, list) or len(v) != DIMENSION or not all(isinstance(x, (int, float)) and math.isfinite(x) for x in v):
+        raise Refus(400, "signature invalide")
+    e = np.array(v, dtype=np.float32)
+    return e / (np.linalg.norm(e) or 1.0)
+
+
+def avec_verrou(calcul):
+    if not verrou.acquire(timeout=20):
+        raise Refus(503, "occupe")
+    try:
+        return calcul()
+    finally:
+        verrou.release()
+
+
+def traiter(chemin: str, d: dict) -> dict:
+    if chemin == "/signature":
+        a, taux = lire_wav(str(d.get("audio", "")))
+        e = avec_verrou(lambda: signature_de(a, taux))
+        return {"signature": [round(float(x), 6) for x in e], "duree": round(len(a) / taux, 2)}
+    if chemin == "/verifier":
+        attendu = str(d.get("chiffres", ""))
+        if not re.fullmatch(r"\d{4,10}", attendu):
+            raise Refus(400, "chiffres invalides")
+        ref = lire_signature(d.get("signature"))
+        a, taux = lire_wav(str(d.get("audio", "")))
+        e, lus = avec_verrou(lambda: (signature_de(a, taux), chiffres_entendus(a, taux)))
+        score = float(ref @ e)
+        return {
+            "chiffres_ok": lus == attendu,
+            "chiffres_entendus": lus[:20],
+            "score": round(score, 3),
+            "voix": "meme" if score >= SEUIL_MEME else "doute" if score >= SEUIL_DOUTE else "differente",
+        }
+    raise Refus(404, "introuvable")
+
+
+class Gestion(BaseHTTPRequestHandler):
+    timeout = 30  # une connexion silencieuse ne bloque pas le service
+
+    def log_message(self, *args):  # aucun contenu dans les journaux
+        pass
+
+    def _repondre(self, code: int, corps: dict | str):
+        b = (json.dumps(corps) if isinstance(corps, dict) else corps).encode()
+        self.send_response(code)
+        self.send_header("Content-Type", "application/json" if isinstance(corps, dict) else "text/plain")
+        self.send_header("Content-Length", str(len(b)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(b)
+
+    def do_GET(self):
+        self._repondre(200, "ok") if self.path == "/sante" else self._repondre(404, "introuvable")
+
+    def do_POST(self):
+        jeton = (self.headers.get("Authorization") or "").removeprefix("Bearer ")
+        if not hmac.compare_digest(jeton.encode(), CLE.encode()):
+            return self._repondre(401, {"erreur": "cle"})
+        if not (self.headers.get("Content-Type") or "").startswith("application/json"):
+            return self._repondre(415, {"erreur": "json attendu"})
+        try:
+            taille = int(self.headers.get("Content-Length") or 0)
+        except ValueError:
+            taille = -1
+        if not 0 < taille <= CORPS_MAX:
+            return self._repondre(413, {"erreur": "taille invalide"})
+        try:
+            d = json.loads(self.rfile.read(taille))
+            if not isinstance(d, dict):
+                raise Refus(400, "json invalide")
+            self._repondre(200, traiter(self.path, d))
+        except Refus as r:
+            self._repondre(r.code, {"erreur": r.message})
+        except Exception:
+            self._repondre(500, {"erreur": "erreur"})
+
+
+if __name__ == "__main__":
+    print(f"Vérification vocale SavoirIA sur http://{HOTE}:{PORT} ({FILS} processeur(s))", flush=True)
+    ThreadingHTTPServer((HOTE, PORT), Gestion).serve_forever()
