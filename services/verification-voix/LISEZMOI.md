@@ -44,9 +44,19 @@ curl http://127.0.0.1:8770/sante      # doit répondre « ok »
 
 La même clé est ensuite mise dans Vercel (variable `VOIX_IDENTITE_CLE`).
 
-Pour que SavoirIA en ligne puisse joindre le service, il faudra le rendre accessible en HTTPS par le proxy déjà présent sur le serveur (Traefik, nginx…). Cela se décidera à l'installation, avec trois règles :
+### Accès depuis SavoirIA : tunnel Cloudflare séparé
+
+Le service a son propre tunnel Cloudflare (`savoiria-tunnel-voix`), qui ne touche ni au proxy ni aux autres tunnels du serveur :
+
+1. Dans Cloudflare Zero Trust, créer un tunnel dédié, puis copier son jeton **directement dans le serveur** (jamais dans un message) :
+   `umask 077 && read -rs -p "Jeton : " T && echo "TUNNEL_TOKEN=$T" > .env.tunnel && unset T`
+2. Dans ce tunnel, nom public `voix.<domaine>` vers `http://verification-voix:8770`.
+3. Protéger ce nom par une application Cloudflare Access avec une règle « Service Auth » et un jeton de service. SavoirIA envoie alors `CF-Access-Client-Id` et `CF-Access-Client-Secret` (variables Vercel), en plus de la clé `CLE_SERVICE`.
+4. Lancer : `docker compose --profile tunnel up -d`.
+
+Trois règles dans tous les cas :
 - **ne jamais ouvrir le port 8770 directement sur Internet**, ni en HTTP simple : la signature vocale est une donnée biométrique ;
-- dans le proxy, **vérifier la clé ou n'accepter que SavoirIA**, fixer **des délais courts** et **limiter le nombre total de connexions** vers le service (pas seulement par adresse), pour qu'un inconnu ne puisse pas l'occuper sans la clé. Le service lui-même n'accepte que 16 connexions à la fois, coupe une connexion silencieuse après 10 s et toute demande qui n'est pas arrivée en entier après 15 s ;
+- devant le service, **n'accepter que SavoirIA** (Cloudflare Access), avec **des délais courts** et **un nombre total de connexions limité** (pas seulement par adresse), pour qu'un inconnu ne puisse pas l'occuper sans la clé. Le service lui-même n'accepte que 16 connexions à la fois, coupe une connexion silencieuse après 10 s et toute demande qui n'est pas arrivée en entier après 15 s ;
 - **SavoirIA ne montre jamais le score ni les chiffres entendus à l'élève**, seulement « réussi » ou « à revoir par un formateur ». Il ne les écrit pas non plus dans ses journaux.
 
 ## Protections contre la triche
