@@ -19,7 +19,7 @@ function asList(v: unknown): string[] {
 function optionEntries(options: unknown): { key: string; label: string }[] {
   if (Array.isArray(options)) {
     return options.map((o, i) =>
-      typeof o === 'string' ? { key: String.fromCharCode(65 + i), label: o } : { key: String(o?.key ?? o?.id ?? String.fromCharCode(65 + i)), label: String(o?.text ?? o?.label ?? o?.value ?? '') }
+      typeof o === 'string' ? { key: String.fromCharCode(65 + i), label: o.replace(/^[A-D]\)\s+/, '') } : { key: String(o?.key ?? o?.id ?? String.fromCharCode(65 + i)), label: String(o?.text ?? o?.label ?? o?.value ?? '') }
     );
   }
   if (options && typeof options === 'object') return Object.entries(options as Record<string, unknown>).map(([k, v]) => ({ key: k, label: String(v) }));
