@@ -5,7 +5,7 @@
  * en commençant par la semaine en cours et la suivante.
  */
 import { prisma } from '@/lib/prisma';
-import { CS50_MODULES } from '@/config/course-modules';
+import { CS50_MODULES, CS50_PROGRAMME } from '@/config/course-modules';
 import {
   generateModuleContent,
   generateAudioScript,
@@ -14,7 +14,8 @@ import {
 
 const DAYS: DayOfWeekType[] = ['MONDAY', 'WEDNESDAY', 'FRIDAY'];
 const DAY_FR: Record<DayOfWeekType, string> = { MONDAY: 'Lundi', WEDNESDAY: 'Mercredi', FRIDAY: 'Vendredi' };
-const LAST_WEEK = 10;
+// Leçons du programme officiel, dans l'ordre (la semaine 7½ a le numéro 11). Le bonus a déjà son contenu.
+const LECONS = CS50_PROGRAMME.map((m) => m.id);
 
 type Unit =
   | { kind: 'summary'; week: number }
@@ -70,21 +71,27 @@ Réponds UNIQUEMENT avec un objet JSON :
 { "title": "titre court",
   "questions": [ { "question": "...", "options": ["...", "...", "...", "..."], "correctOption": "A|B|C|D",
                    "explanation": "explication pédagogique de la bonne réponse", "conceptTested": "concept" } ] }
-Contraintes : exactement 5 questions, 4 options chacune, une seule bonne réponse, tout en français, niveau débutant progressif.`;
+Contraintes : exactement 5 questions, 4 options chacune, une seule bonne réponse, tout en français, niveau débutant progressif. N'écris pas de lettre (« A) ») au début des options. Fais varier la place de la bonne réponse.`;
   const out = await geminiJson(prompt);
   const questions = (Array.isArray(out?.questions) ? out.questions : [])
     .filter((q: any) => q?.question && Array.isArray(q?.options) && q.options.length === 4)
     .slice(0, 5)
-    .map((q: any, i: number) => ({
-      order: i,
-      question: String(q.question),
-      options: q.options.map(String),
-      correctOption: ['A', 'B', 'C', 'D'].includes(String(q.correctOption).toUpperCase())
-        ? String(q.correctOption).toUpperCase()
-        : 'A',
-      explanation: String(q.explanation ?? ''),
-      conceptTested: String(q.conceptTested ?? mod?.title ?? ''),
-    }));
+    .map((q: any, i: number) => {
+      const lettres = ['A', 'B', 'C', 'D'];
+      const options = q.options.map((o: any) => String(o).replace(/^[A-D]\)\s+/, ''));
+      const bonne = lettres.indexOf(String(q.correctOption).toUpperCase());
+      // Bonne réponse placée tour à tour en A, B, C, D (les modèles la mettent trop souvent en B).
+      const cible = i % 4;
+      if (bonne >= 0 && bonne !== cible) [options[bonne], options[cible]] = [options[cible], options[bonne]];
+      return {
+        order: i,
+        question: String(q.question),
+        options,
+        correctOption: bonne >= 0 ? lettres[cible] : 'A',
+        explanation: String(q.explanation ?? ''),
+        conceptTested: String(q.conceptTested ?? mod?.title ?? ''),
+      };
+    });
   if (questions.length < 3) throw new Error('Quiz généré incomplet');
   return { title: String(out?.title || `Quiz du ${DAY_FR[day]}`), questions };
 }
@@ -146,10 +153,9 @@ async function weekOrder(now = new Date()): Promise<number[]> {
   if (session) {
     // Anticipation de 3 jours : à partir du vendredi, on prépare la semaine suivante
     const w = Math.floor((now.getTime() + 3 * DAY - session.startDate.getTime()) / (7 * DAY));
-    for (const x of [w, w + 1]) if (x >= 0 && x <= LAST_WEEK && !priority.includes(x)) priority.push(x);
+    for (const x of [LECONS[w], LECONS[w + 1]]) if (x !== undefined && !priority.includes(x)) priority.push(x);
   }
-  const all = Array.from({ length: LAST_WEEK + 1 }, (_, i) => i);
-  return [...priority, ...all.filter((w) => !priority.includes(w))];
+  return [...priority, ...LECONS.filter((w) => !priority.includes(w))];
 }
 
 async function runUnit(u: Unit): Promise<string> {

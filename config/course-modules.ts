@@ -1,5 +1,10 @@
 export interface CourseModuleConfig {
+  /** Numéro de la leçon en base (adresse /courses/cs50x/lessons/<id>). L'ordre d'affichage est celui du tableau. */
   id: number;
+  /** Numéro affiché (« 7½ ») quand il diffère de id ; absent pour un bonus. */
+  numero?: string;
+  /** Leçon hors programme officiel CS50x (pas de problème à rendre). */
+  bonus?: boolean;
   title: string;
   slug: string;
   description: string;
@@ -112,6 +117,17 @@ export const CS50_MODULES: CourseModuleConfig[] = [
     imageUrl: 'https://tableplus.com/assets/images/sequel-pro-dark-theme/table-data.png',
   },
   {
+    id: 11,
+    numero: '7½',
+    title: 'Semaine 7½ : Intelligence artificielle',
+    slug: 'semaine-7-5-intelligence-artificielle',
+    description: "La leçon « Artificial Intelligence » de CS50x, entre SQL et le Web : IA générative, prompts, arbres de décision, minimax, apprentissage automatique, réseaux de neurones et grands modèles de langage.",
+    videoUrl: 'https://www.youtube.com/embed/-9bo8HlSxwQ',
+    difficulty: 'Intermédiaire',
+    topics: ['IA générative', 'Apprentissage automatique', 'Grands modèles de langage'],
+    imageUrl: 'https://i.ytimg.com/vi/-9bo8HlSxwQ/maxresdefault.jpg',
+  },
+  {
     id: 8,
     title: 'Semaine 8 : HTML, CSS, JavaScript',
     slug: 'semaine-8-html-css-javascript',
@@ -137,14 +153,30 @@ export const CS50_MODULES: CourseModuleConfig[] = [
   },
   {
     id: 10,
-    title: 'Semaine 10 : Cybersécurité',
-    slug: 'semaine-10-cybersecurite',
-    description: "Sécurité informatique, cryptographie, HTTPS et bonnes pratiques.",
+    title: 'Semaine 10 : La fin',
+    slug: 'semaine-10-la-fin',
+    description: "Dernière leçon de CS50x (« The End ») : bilan des dix semaines, ce que vous savez faire désormais, le projet final et la suite de votre parcours.",
     videoUrl: 'https://www.youtube.com/embed/ApQTgFkf8TU',
     videoUrlFr: 'https://www.youtube.com/embed/QnG-UY1aKlw',
+    difficulty: 'Avancé',
+    topics: ['Bilan', 'Projet final', 'Et après ?'],
+    imageUrl: 'https://i.ytimg.com/vi/ApQTgFkf8TU/maxresdefault.jpg',
+  },
+  {
+    id: 12,
+    bonus: true,
+    title: 'Bonus : Cybersécurité',
+    slug: 'bonus-cybersecurite',
+    description: "Leçon bonus, hors programme officiel CS50x : sécurité informatique, cryptographie, HTTPS et bonnes pratiques.",
     notebookUrl: 'https://notebooklm.google.com/notebook/c694a329-339d-4aa0-b1e4-5ad5788fccd4',
     difficulty: 'Avancé',
     topics: ['Sécurité', 'Cryptographie', 'HTTPS'],
     imageUrl: 'https://images.stockcake.com/public/b/c/3/bc366a2d-6aed-4bc5-98fa-cbce2a9d9a5e/digital-security-shield-stockcake.jpg',
   },
 ];
+
+/** Numéro affiché d'une leçon : « 7½ », « 3 »… (null pour un bonus). */
+export const numeroModule = (m: Pick<CourseModuleConfig, 'id' | 'numero' | 'bonus'>) => (m.bonus ? null : m.numero ?? String(m.id));
+
+/** Leçons du programme officiel CS50x (sans les bonus). */
+export const CS50_PROGRAMME = CS50_MODULES.filter((m) => !m.bonus);

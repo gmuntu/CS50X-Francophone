@@ -1,0 +1,221 @@
+Source : CS50x 2026, Harvard University (David J. Malan), notes et transcription du cours, https://cs50.harvard.edu/x/ — licence CC BY-NC-SA 4.0.
+Matériel en anglais : le contenu SavoirIA est rédigé en français à partir de ce texte.
+
+=== NOTES DU COURS ===
+# Artificial Intelligence
+
+- Welcome!
+
+- Generative Artificial Intelligence
+
+- Prompt Engineering and Copilot
+
+- AI
+
+- Decision Trees
+
+- Minimax
+
+- Machine Learning
+
+- Deep Learning
+
+- Large Language Models
+
+- Summing Up
+
+## Welcome!
+
+- In computer science and programming circles, rubber ducking or rubber duck debugging is the act of speaking to an inanimate object to be able to talk through a challenging problem like a bug in one’s code.
+
+- Most recently, CS50 created our own rubber duck debugger at CS50.ai, which uses artificial intelligence (AI) as a way by which to interact with students to help them with their own challenging problems.
+
+- Students engaging with this tool can begin understanding the potential of what AI can offer the world.
+
+## Generative Artificial Intelligence
+
+- Numerous AI tools have created the potential for artificially generated images to enter the world.
+
+- Up until years past, most of these tools had numerous tells that might indicate to an observer that an image is AI-generated.
+
+- However, tools are becoming exceedingly good at generating these images.
+
+- Indeed, as technology improves, it will soon be almost, if not entirely, impossible for such images to be detected with the naked eye.
+
+- Generative AI can be used to create photos, video, music, and text.
+
+## Prompt Engineering and Copilot
+
+- 
+Prompt engineering is the way by which an individual can ask good questions of an AI.
+
+- We use a system prompt to teach the AI how to interact with users. We teach the AI how to work with students using such a prompt.
+
+- 
+User prompts are those provided by users to interact with the AI. With these prompts, students interact with the AI.
+
+- 
+
+We can implement this in code as follows:
+
+# Adds to system prompt.
+
+from openai import OpenAI
+
+client = OpenAI()
+
+user_prompt = input("Prompt: ")
+system_prompt = "Limit your answer to one sentence. Pretend you're a cat."
+
+response = client.responses.create(
+    input=user_prompt,
+    instructions=system_prompt,
+    model="gpt-5"
+)
+
+print(response.output_text)
+
+You can run this code with python chat.py. You can download this code here
+
+- Generative AI can also be used to generate code! This kind of functionality can amplify your abilities as a growing and well-practiced programmer.
+
+- Copilot is one such tool for generating code. In CS50, we do not allow the use of generative AI, outside the course’s own tools. CS50 provides clear guidance for students, in our academic honesty policy, on what is considered reasonable and unreasonable use of AI.
+
+## AI
+
+- AI has been with us for many decades! Software has long adapted to users. Algorithms look for patterns in junk mail, in handwriting recognition, in creating movie and video recommendations, and in playing games.
+
+- In games, for example, step-by-step instructions may allow a computerized adversary to play a game of Breakout.
+
+## Decision Trees
+
+- 
+Decision trees are used by an algorithm to decide what decision to make.
+
+- 
+
+For example, in Breakout, an algorithm may consider what choice to make based on the instructions in the code:
+
+While game is ongoing:
+  If ball is left of paddle:
+    Move paddle left
+  Else if ball is right of paddle:
+    Move paddle right
+  Else:
+    Don't move paddle
+
+- With most games, they attempt to minimize the number of calculations required to compete with the player.
+
+## Minimax
+
+- AI is often good at gameplay because it reduces moves and outcomes to mathematical values.
+
+- You can imagine where an algorithm may score outcomes as positive, negative, and neutral.
+
+- In tic-tac-toe, the AI may consider a board where the computer wins as 1 and one where the computer loses as -1.
+
+- You can imagine how a computer may look at a decision tree of potential outcomes and assign scores to each potential move.
+
+- The computer will attempt to win by maximizing its own score.
+
+- 
+
+In the context of tic-tac-toe, the algorithm may conceptualize this as follows:
+
+If player is X:
+  For each possible move:
+    Calculate score for board
+  Choose move with highest score
+
+Else if player is O:
+    For each possible move:
+        Calculate score for board
+    Choose move with lowest score
+
+- 
+
+This could be pictured as follows:
+
+- Because computers are so powerful, they can crunch massive potential outcomes. However, the computers in our pockets or on our desks may not be able to calculate trillions of options for ever-more-complex game trees. This is where machine learning can help.
+
+## Machine Learning
+
+- Machine learning is a way by which a computer can learn through reinforcement.
+
+- A computer can learn how to flip a pancake.
+
+- A computer can learn how to play The Floor is Lava.
+
+- The computer repeats trial after trial after trial to discover what behaviors to repeat and those not to repeat.
+
+- 
+
+Within much of AI-based algorithms, there are concepts of explore vs. exploit, where the AI may randomly try something that may not be considered optimal. Randomness can yield better outcomes. This can be represented in code as follows:
+
+epsilon = 0.10
+
+If random() < epsilon:
+    Make a random move
+Else: 
+    Make the move with the highest value
+
+Notice that epsilon represents the rate of randomness.
+
+## Deep Learning
+
+- 
+Supervised learning is a form of AI-based learning where the human partners with the AI. For example, you might click the “spam” button in your email client to teach the AI what emails it should consider spam.
+
+- However, supervised learning does not scale well to larger problems. Hence, unsupervised learning is a means by which the AI can learn with minimal human intervention.
+
+- 
+Deep learning uses neural networks whereby problems and solutions are explored.
+
+- 
+
+For example, deep learning may attempt to predict whether a blue or red dot will appear somewhere on a graph. Consider the following image:
+
+- Existing training data is used to predict an outcome. Further, more training data may be created by the AI to discover further patterns.
+
+- 
+
+Deep learning creates nodes (pictured below) that associate inputs and outputs.
+
+## Large Language Models
+
+- 
+Large language models (LLMs) are massive models that make predictions based on huge amounts of training.
+
+- Just a few years ago, AI was not very good at completing and generating sentences. Google published a paper in 2017 regarding how these AIs can have their attention drawn to the relationships between various words.
+
+- Generative Pre-trained Transformer (GPT for short) are trained on the relationships between words.
+
+- The AI encodes words into embeddings to find relationships between words. Thus, through a huge amount of training, a massive neural network can predict the association between words - resulting in the ability for generative AI to generate content and even have conversations with users.
+
+- Sometimes, LLMs can hallucinate and provide incorrect information.
+
+## Summing Up
+
+In this lesson, you learned about some of the technology behind CS50.ai. Specifically, we discussed…
+
+- Generative Artificial Intelligence
+
+- Prompt Engineering
+
+- AI
+
+- Decision Trees
+
+- Minimax
+
+- Machine Learning
+
+- Deep Learning
+
+- Large Language Models
+
+This was CS50!
+
+
+=== TRANSCRIPTION (début) ===
+All right, this is CS 50, and this is our lecture on artificial intelligence or AI, particularly for all of those family members who are here in the audience with us for the first time. In fact, uh, for those students among us, maybe a round of applause for all of the family members who have come here today to join you. Nice. So nice to see everyone. And as CS 50 students already know, it's sort of a thing in programming circles to have a rubber duck on your desk. Indeed, a few weeks back we gave one to all CS 50 students, and the motivation is to have someone, something to talk to in the presence of a bug or mistake in your code or confusion you're having when it comes to solving some problem. And the idea is that in the absence of having a friend, family member, TA of whom you can ask questions is to literally verbalize your confusion, your question to this. object on your desk and in that process of verbalizing your own confusion and explaining yourself, quite often does that proverbial light bulb go off over your head and voila, problem is solved. Now as CS50 students also know, we sort of virtualized that rubber duck over the past few years and most recently in a form of this guy here. So in student's programming environment within CS 50, a tool called Visual Studio Code at a URL of CS50.dv, they have a virtual rubber duck available at available to them at all times. And early on in the very first version of this rubber duck, it was a chat window that looked like this and if students had a question, they could simply type into the chat window something like, I'm hoping you can help me solve a problem. And for multiple years, all the CS 50 duck did was respond with 12 or 3 quacks. We have anecdotal evidence to suggest that that alone was enough for answering students' questions because it was in that process of like actually typing out the confusion that you realize, oh, I'm. Doing something silly and you figure it out on your own. But of course now that we live in an age of chat GBT and Claude and Gemini and all of these other AI based tools came as no surprise perhaps when in 2023 the same duck started responding to students in English and that now is the tool that they have available, which is in effect meant to be a less helpful version of Chat GPT, one that doesn't just spoil answers outright, but tries to guide them to solutions akin to any good teacher or tutor. And so today's is indeed on just that and the underlying building blocks that make possible that they're rubber duck in all of the AI with which we're all increasingly familiar, namely generative artificial intelligence using this technology known as AI to generate something, whether that's images or sounds or video or text. And in fact, what we thought we'd do to get everyone involved early on is if you have a phone by your side, if you'd like to go ahead and scan this QR QR code here, and that's going to lead you. To a polling station where you can buzz in with some answers. CS 50's preceptor Kelly is going to kindly join me here on stage to help run the keyboard, and what we're about to do is play a little game and see just how good we humans are right now at distinguishing AI from reality. And so we'll borrow some data from The New York Times, which a couple of years back actually published some examples of AI and not AI, and we'll see just how good this this technology has gotten. So here we have two photographs on the screen. In a moment, you'll be asked on your phone if you were successful in scanning that code, which one of these is AI? Left or right? So hopefully on your phone here, if you want to go ahead and swipe to the next screen, we'll activate the pole here. In a moment you should see on your phone a prompt inviting you to select left or right. And Feel free to raise your hand if you're not seeing that, but it looks like the responses are coming in, and at the risk of spoiling, it looks like 70%+ of you think it is the answer on the right. And if Kelly, maybe we could swipe back to the two photographs in this particular case, yes, it was in fact the one on the right, maybe. Looked a little too good or maybe a little too unreal, maybe let's see, maybe a couple of other examples. So same QR code, no need to re-scan. Let's go ahead and pull up these two examples now 2 photographs, same question. Which of these is AI? Left or right? Left Or right Alright, I want to take a look at the chart, see what the responses are coming in a little closer in this case, but a majority of you think the answer is in fact left here, though 5% of you are truthfully admitting that you're unsure. But Kelly, if you want to swipe back to the photos, the answer this time was in fact a trick question. They were both in fact AI, which perhaps speaks to just how good this technology is already getting. Neither of these faces exists in the real world. It was synthesized based on lots of training data, so two photographs that look like humans but do not in fact exist. How about one more this time focusing on text, which will be the focus of course underlying our duck. Did a 4th grader write this or the new chatbot? Here are two final examples same code as before, so no need to re-scan. And here are the texts. SA 1 I'd like to bring a yummy sandwich and a cold juice box for lunch. Sometimes I'll even pack a tasty piece of fruit or a bag of crunchy chips. As we eat, we chat and laugh and catch up on each other's day. SA 2. My mother packs me a sandwich, a drink, fruit, and a treat. When I get into a lunchroom, I find an empty table and sit there and eat my lunch. My friends come and sit down with me. The question now lastly is which of these is AI? 1 or 2? SA 1 or 2. The bars here are duking themselves out. Looks like a majority of you say SA 1. Let's go back to the text and some of you who, one of you who says SA 1 Y if you want to raise a quick hand, why SA 1, yeah. OK, and uh it's so SA2 looks more like you would write and kind of ask what grade you are in? A 5th grader. So is this a new 5th grader or not? The answer here, in fact, is that SA 1 is the AI because indeed SA 2 is more akin to what a 4th, or if I may, a 5th grader would write. And I dare say there are maybe some telltale signs. I'm not sure a typical 4th grader or 5th grader would catch up on each other's day in the vernacular that we see in SA 1. But suffice it to say this game is not something we can play for in the years to come because it's just going to get too hard to discern something that's a. I generated or not. And so among our goals for today is really to give you a better sense of not just how technologies like this duck and these games that we've played here with images and text work, but really what are the underlying principles of artificial intelligence that frankly have been with us and have been developing for decades and have really now come to a head in recent years thanks to advances in research, thanks to all the more cloud computing, thanks to all the more memory and disk space and information, sheer. The volume thereof that we have at our disposal that can be used to train all of these here technologies. So that their duck is built on a fairly complicated architecture that looks a little something like this where here's a student using one of CS 50's tools. Here's a website with which CS 50 students are familiar called CS50.AI where we, the staff, wrote a bunch of code that actually talks to what are called APIs, application programming interfaces, third party services by companies like Microsoft and OpenAI. Really have been doing the hard work of developing these models as well as some local sweets, some local sauce that we CS 50 add into the mix to make it specific, the duck's answers to CS50 itself. But what we've essentially been doing is something that with which you might be familiar in part, prompt engineering, which has started popping up for better or for worse on LinkedIn profiles everywhere, and prompt engineering really, it's not so much a form of engineering as it is a form of asking good questions. And being detailed in your question giving context to the underlying AI so that the answer with high probability is what you want back. And so there's two terms in this world of prompt engineering that are worth knowing about. So in CS 50 has leveraged both of these to implement that duck. We for instance wrote what's called a system prompt, which are instructions written by us humans, often in English, that sort of nudge the underlying AI technology to have a certain personality or a specific domain. Of expertise. For instance, we CS 50 have written a system prompt essentially that looks like this. In reality it's like a lot of lines long nowadays, but the essence of it is this. You are a friendly and supportive teaching assistant for CS 50. You are also a rubber duck, and that is sufficient to turn an AI into a rubber duck. It turns out. Answer student questions only about CS 50 in the field of computer science. Do not answer questions about unrelated topics. Do not provide full answers to problem sets as this would violate academic honesty. Answer this question colon. And after that preamble, if you will, aka system prompt, we effectively copy paste whatever question a student has typed in, otherwise known as a user prompt, and that is why the duck behaves like a duck in our case and not a cat or a dog. Or a PhD, but rather something that's been attenuated to the particular goals we have pedagogically in the course. And in fact, those of you who are CS 50 students might recall from quite some weeks ago in week zero when we first introduced the course to the class, we had code that we whipped up that day that ultimately looked a little something like this, and I'll walk through it briefly line by line, but now on the heels of having studied some Python in CS 50, this year code that I whipped up in the first lecture might make now a bit more sense. In that first lecture, we imported OpenAI's own library code that a third party company wrote to make it possible for us to implement code on top of theirs. We created a variable called client in week zero, and this gave us access to the OpenAI client, that is software that they wrote for us. We then defined in week zero a user prompt which came from the user using the input function with which CS 50 students are now familiar, and then we defined this system prompt that day where I said limit your answer to one sentence, pretend you're a cat, I think was the persona of the day. And then we used some bit more arcane code here, but in essence we created a variable called response which was meant to represent the response from OpenAI Server. We used client.responses.create, which is a function or method that OpenAI gives us that allows us to pass in three arguments the input from the user, that is the user prompt, the instructions from us, that is the system prompt, and then the specific model or version of AI that we wanted to use. And the last thing we did that day was print out response. output_text. That's how we were able to answer questions like what is CS 50 or the like. So we've seen all of that before, but we didn't talk about that week exactly how it was working or what more we could actually do with it. And so in fact what I thought we'd do today is peel back a layer that we've not allowed into the course up until now and indeed you still cannot use this feature until the very end of the class in CS 50 when you get to your final projects, at which point you are welcome and encouraged to use VS code in this particular way. So here again is. Code for those unfamiliar, this is the programming environment we use here with students. And let me open up some code that was assigned to students a couple of weeks back, namely a spell checker that they had to implement in C. So I came in advance with a folder called speller, and inside of this folder I had code that day and all s
