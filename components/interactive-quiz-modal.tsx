@@ -49,7 +49,8 @@ function getNormalizedOptions(rawOptions: any): Array<{ id: string; text: string
     }
     return {
       id: defaultId,
-      text: String(opt ?? ''),
+      // Les réponses étant mélangées, une lettre écrite dans le texte (« B) … ») tromperait l'élève.
+      text: String(opt ?? '').replace(/^[A-D]\)\s+/, ''),
     };
   });
 }
