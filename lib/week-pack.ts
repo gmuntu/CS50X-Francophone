@@ -2,6 +2,7 @@
 
 import { createZip, type ZipEntry } from '@/lib/zip';
 import { AUDIO_CACHE } from '@/lib/offline';
+import { CS50_MODULES, numeroModule } from '@/config/course-modules';
 
 // « Pack de la semaine » : un ZIP qui s'ouvre sans Internet ni application,
 // partageable par Bluetooth, WhatsApp, Xender ou clé USB.
@@ -14,6 +15,13 @@ function asList(v: unknown): string[] {
   if (Array.isArray(v)) return v.map((x) => (typeof x === 'string' ? x : x?.text ?? x?.label ?? x?.concept ?? x?.title ?? JSON.stringify(x)));
   if (v && typeof v === 'object') return Object.values(v as Record<string, unknown>).map((x) => String(x));
   return [];
+}
+
+// « Semaine 7½ » pour la leçon n° 11, « Bonus » pour une leçon bonus.
+function etiquette(id: number) {
+  const m = CS50_MODULES.find((x) => x.id === id);
+  const n = m ? numeroModule(m) : String(id);
+  return n === null ? 'Bonus' : `Semaine ${n}`;
 }
 
 function optionEntries(options: unknown): { key: string; label: string }[] {
@@ -55,7 +63,7 @@ function buildHtml(p: PackInput, audioFiles: { title: string; file: string }[]) 
 
   return `<!doctype html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Semaine ${p.week} — ${esc(p.title)} | SavoirIA</title>
+<title>${esc(p.title)} | SavoirIA</title>
 <style>
 :root{--bg:#fff;--fg:#0f172a;--mut:#64748b;--card:#f8fafc;--bd:#e2e8f0;--pri:#cc0000;--ok:#059669;--ko:#dc2626}
 @media(prefers-color-scheme:dark){:root{--bg:#0f172a;--fg:#e2e8f0;--mut:#94a3b8;--card:#1e293b;--bd:#334155}}
@@ -69,7 +77,7 @@ label{display:block;padding:8px 10px;border:1px solid var(--bd);border-radius:8p
 button{background:var(--pri);color:#fff;border:0;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer}
 .exp{display:none;margin-top:6px}.done .exp{display:block}pre{white-space:pre-wrap}
 </style></head><body><main>
-<span class="tag">Semaine ${p.week}</span>
+<span class="tag">${etiquette(p.week)}</span>
 <h1>${esc(p.title)}</h1>
 <p class="mut">${esc(p.description)}</p>
 <nav>${audioFiles.length ? '<a href="#podcasts">Podcasts</a>' : ''}<a href="#resume">Résumé</a>${quizData.length ? '<a href="#quiz">Quiz</a>' : ''}${p.exercises?.length ? '<a href="#exercices">Exercices</a>' : ''}</nav>
@@ -144,7 +152,7 @@ export async function buildWeekPack(p: PackInput, onProgress?: (done: number, to
   entries.unshift({ name: 'OUVRIR-MOI.html', data: buildHtml(p, audioFiles) });
   entries.push({
     name: 'LISEZMOI.txt',
-    data: `SavoirIA — Semaine ${p.week} : ${p.title}\r\n\r\n1. Décompressez ce fichier (appui long > Extraire, ou double-clic sur ordinateur).\r\n2. Ouvrez OUVRIR-MOI.html avec votre navigateur (Chrome, Safari...).\r\n3. Tout fonctionne sans Internet : résumé, podcasts, quiz corrigé.\r\n\r\nVous pouvez partager ce fichier avec vos camarades par Bluetooth, WhatsApp, Xender ou clé USB.\r\nSite : ${p.siteUrl}\r\n`,
+    data: `SavoirIA — ${p.title}\r\n\r\n1. Décompressez ce fichier (appui long > Extraire, ou double-clic sur ordinateur).\r\n2. Ouvrez OUVRIR-MOI.html avec votre navigateur (Chrome, Safari...).\r\n3. Tout fonctionne sans Internet : résumé, podcasts, quiz corrigé.\r\n\r\nVous pouvez partager ce fichier avec vos camarades par Bluetooth, WhatsApp, Xender ou clé USB.\r\nSite : ${p.siteUrl}\r\n`,
   });
   onProgress?.(++done, total);
 

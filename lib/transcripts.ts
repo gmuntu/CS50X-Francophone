@@ -7,7 +7,8 @@ import { prisma } from '@/lib/prisma';
  * français avec Gemini et on dépose transcripts/semaineN.fr.txt dans le
  * stockage public des podcasts (Vercel Blob).
  */
-const WEEKS = Array.from({ length: 11 }, (_, i) => i);
+// Semaines 0 à 10, plus la semaine 7½ (numéro 11).
+const WEEKS = [...Array.from({ length: 11 }, (_, i) => i), 11];
 
 function srtToBlocks(srt: string, windowSec = 20): string[] {
   const re = /(\d+):(\d+):(\d+)[,.]\d+\s*-->.*?\n([\s\S]*?)(?:\n\s*\n|$)/g;

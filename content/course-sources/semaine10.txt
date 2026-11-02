@@ -1,0 +1,89 @@
+Source : CS50x 2026, Harvard University (David J. Malan), notes et transcription du cours, https://cs50.harvard.edu/x/ — licence CC BY-NC-SA 4.0.
+Matériel en anglais : le contenu SavoirIA est rédigé en français à partir de ce texte.
+
+=== NOTES DU COURS ===
+# The End
+
+- Recap
+
+- Final Project
+
+- Looking Ahead
+
+- Thank You!
+
+- Summing Up
+
+## Recap
+
+- Over these past ten weeks, you have been drinking from the proverbial firehose.
+
+- During this course, you learned to program in many different languages; indeed, our great hope is that you learned how to program in them all, regardless of the language.
+
+- Consider the various topics we discussed over the last ten weeks: You have come so far and have gained so many skills.
+
+- You should measure your success as the delta between your skill at the start of the course and your skill now, at the end of the course.
+
+- Further, we hope that you learned how to solve problems above all else, how to take input, process it through an algorithm, and produce some output. To that point, we played a game where we drew a picture using verbal instructions.
+
+- Notice how some verbal instructions were higher level and others were lower level, like the different programming languages utilized in this course.
+
+- Notice how some instructions were more specific than others. Remember times when you had to refine your code to do exactly as you wanted.
+
+- Also, notice how some instructions were abstracted away, like draw arms. This is similar to how we abstracted away code into functions.
+
+- Looking at all the weeks of the course, you gathered tools and built skills. Above all, though, you learned how to teach yourself and leverage learning resources.
+
+## Final Project
+
+- Your final project is your opportunity to build a project, using these skills, that is of your specification and design. We hope you will join us for the CS50 Hackathon, an epic all-nighter wherein we work together on our final projects.
+
+- Further, you should notice in the final project specification the opportunity to leverage AI-based tools outside the course’s own (not permitted in any other problem set).
+
+- For those of you on campus, we hope that you will attend the CS50 Fair to showcase your final project.
+
+## Looking Ahead
+
+- As you journey from the work of this course to the world outside CS50, you may want to take a number of steps to prepare and adventure out.
+
+- Journeying on, download and learn about VS Code. Cursor and Windsurf are other popular text editors.
+
+- To be able to execute commands on the terminal, much like you did on CS50.dev, install command-line tools on your Mac or PC.
+
+- Learn more about Git.
+
+- Host a website using GitHub.
+
+- If applicable, host a web app using AWS, Azure, Google Cloud, Cloudflare, Heroku, or Vercel.
+
+- Ask questions in relevant online communities.
+
+- Ask questions using AI-based tools like ChatGPT, Claude, Gemini, GitHub Copilot, Codex, or v0.
+
+- Take any of our other CS50 courses.
+
+- Join one of our many communities.
+
+## Thank You!
+
+- Thank you for engaging in this course!
+
+- Many people made this course possible: Thank you for making this course possible and for supporting us so well!
+
+## Summing Up
+
+In this lesson, we reflected on your journey through this course. Specifically, we encourage you to…
+
+- Take the programming skills you learned in this course to solve problems in the world.
+
+- Take the new skills you acquired in this course and continue your learning!
+
+- Finish strong and submit your final project.
+
+- Quack!
+
+This was CS50!
+
+
+=== TRANSCRIPTION (début) ===
+Alright, this is CS 50 week 10. The very end and we will end today's class just as we ended week zero, which is a little bit of cake outside in the transept. But over these past 10+ weeks, if you've been feeling like it was that proverbial fire hose sort of hitting you in the face with so much new content, so many new skills, so many new challenges, um, realize that you're in very good company and we can officially declare nonetheless that if you started the class among those less comfortable, you are officially after today no longer less comfortable. You're at least somewhere in between and if you were in between. You're more comfortable and if you were more comfortable, you're perhaps now most comfortable among those here. But keep in mind as for CS 50 syllabus, what does ultimately matter in this course is not so much where you end up relative to your classmates, but where you end up relative to where you yourself began, and that's taken into account come final projects, come final grades, but most importantly, that's really what's most important educationally in general is that Delta from week 0 to, in our case here now, week 10. So if it's any reassurance. And something I like to bring up around this time is just how badly I did in CS 50 and like the very first problem set. Like I didn't even get Hello world right somehow in the fall of 1996. So here's a photograph of my homework assignment for assignment one. It was a program to print Hello World on the screen. I was incredibly detailed with my comments, even commenting that Maine is Maine, which is not the way you're supposed to program, even telling the TF where my file ended, which is not really necessary, and I got -2 for not even following directions. Correctly, so take some comfort in that even if by problems at 9 you're still getting points off, you're hopefully, at least in my case, in some very good company. It only gets better and easier and faster in time. But the whole course ultimately has really been about this picture, right? Problem solving is computer science and you have inputs, which is the problem to be solved. You have the outputs that you want to get to, which is presumably the solutions there too. And inside of that proverbial black box are these algorithms, step by step instruction. For solving some problem, and I pulled up my own notes from CS 50's first lecture some 25 plus years ago too, where I wrote down this in my horrible writing, handwriting to this day, but I noted that what an algorithm is is a precise sequence of steps for getting something done, which is pretty much what we now say. I noted that programming itself, as we have for weeks now, is the process of taking an algorithm and putting it into a language that computer can process, and that's what you've done in Scratch and C, and Python and SQL and Java. and anything in between, and most important, at least my takeaway that day when it comes to algorithms is precision and correctness, and indeed those are points we've made perhaps not as emphatically over the past several weeks as well. But we thought we'd see just how much those two lessons in particular have sunk in, by doing a bit of an exercise, some CS 50 pictionary in this, our last lecture altogether this term, um, for which to begin we need one brave volunteer to come on upstage. Who would like to volunteer? Who, how about, OK, over here, we never call from the middle of the section, come on up, come on up, a round of applause for being so brave. Nice. All right, come on over. And In just a moment, let's go ahead and do introductions. First, if you want to come up over to the middle of the stage and introduce yourself to the world. Hi, I'm Jia. I'm a freshman. All right, nice, nice to meet you. Thank you for joining us. So what we're about to do is Gia's going to look at my screen where there's going to be a picture on a white screen. All of you presumably have a white sheet of paper in front of you that you grabbed on the way in. If you don't. Just grab one from a friend or your binder or the like, and if you really don't, that's OK too, but hopefully everyone has a pen or pencil or someone near you does. And what we're going to ask you to do is program the audience to draw what it is you see on the screen. You can say anything you want, but you may not use any physical gestures or the like, verbal programming only. OK. All right, come on over to the lectern. And in just a moment, GN only Gia will see what is actually here on the screen. So. Step 1 for your audience. OK, so the first thing that you need to do is draw two lines right next to each other, 2 vertical lines. OK. OK. Step 2, once you have done that, you need to draw 3 dots, one on above those two vertical lines, one right in the middle between those two vertical lines, and one on the bottom of these 3 vertical lines beneath those two vertical lines. Yeah, so 3 dots. OK. Step 3. Step 3 is on the top of the left vertical line, you're gonna connect a line from that position to the top dot that you drew and then on the top of the right vertical line, you're gonna connect that position to the top dot that you drew. All right, step 4 is, remember that top left position? You're going to connect that to the middle dot that you drew. And then the top right of the vertical line, uh, the, yes, you're going to connect that to the middle dot of the line that you drew. Mhm. And then step 5 on the bottom left of your left vertical line, you're gonna connect that position to the bottom dot that you drew and then on the bottom right of the right vertical line you're gonna connect that position to the bottom dot that you drew. And now from the middle dot to the bottom dot you should have no line in between that, and you can now draw a line between those two dots. Step 6 and the last. I think you should be done. All right, a round of applause for our programmer. Let me give you a little something. If you want to take a seat, well, now what Kelly and I are going to do is very quickly collect your execution of this program, and we'll see just how it went with Gia as the programmer. If you want to just reach out and hand me or Kelly over there any of your handwritings, we don't need all of them, just a representative sample will suffice. If you're proud of your work, extend your hand quite a bit. OK, very proud. OK. OK. OK, OK, one more, one more, that's OK. All right, I'm gonna run back to the stage. OK. It's OK if we didn't grab yours. All right. All right, thank you to Kelly for grabbing these as well. So, without having seen any of these, here is how you all interpreted Gia's instructions. So here's one interpretation. OK. Perhaps similar or different from your own. Uh, here's another several. Vertical vertical line, question mark, OK. He is. Very narrow one. All right, and And let's see if we got any other variants thereof. Actually, the rest of them are pretty consistent. So, gee, if it's any reassurance, I'm seeing a lot of ones that look like this. Here's another that looks like this and here's yet another that looks like this. So if you're wondering where we're going with this, if I go ahead and reveal what it was Gia was looking at on the screen, she was in fact having you draw this here cube. So some of the takeaways here. So suffice to say, not all of that went well, uh, but why was that? Well, I dare say it was very easy to get confused, I think, G, in some of your words because you had in your mind's eye exactly what it was you were drawing and. Of course it was right there on the screen, but we didn't leverage, at least in GSA instructions, any abstractions. I dare say it might have been a little bit easier for all of us if maybe she had just teed things up by saying, All right, everyone, we're going to draw a cube, for instance, which is indeed an abstraction over these lower level details that she was focusing on. But perhaps there could have been another approach altogether, which is even more pedantic. For instance, a lot of the earliest drawing programs. And even worlds like Scratch sort of take for granted that you have a coordinate system like X's and Y's and you can go up, down, left and right. So an alternative to just saying, hey, I'll draw a cube, which could be subject to interpretation because there's a cube like this, is it like this rotated so we still would have needed more information than just a cube from Gia. But here maybe an alternative approach would have been to really get into the weeds and say put your pen at the top of the page and then draw a Straight line to the southwest, for instance, and then draw another line of the same distance to the south and then to the southeast or so forth and it could have been in terms of degrees, it could be directionally in that way, but it might not have been clear to anyone what it was we were drawing until enough of the lines suddenly appear on the screen and then voila, you see that we've been drawing a cube this whole time. So the degree to which we're precise and the layer of the level of abstraction that operate in is incredibly important whether it's for another human to understand us, for an AI to understand us nowadays, or anything in between. All right, why don't we go ahead and flip things around a bit um for this, why don't we go ahead and get one more volunteer to do something a little different here on stage? One more OK, how about here on the aisle? Come on down. Round of applause for this brave volunteer. Come on down. All right. So in this exercise, we're gonna flip things around. So you all will be giving the instructions verbally by just shouting them out and our volunteer whose name is Preston. Presley. Presley, Presley, you want to say a quick introduction? Yeah, uh, my name is Presley. I'm a freshman, uh, living in Stton House. Nice. Well, welcome. Come on over to the, the, uh, the easel here, and we have a black marker for Presley here. And the only thing that we ask is that you not look up or behind you because the answer is going to be Right there on the screen, but everyone else is welcome to look up or over to the TV screen. And if you want to go ahead and face the easel here and as you draw, just make sure to kind of open up after each stroke of the pen so that everyone can see what you have done. All right, so no looking up as of now because what the audience is about to do is to program you to draw this on the screen. Oh, way to encourage him. OK, so step one, feel free to just raise your hand and we'll shout them out. I heard draw circle over here, but not too big, I heard over here. Good abstraction, you're gonna end up drawing a stick figure. But we should probably be a little more helpful than that. So let's do the hand thing just so we can be more precise and not overwhelm Presley with the was the hand over here, yeah, and back. Draw a line down from the circle, Presley. From the bottom of the circle. OK, someone else? So actually, let me, let me rewind, sorry, say it again. Draw two diagonal lines from the line you just drew. Well, I don't think the audience likes this. Wait, let's, uh, mm. OK. OK, that's what we were told. Next step, someone else? So OK. Good one. OK. Extends the original vertical line to be about the same height as the circle. OK, yeah, that's good, good feedback. All right, someone else. Next step. Next step. Yes. Nice. Draw two diagonal lines from the bottom of that line that look like legs, good use of detail and abstraction. OK, nice. Next step. Anyone? We're close. Yeah, over here. On the left. So you're gonna draw a speech bubble to the left of the head with the word high, capital H with a short line. No bubble, just high. And you wanted to clarify one other detail. A line from high to the face, with space in between. OK, no, you're doing great, it's OK, Presley. Hang in there. OK, final step or two. Next step, Anyone at all Feel free to shout it out. Adjust the arms to make them look like th

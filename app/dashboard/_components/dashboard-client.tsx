@@ -8,7 +8,7 @@ import {
   FolderCheck, ShieldCheck
 } from 'lucide-react';
 import Link from 'next/link';
-import { CS50_MODULES } from '@/config/course-modules';
+import { CS50_MODULES, CS50_PROGRAMME, numeroModule } from '@/config/course-modules';
 import { motion } from 'framer-motion';
 import TutorMessageCard from '@/components/tutor-message-card';
 import MyTrainingsCard from '@/components/home/my-trainings-card';
@@ -55,17 +55,17 @@ export default function DashboardClient({ user }: Props) {
     load();
   }, []);
 
-  const completedCount = progress?.filter?.((p: any) => p?.status === 'COMPLETED')?.length ?? 0;
-  const totalModules = CS50_MODULES?.length ?? 11;
+  const completedCount = progress?.filter?.((p: any) => p?.status === 'COMPLETED' && CS50_PROGRAMME.some((m) => m.id === p?.lessonId))?.length ?? 0;
+  const totalModules = CS50_PROGRAMME.length; // le bonus ne compte pas dans la progression
   const avgScore = progress?.length > 0
     ? Math.round((progress?.reduce?.((acc: number, p: any) => acc + (p?.score ?? 0), 0) ?? 0) / progress.length)
     : 0;
 
   // Détermine le module recommandé pour reprendre l'apprentissage
-  const nextModule = CS50_MODULES.find((m: any) => {
+  const nextModule = CS50_PROGRAMME.find((m: any) => {
     const p = progress?.find?.((pr: any) => pr?.lessonId === m?.id);
     return p?.status !== 'COMPLETED';
-  }) ?? CS50_MODULES[0];
+  }) ?? CS50_PROGRAMME[0];
 
   const nextModuleProgress = progress?.find?.((pr: any) => pr?.lessonId === nextModule?.id);
 
@@ -163,7 +163,7 @@ export default function DashboardClient({ user }: Props) {
               <div className="space-y-2 max-w-2xl">
                 <div className="flex items-center gap-2">
                   <span className="px-2.5 py-0.5 rounded-md bg-primary text-primary-foreground text-[11px] font-extrabold uppercase tracking-wide">
-                    Semaine {nextModule.id}
+                    Semaine {numeroModule(nextModule)}
                   </span>
                   <span className="text-xs font-semibold text-muted-foreground">Reprendre là où vous vous êtes arrêté</span>
                 </div>
@@ -265,11 +265,11 @@ export default function DashboardClient({ user }: Props) {
                               </div>
                             ) : isInProgress ? (
                               <div className="w-8 h-8 rounded-xl bg-primary/15 text-primary flex items-center justify-center font-bold text-xs">
-                                {m.id}
+                                {numeroModule(m) ?? '★'}
                               </div>
                             ) : (
                               <div className="w-8 h-8 rounded-xl bg-muted text-muted-foreground flex items-center justify-center font-bold text-xs">
-                                {m.id}
+                                {numeroModule(m) ?? '★'}
                               </div>
                             )}
                           </div>

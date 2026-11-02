@@ -6,7 +6,8 @@ import Footer from '@/components/footer';
 import { Play, Brain, FileText, ArrowLeft, Volume2, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import type { CourseModuleConfig } from '@/config/course-modules';
+import { CS50_MODULES, numeroModule, type CourseModuleConfig } from '@/config/course-modules';
+import { CS50_PROBLEM_WEEKS } from '@/config/cs50-problems';
 import InteractiveQuizModal from '@/components/interactive-quiz-modal';
 import CourseAssistant from '@/components/course-assistant';
 import OfflineLessonButton from '@/components/pwa/offline-lesson-button';
@@ -45,9 +46,13 @@ export default function LessonClient({ moduleConfig, lesson, userId }: Props) {
     (u: any): u is string => typeof u === 'string' && u.length > 0
   );
 
-  const currentWeek = moduleConfig?.id ?? 0;
-  const prevWeek = currentWeek > 0 ? currentWeek - 1 : null;
-  const nextWeek = currentWeek < 10 ? currentWeek + 1 : null;
+  // Ordre du programme (avec la semaine 7½ et le bonus), pas l'ordre des numéros.
+  const position = CS50_MODULES.findIndex((m) => m.id === moduleConfig?.id);
+  const prevWeek = position > 0 ? CS50_MODULES[position - 1].id : null;
+  const nextWeek = position >= 0 && position < CS50_MODULES.length - 1 ? CS50_MODULES[position + 1].id : null;
+  const numero = numeroModule(moduleConfig);
+  const etiquette = numero === null ? 'Bonus' : `Semaine ${numero}`;
+  const aDesProblemes = CS50_PROBLEM_WEEKS.some((w) => w.week === moduleConfig?.id);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -65,7 +70,7 @@ export default function LessonClient({ moduleConfig, lesson, userId }: Props) {
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-muted-foreground">SavoirIA</span>
             <span className="text-muted-foreground/40">/</span>
-            <span className="text-xs font-bold text-foreground">Semaine {moduleConfig?.id}</span>
+            <span className="text-xs font-bold text-foreground">{etiquette}</span>
           </div>
         </div>
 
@@ -73,7 +78,7 @@ export default function LessonClient({ moduleConfig, lesson, userId }: Props) {
         <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
           <div className="flex flex-wrap items-center gap-2">
             <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-extrabold border border-primary/20">
-              Semaine {moduleConfig?.id}
+              {etiquette}
             </span>
             {moduleConfig?.topics?.map((topic: string) => (
               <span key={topic} className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-card border border-border/80 text-foreground/80">
@@ -83,12 +88,14 @@ export default function LessonClient({ moduleConfig, lesson, userId }: Props) {
           </div>
           <h1 className="text-2xl sm:text-4xl font-extrabold text-foreground tracking-tight">{moduleConfig?.title}</h1>
           <OfflineLessonButton lessonId={moduleConfig?.id} title={moduleConfig?.title} audioUrls={offlineAudio} />
-          <Link
-            href={`/courses/cs50x/problemes/${moduleConfig?.id}`}
-            className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl bg-primary/10 text-primary border border-primary/20 hover:bg-primary/15 transition"
-          >
-            🧩 Problèmes de la semaine
-          </Link>
+          {aDesProblemes && (
+            <Link
+              href={`/courses/cs50x/problemes/${moduleConfig?.id}`}
+              className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl bg-primary/10 text-primary border border-primary/20 hover:bg-primary/15 transition"
+            >
+              🧩 Problèmes de la semaine
+            </Link>
+          )}
           <p className="text-sm sm:text-base text-muted-foreground max-w-3xl leading-relaxed">{moduleConfig?.description}</p>
         </motion.div>
 
@@ -226,6 +233,7 @@ export default function LessonClient({ moduleConfig, lesson, userId }: Props) {
             {/* Exercises Tab */}
             {activeTab === 'exercises' && (
               <div className="space-y-4">
+                {aDesProblemes ? (
                 <Link
                   href={`/courses/cs50x/problemes/${moduleConfig?.id}`}
                   className="block rounded-2xl border border-primary/30 bg-primary/5 p-5 sm:p-6 hover:bg-primary/10 transition"
@@ -235,6 +243,9 @@ export default function LessonClient({ moduleConfig, lesson, userId }: Props) {
                     Les problèmes officiels de CS50, expliqués en français pas à pas, avec Socrate pour vous guider. C'est eux qui comptent pour le certificat CS50x.
                   </p>
                 </Link>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Cette leçon n'a pas de problème officiel à rendre : regardez la vidéo, écoutez les podcasts et testez-vous avec les quiz.</p>
+                )}
                 {exercises?.length > 0 && (
                   <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide pt-2">Exercices à rendre à votre formateur</p>
                 )}
@@ -282,7 +293,7 @@ export default function LessonClient({ moduleConfig, lesson, userId }: Props) {
                   href={`/courses/cs50x/lessons/${prevWeek}`}
                   className="px-4 py-2.5 rounded-xl border border-border/80 bg-card text-xs sm:text-sm font-bold text-foreground hover:bg-muted transition flex items-center gap-2"
                 >
-                  <ArrowLeft className="w-4 h-4" /> Semaine précédente
+                  <ArrowLeft className="w-4 h-4" /> Leçon précédente
                 </Link>
               ) : <div />}
 
@@ -291,7 +302,7 @@ export default function LessonClient({ moduleConfig, lesson, userId }: Props) {
                   href={`/courses/cs50x/lessons/${nextWeek}`}
                   className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs sm:text-sm font-bold hover:bg-primary/90 transition shadow-sm shadow-primary/25 flex items-center gap-2"
                 >
-                  Semaine suivante →
+                  Leçon suivante →
                 </Link>
               )}
             </div>
