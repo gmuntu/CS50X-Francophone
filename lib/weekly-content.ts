@@ -71,7 +71,7 @@ Réponds UNIQUEMENT avec un objet JSON :
 { "title": "titre court",
   "questions": [ { "question": "...", "options": ["...", "...", "...", "..."], "correctOption": "A|B|C|D",
                    "explanation": "explication pédagogique de la bonne réponse", "conceptTested": "concept" } ] }
-Contraintes : exactement 5 questions, 4 options chacune, une seule bonne réponse, tout en français, niveau débutant progressif. N'écris pas de lettre (« A) ») au début des options. Fais varier la place de la bonne réponse.`;
+Contraintes : exactement 5 questions, 4 options chacune, une seule bonne réponse, tout en français, niveau débutant progressif. N'écris pas de lettre (« A) ») au début des options, et ne cite jamais de lettre dans l'explication (les réponses sont mélangées).`;
   const out = await geminiJson(prompt);
   const questions = (Array.isArray(out?.questions) ? out.questions : [])
     .filter((q: any) => q?.question && Array.isArray(q?.options) && q.options.length === 4)
