@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
-import { BookOpen, Play, Brain, FileText, ArrowLeft, Volume2, CheckCircle } from 'lucide-react';
+import { Play, Brain, FileText, ArrowLeft, Volume2, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import type { CourseModuleConfig } from '@/config/course-modules';
@@ -15,6 +15,8 @@ import IdentityReminder from '@/components/identity/identity-reminder';
 import FinalProject from '@/components/formations/ia/final-project';
 import WeekPackButton from '@/components/pwa/week-pack-button';
 import BilingualVideo from '@/components/pwa/bilingual-video';
+import Cs50Credit from '@/app/courses/cs50x/problemes/_components/cs50-credit';
+import WeekSummary from './week-summary';
 
 interface Props {
   moduleConfig: CourseModuleConfig;
@@ -33,7 +35,7 @@ export default function LessonClient({ moduleConfig, lesson, userId }: Props) {
   const videoSummary = lesson?.videoSummary;
 
   const tabs = [
-    { id: 'video', label: 'Vidéo & Résumé', icon: Play },
+    { id: 'video', label: 'Vidéo & résumé', icon: Play },
     { id: 'audio', label: 'Podcasts', icon: Volume2 },
     { id: 'quiz', label: `Quiz (${quizzes?.length ?? 0})`, icon: Brain },
     { id: 'exercises', label: `Exercices (${exercises?.length ?? 0})`, icon: FileText },
@@ -127,22 +129,8 @@ export default function LessonClient({ moduleConfig, lesson, userId }: Props) {
                 {moduleConfig?.videoUrl && (
                   <BilingualVideo en={moduleConfig.videoUrl} fr={moduleConfig?.videoUrlFr} title={moduleConfig?.title} />
                 )}
-                {videoSummary ? (
-                  <div className="bg-card border border-border/80 rounded-2xl p-6 sm:p-7 shadow-soft-sm space-y-4">
-                    <h2 className="text-xl font-extrabold text-foreground tracking-tight border-b border-border/60 pb-3">
-                      {videoSummary?.title ?? 'Résumé Vidéo'}
-                    </h2>
-                    <div
-                      className="prose-cs50"
-                      dangerouslySetInnerHTML={{ __html: (videoSummary?.overview ?? '').replace?.(/\n/g, '<br/>') }}
-                    />
-                  </div>
-                ) : (
-                  <div className="bg-card border border-border/80 rounded-2xl p-8 text-center shadow-soft-sm">
-                    <BookOpen className="w-10 h-10 text-muted-foreground/60 mx-auto mb-3" />
-                    <p className="text-sm text-muted-foreground">Le résumé vidéo sera généré par l'IA prochainement.</p>
-                  </div>
-                )}
+                <Cs50Credit />
+                <WeekSummary summary={videoSummary} />
               </div>
             )}
 
@@ -238,6 +226,18 @@ export default function LessonClient({ moduleConfig, lesson, userId }: Props) {
             {/* Exercises Tab */}
             {activeTab === 'exercises' && (
               <div className="space-y-4">
+                <Link
+                  href={`/courses/cs50x/problemes/${moduleConfig?.id}`}
+                  className="block rounded-2xl border border-primary/30 bg-primary/5 p-5 sm:p-6 hover:bg-primary/10 transition"
+                >
+                  <p className="font-extrabold text-foreground text-sm sm:text-base">🧩 À faire en priorité : les problèmes de la semaine</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
+                    Les problèmes officiels de CS50, expliqués en français pas à pas, avec Socrate pour vous guider. C'est eux qui comptent pour le certificat CS50x.
+                  </p>
+                </Link>
+                {exercises?.length > 0 && (
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide pt-2">Exercices à rendre à votre formateur</p>
+                )}
                 {exercises?.length > 0 ? (
                   exercises.map((ex: any) => (
                     <Link
@@ -270,10 +270,7 @@ export default function LessonClient({ moduleConfig, lesson, userId }: Props) {
                     </Link>
                   ))
                 ) : (
-                  <div className="bg-card border border-border/80 rounded-2xl p-8 text-center shadow-soft-sm">
-                    <FileText className="w-10 h-10 text-muted-foreground/60 mx-auto mb-3" />
-                    <p className="text-sm text-muted-foreground">Les exercices seront disponibles prochainement.</p>
-                  </div>
+                  null
                 )}
               </div>
             )}
