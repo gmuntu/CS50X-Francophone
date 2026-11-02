@@ -62,7 +62,7 @@ export default function ExerciseClient({ exercise, lessonId, userId }: Props) {
             exercise?.difficulty === 'easy' ? 'bg-green-500/10 text-green-400' :
             exercise?.difficulty === 'hard' ? 'bg-red-500/10 text-red-400' :
             'bg-amber-500/10 text-amber-400'
-          }`}>{exercise?.difficulty}</span>
+          }`}>{({ easy: 'Facile', medium: 'Moyen', hard: 'Difficile' } as Record<string, string>)[exercise?.difficulty] ?? exercise?.difficulty}</span>
 
           <div className="bg-card border border-border rounded-xl p-6 mb-6">
             <h2 className="font-bold text-foreground mb-2">Instructions</h2>
