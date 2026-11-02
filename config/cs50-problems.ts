@@ -1,6 +1,7 @@
 // Problèmes officiels de CS50x 2026 (Harvard), semaine par semaine.
 // Source : https://cs50.harvard.edu/x/2026/psets/ — licence CC BY-NC-SA 4.0.
 // Pour ajouter une vidéo doublée : remplir `fr` avec l'adresse « embed » YouTube de la version française.
+// Doublage : Moon2⁺Studio, voix « Rémy » (la même que pour les leçons).
 
 export interface ProblemVideo {
   /** Vidéo originale (anglais), adresse « embed » YouTube. */
