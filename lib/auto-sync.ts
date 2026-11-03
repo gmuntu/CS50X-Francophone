@@ -84,7 +84,7 @@ export async function synchroniser(auto = false): Promise<void> {
     await flushQueue().catch(() => 0);
 
     // Ce qu'il faut avoir sur l'appareil
-    const aFaire: { formation: string; lecon: { id: number; title: string; path: string; audio: string[] } }[] = [];
+    const aFaire: { formation: string; lecon: { id: number; title: string; path: string; audio: string[]; version?: string } }[] = [];
     for (const f of FORMATIONS) {
       const r = await fetch(`/api/offline/manifest?course=${f.slug}`, { cache: 'no-store' }).catch(() => null);
       if (!r || r.status === 401) { publier({ enCours: false, etape: '', erreur: 'Connecte-toi une fois avec Internet pour activer la synchronisation.' }); return; }

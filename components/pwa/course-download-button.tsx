@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { offlineSupported, saveLesson, storeGeneratedAudio, generatedAudioKey, readGeneratedAudio } from '@/lib/offline';
 import { IA_SLUG, getIaWeek } from '@/lib/courses/ia-essentiels';
 
-type Lesson = { id: number; week?: number; title: string; path: string; audio: string[] };
+type Lesson = { id: number; week?: number; title: string; path: string; audio: string[]; version?: string };
 
 /** « Toute la formation hors ligne » : enregistre toutes les semaines ouvertes, podcasts compris. */
 export default function CourseDownloadButton({ course, label = 'Toute la formation hors ligne' }: { course: string; label?: string }) {
@@ -28,7 +28,7 @@ export default function CourseDownloadButton({ course, label = 'Toute la formati
         const l = lessons[i];
         setProgress(`Semaine ${i + 1} / ${lessons.length}`);
         try {
-          const r = await saveLesson({ id: l.id, title: l.title, path: l.path, audio: l.audio });
+          const r = await saveLesson({ id: l.id, title: l.title, path: l.path, audio: l.audio, version: l.version });
           failed += r.failed.length;
           // Formations SavoirIA : les voix du podcast sont générées, on les enregistre une par une.
           if (course === IA_SLUG && l.week) {

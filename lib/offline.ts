@@ -13,6 +13,8 @@ export interface SavedLesson {
   path: string;
   audio: string[];
   savedAt: string;
+  /** Empreinte des quiz au moment de l'enregistrement (CS50x) : sert à repérer un paquet périmé. */
+  version?: string;
 }
 
 export const offlineSupported = () =>
@@ -40,6 +42,9 @@ export async function saveLesson(lesson: Omit<SavedLesson, 'savedAt'>, onProgres
   const audio = await caches.open(AUDIO_CACHE);
   const total = lesson.audio.length + 1;
   let done = 0;
+  // Empreinte demandée AVANT la page : si un quiz change pendant le téléchargement,
+  // la semaine sera vue comme périmée (et non l'inverse).
+  const version = lesson.version ?? (await versionDe(lesson));
 
   const page = await fetch(lesson.path, { credentials: 'include' });
   if (!page.ok || page.redirected) throw new Error('page');
@@ -72,7 +77,7 @@ export async function saveLesson(lesson: Omit<SavedLesson, 'savedAt'>, onProgres
   }
 
   const list = (await listSavedLessons()).filter((l) => l.id !== lesson.id);
-  list.push({ ...lesson, audio: lesson.audio.filter((a) => !failed.includes(a)), savedAt: new Date().toISOString() });
+  list.push({ ...lesson, version, audio: lesson.audio.filter((a) => !failed.includes(a)), savedAt: new Date().toISOString() });
   await writeList(list.sort((a, b) => a.id - b.id));
   return { failed };
 }
@@ -93,6 +98,59 @@ export async function savePage(path: string) {
     }));
   } catch {}
   return true;
+}
+
+const estCs50x = (l: { path: string }) => l.path.startsWith('/courses/cs50x/');
+
+/** Empreintes actuelles des quiz CS50x, données par le serveur (null sans réseau ou sans connexion). */
+async function versionsActuelles(): Promise<Record<string, string> | null> {
+  try {
+    const r = await fetch('/api/offline/manifest?course=cs50x&versions=1', { cache: 'no-store', credentials: 'include' });
+    if (!r.ok) return null;
+    return ((await r.json()) as { versions?: Record<string, string> }).versions ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function versionDe(lesson: { id: number; path: string }): Promise<string | undefined> {
+  if (!estCs50x(lesson)) return undefined;
+  return (await versionsActuelles())?.[lesson.id];
+}
+
+/**
+ * Semaines enregistrées dont les quiz ont changé depuis (corrigés, remplacés…).
+ * Une semaine enregistrée avant l'arrivée des empreintes compte comme périmée.
+ * Sans réseau, renvoie une liste vide : on ne peut pas savoir.
+ */
+export async function paquetsPerimes(): Promise<SavedLesson[]> {
+  if (!offlineSupported() || !navigator.onLine) return [];
+  const cs50 = (await listSavedLessons().catch(() => [] as SavedLesson[])).filter(estCs50x);
+  if (!cs50.length) return [];
+  const versions = await versionsActuelles();
+  if (!versions) return [];
+  return cs50.filter((l) => versions[l.id] && l.version !== versions[l.id]);
+}
+
+/**
+ * Met à jour les semaines périmées : seulement les pages (où se trouvent les quiz),
+ * les podcasts déjà enregistrés sont gardés. Renvoie le nombre de semaines mises à jour.
+ */
+export async function mettreAJourPaquets(perimes: SavedLesson[]): Promise<number> {
+  const versions = await versionsActuelles();
+  if (!versions) return 0;
+  let faits = 0;
+  for (const l of perimes) {
+    if (!(await savePage(l.path).catch(() => false))) continue;
+    const list = await listSavedLessons();
+    const cible = list.find((x) => x.id === l.id);
+    if (!cible) continue;
+    cible.version = versions[l.id];
+    cible.savedAt = new Date().toISOString();
+    await writeList(list);
+    faits++;
+  }
+  return faits;
 }
 
 export async function removeLesson(id: number) {
