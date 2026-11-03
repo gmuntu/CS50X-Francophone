@@ -55,6 +55,10 @@ export default function PostesEcole({ institutionId, postes, onChange }: { insti
       <p className="text-sm font-semibold text-foreground flex items-center gap-1.5">
         <Monitor className="w-4 h-4 text-primary" /> Ordinateurs d&apos;école (hors ligne)
       </p>
+      <p className="text-xs text-muted-foreground">
+        Un poste reçoit les comptes des élèves de cet établissement (mots de passe chiffrés) pour qu&apos;ils se connectent sans Internet.
+        Poste perdu ou volé : désactivez-le tout de suite (⏻) ; à sa prochaine connexion, il bloque aussi les comptes qu&apos;il gardait.
+      </p>
 
       {cle && (
         <div className="rounded-xl border border-amber-500/50 bg-amber-50 dark:bg-amber-950/30 p-3 text-sm space-y-2">

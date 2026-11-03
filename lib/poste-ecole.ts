@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma';
 // Le site central ne garde que l'empreinte (SHA-256) de la clé, jamais la clé elle-même.
 
 export const ENTETE_POSTE = 'x-savoiria-poste';
-export const MAX_LIGNES = 2000; // par envoi (le poste envoie par paquets)
+export const MAX_LIGNES = 500; // par envoi (le poste envoie par paquets)
 
 export function genererClePoste(): string {
   return `poste_${randomBytes(32).toString('base64url')}`;
@@ -43,7 +43,6 @@ export async function elevesDeLEcole(institutionId: string) {
       firstName: true,
       lastName: true,
       password: true,
-      dossierNumber: true,
       studentType: true,
       university: true,
       paymentStatus: true,

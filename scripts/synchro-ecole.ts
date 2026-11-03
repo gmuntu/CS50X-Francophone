@@ -11,10 +11,11 @@ const prisma = new PrismaClient();
 const SERVEUR = process.env.SAVOIRIA_SERVEUR || 'https://www.savoiria.online';
 const CLE = (process.env.POSTE_CLE || '').trim();
 const ETAT = process.env.SYNCHRO_ETAT || '/var/lib/savoiria/synchro-ecole.json';
-const PAQUET = 1000;
+const PAQUET = 500;
 const MARGE_MS = 2 * 86_400_000; // on renvoie 2 jours de plus : le site ignore les doublons
 
 type Etat = { derniereSynchro?: string; institutionId?: string };
+class PosteRefuse extends Error {}
 
 async function lireEtat(): Promise<Etat> {
   try { return JSON.parse(await readFile(ETAT, 'utf8')); } catch { return {}; }
@@ -26,6 +27,7 @@ async function appel(chemin: string, init: RequestInit = {}) {
     headers: { 'Content-Type': 'application/json', 'x-savoiria-poste': CLE, ...(init.headers ?? {}) },
     signal: AbortSignal.timeout(60_000),
   });
+  if (r.status === 401) throw new PosteRefuse();
   if (!r.ok) throw new Error(`${chemin} : ${r.status} ${(await r.text()).slice(0, 200)}`);
   return r.json();
 }
@@ -38,10 +40,11 @@ async function cartesQuiz() {
   return { parId, parCle };
 }
 
-async function envoyer(etat: Etat) {
-  if (!etat.institutionId) return; // première fois : on reçoit d'abord les comptes
+/** Renvoie le nombre de lignes refusées par le site (horloge du poste fausse, élève retiré…). */
+async function envoyer(etat: Etat): Promise<number> {
+  if (!etat.institutionId) return 0; // première fois : on reçoit d'abord les comptes
   const eleves = (await prisma.user.findMany({ where: { institutionId: etat.institutionId, role: 'STUDENT' }, select: { id: true } })).map((u) => u.id);
-  if (!eleves.length) return;
+  if (!eleves.length) return 0;
   const depuis = etat.derniereSynchro ? new Date(new Date(etat.derniereSynchro).getTime() - MARGE_MS) : new Date(0);
   const { parId } = await cartesQuiz();
 
@@ -63,13 +66,26 @@ async function envoyer(etat: Etat) {
   });
 
   const n = Math.max(quizAttempts.length, courseProgress.length);
+  let refuses = 0;
   for (let i = 0; i < n; i += PAQUET) {
     const r = await appel('/api/poste/envoi', {
       method: 'POST',
       body: JSON.stringify({ quizAttempts: quizAttempts.slice(i, i + PAQUET), courseProgress: courseProgress.slice(i, i + PAQUET) }),
     });
     console.log(`   envoi : ${r.quizAjoutes} quiz ajoutés, ${r.semainesMaj} semaines, ${r.refuses} refusés`);
+    refuses += Number(r.refuses) || 0;
   }
+  return refuses;
+}
+
+/** Poste désactivé par l'administration : plus aucun élève de l'école ne se connecte ici. */
+async function bloquerLEcole(institutionId?: string) {
+  if (!institutionId) return;
+  const r = await prisma.user.updateMany({
+    where: { institutionId, role: 'STUDENT' },
+    data: { status: 'SUSPENDED', password: null },
+  });
+  console.log(`Poste désactivé par l'administration : ${r.count} compte(s) d'élève bloqué(s) sur cet ordinateur.`);
 }
 
 async function recevoir(): Promise<string> {
@@ -84,7 +100,7 @@ async function recevoir(): Promise<string> {
   const recus = new Set<string>();
   for (const u of d.eleves as any[]) {
     const autre = await prisma.user.findUnique({ where: { email: u.email }, select: { id: true } });
-    if (autre && autre.id !== u.id) { console.log(`   compte ignoré (adresse déjà utilisée sur ce poste) : ${u.email}`); continue; }
+    if (autre && autre.id !== u.id) { console.log(`   compte ${u.id} ignoré : son adresse est déjà utilisée par un autre compte de ce poste`); continue; }
     const infos = {
       email: u.email, name: u.name, firstName: u.firstName, lastName: u.lastName, password: u.password,
       role: 'STUDENT' as const, status: 'ACTIVE' as const, institutionId: inst.id,
@@ -131,10 +147,19 @@ async function main() {
   if (!CLE) { console.log("Pas de clé de poste d'école : synchronisation des élèves ignorée."); return; }
   const debut = new Date().toISOString();
   const etat = await lireEtat();
-  await envoyer(etat); // d'abord l'envoi : rien de ce qui a été fait ici ne se perd
-  const institutionId = await recevoir();
-  await writeFile(ETAT, JSON.stringify({ derniereSynchro: debut, institutionId }), { mode: 0o600 });
-  console.log('Synchronisation de l’école terminée.');
+  try {
+    const refuses = await envoyer(etat); // d'abord l'envoi : rien de ce qui a été fait ici ne se perd
+    const institutionId = await recevoir();
+    // Des lignes refusées (souvent l'horloge du poste) : on ne fait pas avancer la date,
+    // elles seront renvoyées au prochain passage une fois l'heure corrigée.
+    const derniereSynchro = refuses > 0 ? etat.derniereSynchro : debut;
+    if (refuses > 0) console.log(`ATTENTION : ${refuses} ligne(s) refusée(s) par le site. Vérifiez la date et l'heure de cet ordinateur.`);
+    await writeFile(ETAT, JSON.stringify({ derniereSynchro, institutionId }), { mode: 0o600 });
+    console.log('Synchronisation de l’école terminée.');
+  } catch (e) {
+    if (e instanceof PosteRefuse) { await bloquerLEcole(etat.institutionId); process.exitCode = 1; return; }
+    throw e;
+  }
 }
 
 main()

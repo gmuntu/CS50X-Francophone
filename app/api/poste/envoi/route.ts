@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { datePlausible, elevesDeLEcole, MAX_LIGNES, noter, posteDeLaRequete } from '@/lib/poste-ecole';
-import { IA_PASS_SCORE } from '@/lib/courses/ia-essentiels';
+import { IA_PASS_SCORE, IA_SLUG, IA_WEEKS } from '@/lib/courses/ia-essentiels';
 
 export const dynamic = 'force-dynamic';
 
 const JOURS = new Set(['MONDAY', 'WEDNESDAY', 'FRIDAY']);
 const ID_OK = /^[a-z0-9]{10,40}$/i;
-const SLUG_OK = /^[a-z0-9-]{1,60}$/;
+const SEMAINES_IA = new Set(IA_WEEKS.map((w) => w.n));
 
 /**
  * Un ordinateur d'école envoie ce que ses élèves ont fait sans Internet :
@@ -61,17 +61,25 @@ export async function POST(req: Request) {
   }
   const quizAjoutes = aCreer.length ? (await prisma.quizAttempt.createMany({ data: aCreer, skipDuplicates: true })).count : 0;
 
-  // --- Semaines des formations SavoirIA ---
+  // --- Semaines des formations SavoirIA (seulement les formations et semaines qui existent) ---
   let semainesMaj = 0;
-  for (const s of semaines) {
+  const tri = [...semaines].sort((a, b) => Number(a?.week) - Number(b?.week)); // dans l'ordre : la 1 avant la 2…
+  for (const s of tri) {
     const week = Number(s?.week);
     const bestScore = Number(s?.bestScore);
-    if (!eleves.has(s?.userId) || !SLUG_OK.test(String(s?.courseSlug ?? '')) || !Number.isInteger(week) || week < 0 || week > 60 || !(bestScore >= 0 && bestScore <= 1)) {
+    if (!eleves.has(s?.userId) || s?.courseSlug !== IA_SLUG || !SEMAINES_IA.has(week) || !(bestScore >= 0 && bestScore <= 1)) {
       refuses++;
       continue;
     }
-    // Une date de réussite n'est acceptée que si le score atteint le seuil
-    const passedAt = bestScore >= IA_PASS_SCORE ? datePlausible(s?.passedAt) : null;
+    // Réussite acceptée seulement si le score atteint le seuil ET si la semaine précédente est déjà réussie
+    let passedAt = bestScore >= IA_PASS_SCORE ? datePlausible(s?.passedAt) : null;
+    if (passedAt && week > 1) {
+      const precedente = await prisma.courseProgress.findUnique({
+        where: { userId_courseSlug_week: { userId: s.userId, courseSlug: IA_SLUG, week: week - 1 } },
+        select: { passedAt: true },
+      });
+      if (!precedente?.passedAt) { passedAt = null; refuses++; }
+    }
     const where = { userId_courseSlug_week: { userId: s.userId, courseSlug: s.courseSlug, week } };
     const avant = await prisma.courseProgress.findUnique({ where });
     const garde = avant?.passedAt && (!passedAt || avant.passedAt <= passedAt) ? avant.passedAt : passedAt;
