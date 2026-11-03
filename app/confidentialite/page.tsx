@@ -15,11 +15,10 @@ export default function ConfidentialitePage() {
       <table><thead><tr><th>Donnée</th><th>Pourquoi</th></tr></thead><tbody>
         <tr><td>Prénom, nom, courriel, mot de passe (enregistré chiffré, jamais en clair)</td><td>Créer et protéger votre compte, vous écrire (mot de passe oublié, avis)</td></tr>
         <tr><td>Pays, type d'élève, établissement (s'il y a lieu)</td><td>Adapter la formation, gérer les partenariats avec les établissements</td></tr>
-        <tr><td>Photo de vérification</td><td>Confirmer votre identité, notamment pour les attestations</td></tr>
         <tr><td>Numéro de téléphone (facultatif)</td><td>Utiliser Socrate par WhatsApp ou SMS</td></tr>
         <tr><td>Progression, résultats de quiz, exercices et projets</td><td>Suivre votre formation, ouvrir les semaines suivantes, délivrer l'attestation</td></tr>
         <tr><td>Vos questions à Socrate (texte et voix)</td><td>Vous répondre. Les enregistrements de voix servent seulement à la réponse et ne sont pas conservés par SavoirIA.</td></tr>
-        <tr><td>Empreinte SavoirIA (3 photos du visage et 15 s de voix), photos et voix prises pendant l'examen oral (avec votre accord)</td><td>Vérifier que c'est bien vous qui passez les examens, par comparaison avec votre empreinte. Stockées chez Vercel, supprimées 6 mois après la fin de la formation.</td></tr>
+        <tr><td>Empreinte SavoirIA (3 photos du visage et 15 s de voix), photos et voix prises pendant l'examen oral (avec votre accord)</td><td>Vérifier que c'est bien vous qui passez les examens : en cas de doute, un formateur compare avec votre empreinte (aucune reconnaissance faciale automatique). Stockées chez Vercel, supprimées 6 mois après la fin de la formation.</td></tr>
         <tr><td>Demandes « Me prévenir »</td><td>Vous avertir de l'ouverture d'une formation</td></tr>
       </tbody></table>
 

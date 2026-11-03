@@ -5,14 +5,13 @@ import Header from '@/components/header';
 import Footer from '@/components/footer';
 import {
   Users, ArrowLeft, Shield, Ban, CheckCircle, UserPlus, Loader2,
-  Camera, Check, X, Search, Filter, KeyRound, Building2, CreditCard,
+  Check, X, Search, Filter, KeyRound, Building2, CreditCard,
   Phone, Calendar, FileText, AlertCircle, RefreshCw, Eye, Sparkles,
   GraduationCap, Smartphone, Pencil, Trash2, AlertTriangle
 } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import FacialCaptureModal from '@/components/facial-capture-modal';
 import EditUserModal from './edit-user-modal';
 import DeleteUserModal from './delete-user-modal';
 import {
@@ -36,8 +35,6 @@ interface UserItem {
   dialCode?: string | null;
   dossierNumber?: string | null;
   birthDate?: string | null;
-  photoUrl?: string | null;
-  facialVerificationStatus?: string;
   studentType?: string;
   university?: string | null;
   paymentStatus?: string;
@@ -58,11 +55,7 @@ export default function UsersClient({ users: initialUsers }: Props) {
   // Recherche & Filtres
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'ALL' | 'LIBRE' | 'UNIVERSITAIRE'>('ALL');
-  const [filterFacial, setFilterFacial] = useState<'ALL' | 'PENDING' | 'VERIFIED' | 'REJECTED'>('ALL');
   const [filterRole, setFilterRole] = useState<'ALL' | 'STUDENT' | 'INSTRUCTOR' | 'ADMIN'>('ALL');
-
-  // Modal Webcam / Photo
-  const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
 
   // Modal Réinitialisation mot de passe
   const [resetUser, setResetUser] = useState<UserItem | null>(null);
@@ -100,8 +93,6 @@ export default function UsersClient({ users: initialUsers }: Props) {
     paymentStatus: 'PENDING' as 'PAID' | 'PENDING' | 'EXEMPTED' | 'FAILED',
     paymentMethod: 'MPESA',
     paymentAmount: 500,
-    photoUrl: '' as string,
-    facialVerificationStatus: 'PENDING' as 'PENDING' | 'VERIFIED' | 'REJECTED',
   });
 
   // Mise à jour du pays et auto-génération du numéro de dossier
@@ -231,8 +222,6 @@ export default function UsersClient({ users: initialUsers }: Props) {
         dialCode: formData.dialCode,
         dossierNumber: formData.dossierNumber,
         birthDate: formData.birthDate || null,
-        photoUrl: formData.photoUrl || null,
-        facialVerificationStatus: formData.facialVerificationStatus,
         studentType: isInstructor ? 'PERSONNEL' : formData.studentType,
         university: finalUniversity,
         paymentStatus: isInstructor || formData.studentType === 'UNIVERSITAIRE' ? 'EXEMPTED' : formData.paymentStatus,
@@ -276,8 +265,6 @@ export default function UsersClient({ users: initialUsers }: Props) {
           paymentStatus: 'PENDING',
           paymentMethod: 'MPESA',
           paymentAmount: 500,
-          photoUrl: '',
-          facialVerificationStatus: 'PENDING',
         });
       } else {
         const serverCauses: string[] = Array.isArray(data?.causes) && data.causes.length > 0
@@ -304,25 +291,6 @@ export default function UsersClient({ users: initialUsers }: Props) {
       toast.error(genericError);
     } finally {
       setCreating(false);
-    }
-  };
-
-  // Mise à jour de la vérification faciale
-  const handleToggleFacial = async (userId: string, newStatus: 'VERIFIED' | 'REJECTED' | 'PENDING') => {
-    try {
-      const res = await fetch('/api/admin/users', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, facialVerificationStatus: newStatus }),
-      });
-      if (res.ok) {
-        setUsers((prev) =>
-          prev.map((u) => (u.id === userId ? { ...u, facialVerificationStatus: newStatus } : u))
-        );
-        toast.success(`Statut facial : ${newStatus}`);
-      }
-    } catch {
-      toast.error('Erreur de mise à jour');
     }
   };
 
@@ -389,17 +357,14 @@ export default function UsersClient({ users: initialUsers }: Props) {
         (filterType === 'LIBRE' && (u.studentType === 'LIBRE' || !u.studentType)) ||
         (filterType === 'UNIVERSITAIRE' && u.studentType === 'UNIVERSITAIRE');
 
-      const matchesFacial =
-        filterFacial === 'ALL' ||
-        u.facialVerificationStatus === filterFacial;
 
       const matchesRole =
         filterRole === 'ALL' ||
         u.role === filterRole;
 
-      return matchesSearch && matchesType && matchesFacial && matchesRole;
+      return matchesSearch && matchesType && matchesRole;
     });
-  }, [users, searchTerm, filterType, filterFacial, filterRole]);
+  }, [users, searchTerm, filterType, filterRole]);
 
   // Statistiques
   const stats = useMemo(() => {
@@ -407,8 +372,7 @@ export default function UsersClient({ users: initialUsers }: Props) {
     const libres = users.filter((u) => (u.studentType === 'LIBRE' || !u.studentType) && u.role === 'STUDENT').length;
     const universitaires = users.filter((u) => u.studentType === 'UNIVERSITAIRE' && u.role === 'STUDENT').length;
     const instructors = users.filter((u) => u.role === 'INSTRUCTOR').length;
-    const facialPending = users.filter((u) => u.facialVerificationStatus === 'PENDING').length;
-    return { total, libres, universitaires, instructors, facialPending };
+    return { total, libres, universitaires, instructors };
   }, [users]);
 
   // Validation mot de passe en temps réel
@@ -438,7 +402,7 @@ export default function UsersClient({ users: initialUsers }: Props) {
               Gestion & Enregistrement des Étudiants
             </h1>
             <p className="text-muted-foreground text-sm mt-1">
-              Enregistrement certifié avec vérification faciale, numéro de dossier et gestion des paiements
+              Enregistrement des étudiants, numéro de dossier et gestion des paiements
             </p>
             <div className="inline-flex items-center gap-2 mt-2 px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-xs font-semibold text-primary">
               <Shield className="w-3.5 h-3.5 text-primary" />
@@ -460,7 +424,7 @@ export default function UsersClient({ users: initialUsers }: Props) {
         </div>
 
         {/* Cartes statistiques */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 mb-8">
           <div className="bg-card border border-border rounded-2xl p-4 shadow-sm">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Comptes</p>
             <p className="text-2xl font-black text-foreground mt-1">{stats.total}</p>
@@ -482,12 +446,6 @@ export default function UsersClient({ users: initialUsers }: Props) {
               <GraduationCap className="w-3.5 h-3.5" /> Formateurs
             </p>
             <p className="text-2xl font-black text-indigo-600 mt-1">{stats.instructors}</p>
-          </div>
-          <div className="bg-card border border-border rounded-2xl p-4 shadow-sm">
-            <p className="text-xs font-semibold text-amber-600 uppercase tracking-wider flex items-center gap-1">
-              <Camera className="w-3.5 h-3.5" /> Photos en attente
-            </p>
-            <p className="text-2xl font-black text-amber-600 mt-1">{stats.facialPending}</p>
           </div>
         </div>
 
@@ -527,18 +485,6 @@ export default function UsersClient({ users: initialUsers }: Props) {
               <option value="LIBRE">Libres (500$)</option>
               <option value="UNIVERSITAIRE">Universitaires (0$)</option>
             </select>
-
-            {/* Filtre Facial */}
-            <select
-              value={filterFacial}
-              onChange={(e: any) => setFilterFacial(e.target.value)}
-              className="px-3 py-2 text-xs font-semibold bg-background border border-border rounded-xl focus:outline-none"
-            >
-              <option value="ALL">Tous statuts photo</option>
-              <option value="VERIFIED">Photo Vérifiée ✓</option>
-              <option value="PENDING">Photo En attente ⏳</option>
-              <option value="REJECTED">Photo Rejetée ✕</option>
-            </select>
           </div>
         </div>
 
@@ -548,19 +494,18 @@ export default function UsersClient({ users: initialUsers }: Props) {
             <table className="w-full text-left text-sm">
               <thead className="bg-muted/50 text-muted-foreground text-xs uppercase font-bold tracking-wider border-b border-border">
                 <tr>
-                  <th className="py-3.5 px-4">Étudiant & Photo</th>
+                  <th className="py-3.5 px-4">Étudiant</th>
                   <th className="py-3.5 px-4">N° Dossier</th>
                   <th className="py-3.5 px-4">Contact</th>
                   <th className="py-3.5 px-4">Type & Convention</th>
                   <th className="py-3.5 px-4">Paiement</th>
-                  <th className="py-3.5 px-4">Vérification Faciale</th>
                   <th className="py-3.5 px-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="text-center py-12 text-muted-foreground text-sm">
+                    <td colSpan={6} className="text-center py-12 text-muted-foreground text-sm">
                       Aucun étudiant ne correspond aux critères de recherche.
                     </td>
                   </tr>
@@ -571,17 +516,13 @@ export default function UsersClient({ users: initialUsers }: Props) {
 
                     return (
                       <tr key={u.id} className="hover:bg-muted/30 transition-colors">
-                        {/* Étudiant & Photo */}
+                        {/* Étudiant */}
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-3">
                             <div className="relative w-10 h-10 rounded-full overflow-hidden bg-muted flex items-center justify-center border border-border flex-shrink-0">
-                              {u.photoUrl ? (
-                                <img src={u.photoUrl} alt={u.name || ''} className="w-full h-full object-cover" />
-                              ) : (
-                                <span className="font-bold text-xs text-muted-foreground">
-                                  {u.name?.slice(0, 2).toUpperCase() || 'ET'}
-                                </span>
-                              )}
+                              <span className="font-bold text-xs text-muted-foreground">
+                                {u.name?.slice(0, 2).toUpperCase() || 'ET'}
+                              </span>
                             </div>
                             <div>
                               <p className="font-bold text-foreground text-sm leading-tight flex items-center gap-1.5">
@@ -686,47 +627,6 @@ export default function UsersClient({ users: initialUsers }: Props) {
                               {u.paymentStatus || 'Non payé'}
                             </span>
                           )}
-                        </td>
-
-                        {/* Vérification Faciale */}
-                        <td className="py-3 px-4">
-                          <div className="flex items-center gap-1.5">
-                            {u.facialVerificationStatus === 'VERIFIED' ? (
-                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
-                                <Check className="w-3 h-3" /> Vérifié
-                              </span>
-                            ) : u.facialVerificationStatus === 'REJECTED' ? (
-                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded-full">
-                                <X className="w-3 h-3" /> Rejeté
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
-                                En attente
-                              </span>
-                            )}
-
-                            {/* Boutons d'action rapide pour valider/rejeter la photo */}
-                            {u.facialVerificationStatus !== 'VERIFIED' && (
-                              <button
-                                type="button"
-                                title="Valider la reconnaissance faciale"
-                                onClick={() => handleToggleFacial(u.id, 'VERIFIED')}
-                                className="p-1 rounded-lg hover:bg-emerald-100 text-emerald-700 transition"
-                              >
-                                <Check className="w-3.5 h-3.5" />
-                              </button>
-                            )}
-                            {u.facialVerificationStatus !== 'REJECTED' && (
-                              <button
-                                type="button"
-                                title="Rejeter la photo"
-                                onClick={() => handleToggleFacial(u.id, 'REJECTED')}
-                                className="p-1 rounded-lg hover:bg-rose-100 text-rose-700 transition"
-                              >
-                                <X className="w-3.5 h-3.5" />
-                              </button>
-                            )}
-                          </div>
                         </td>
 
                         {/* Actions */}
@@ -1318,64 +1218,6 @@ export default function UsersClient({ users: initialUsers }: Props) {
                   </div>
                 </div>
 
-                {/* 6. PHOTO & RECONNAISSANCE FACIALE */}
-                <div className="border border-border rounded-2xl p-4 bg-muted/20">
-                  <div className="flex items-center justify-between mb-3">
-                    <div>
-                      <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                        <Camera className="w-4 h-4 text-primary" /> Photo d'identité & Reconnaissance faciale
-                      </span>
-                      <p className="text-[11px] text-muted-foreground">
-                        Capture Webcam en direct ou fichier d'identité
-                      </p>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => setIsPhotoModalOpen(true)}
-                      className="px-3 py-1.5 text-xs font-bold bg-primary text-primary-foreground rounded-xl flex items-center gap-1.5 hover:bg-primary/90 transition"
-                    >
-                      <Camera className="w-3.5 h-3.5" />
-                      {formData.photoUrl ? 'Modifier la photo' : 'Prendre la photo'}
-                    </button>
-                  </div>
-
-                  {formData.photoUrl ? (
-                    <div className="flex items-center gap-4 bg-card border border-border p-3 rounded-xl">
-                      <img
-                        src={formData.photoUrl}
-                        alt="Photo étudiant"
-                        className="w-16 h-16 rounded-xl object-cover border-2 border-emerald-500"
-                      />
-                      <div className="flex-1">
-                        <p className="text-xs font-bold text-emerald-600 flex items-center gap-1">
-                          <Check className="w-3.5 h-3.5" /> Photo enregistrée
-                        </p>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">
-                          Prête pour la validation faciale de certification
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setFormData((prev) => ({ ...prev, photoUrl: '' }))}
-                        className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ) : (
-                    <div
-                      onClick={() => setIsPhotoModalOpen(true)}
-                      className="cursor-pointer border border-dashed border-border hover:border-primary rounded-xl p-4 text-center transition bg-card"
-                    >
-                      <Camera className="w-6 h-6 text-muted-foreground mx-auto mb-1" />
-                      <p className="text-xs text-muted-foreground font-medium">
-                        Cliquez pour capturer par webcam ou uploader une photo
-                      </p>
-                    </div>
-                  )}
-                </div>
-
                 {/* Boutons d'action */}
                 <div className="pt-2 flex items-center justify-end gap-3 border-t border-border">
                   <button
@@ -1403,19 +1245,6 @@ export default function UsersClient({ users: initialUsers }: Props) {
           </div>
         )}
       </AnimatePresence>
-
-      {/* MODAL WEBCAM / CAMÉRA MOBILE / TÉLÉVERSEMENT */}
-      <FacialCaptureModal
-        isOpen={isPhotoModalOpen}
-        onClose={() => setIsPhotoModalOpen(false)}
-        initialPhoto={formData.photoUrl}
-        dossierNumber={formData.dossierNumber}
-        userName={formData.firstName && formData.lastName ? `${formData.firstName} ${formData.lastName}` : undefined}
-        onCapture={(photoBase64) => {
-          setFormData((prev) => ({ ...prev, photoUrl: photoBase64, facialVerificationStatus: 'VERIFIED' }));
-          toast.success('Photo capturée et associée !');
-        }}
-      />
 
       {/* MODAL RÉINITIALISATION MOT DE PASSE */}
       <AnimatePresence>
@@ -1494,11 +1323,7 @@ export default function UsersClient({ users: initialUsers }: Props) {
               <div className="flex items-center justify-between mb-5 pb-4 border-b border-border">
                 <div className="flex items-center gap-3">
                   <div className="w-14 h-14 rounded-2xl overflow-hidden bg-muted border border-border flex items-center justify-center">
-                    {detailUser.photoUrl ? (
-                      <img src={detailUser.photoUrl} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <Users className="w-6 h-6 text-muted-foreground" />
-                    )}
+                    <Users className="w-6 h-6 text-muted-foreground" />
                   </div>
                   <div>
                     <h3 className="font-bold text-base text-foreground">{detailUser.name}</h3>
@@ -1544,12 +1369,6 @@ export default function UsersClient({ users: initialUsers }: Props) {
                     {detailUser.studentType === 'UNIVERSITAIRE'
                       ? '0 USD (Convention)'
                       : `${detailUser.paymentAmount || 500} USD — ${detailUser.paymentStatus}`}
-                  </span>
-                </div>
-                <div className="flex justify-between py-1.5 border-b border-border">
-                  <span className="text-muted-foreground">Vérification faciale :</span>
-                  <span className={`font-bold ${detailUser.facialVerificationStatus === 'VERIFIED' ? 'text-emerald-600' : 'text-amber-600'}`}>
-                    {detailUser.facialVerificationStatus || 'PENDING'}
                   </span>
                 </div>
                 <div className="flex justify-between py-1.5">

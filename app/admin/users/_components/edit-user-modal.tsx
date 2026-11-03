@@ -3,11 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  X, Loader2, Camera, Check, AlertCircle, Phone, Calendar,
+  X, Loader2, AlertCircle, Phone, Calendar,
   CreditCard, Building2, Shield, UserCheck, RefreshCw, KeyRound
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import FacialCaptureModal from '@/components/facial-capture-modal';
 import {
   AFRICAN_COUNTRIES,
   PAYMENT_METHODS,
@@ -29,8 +28,6 @@ interface UserItem {
   dialCode?: string | null;
   dossierNumber?: string | null;
   birthDate?: string | null;
-  photoUrl?: string | null;
-  facialVerificationStatus?: string;
   studentType?: string;
   university?: string | null;
   paymentStatus?: string;
@@ -49,7 +46,6 @@ interface EditUserModalProps {
 export default function EditUserModal({ user, isOpen, onClose, onUserUpdated }: EditUserModalProps) {
   const defaultCountry = AFRICAN_COUNTRIES[0];
   const [selectedCountry, setSelectedCountry] = useState<CountryOption>(defaultCountry);
-  const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -69,8 +65,6 @@ export default function EditUserModal({ user, isOpen, onClose, onUserUpdated }: 
     paymentAmount: 500,
     role: 'STUDENT',
     status: 'ACTIVE',
-    facialVerificationStatus: 'PENDING',
-    photoUrl: '',
     newPassword: '',
   });
 
@@ -105,8 +99,6 @@ export default function EditUserModal({ user, isOpen, onClose, onUserUpdated }: 
             : 500,
         role: user.role || 'STUDENT',
         status: user.status || 'ACTIVE',
-        facialVerificationStatus: user.facialVerificationStatus || 'PENDING',
-        photoUrl: user.photoUrl || '',
         newPassword: '',
       });
     }
@@ -189,8 +181,6 @@ export default function EditUserModal({ user, isOpen, onClose, onUserUpdated }: 
           paymentAmount: formData.studentType === 'UNIVERSITAIRE' ? 0 : Number(formData.paymentAmount),
           role: formData.role,
           status: formData.status,
-          facialVerificationStatus: formData.facialVerificationStatus,
-          photoUrl: formData.photoUrl || null,
           newPassword: formData.newPassword || undefined,
         }),
       });
@@ -471,13 +461,13 @@ export default function EditUserModal({ user, isOpen, onClose, onUserUpdated }: 
               </div>
             </div>
 
-            {/* 3. Statut du compte & Reconnaissance faciale */}
+            {/* 3. Statut du compte */}
             <div className="border-t border-border pt-4">
               <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-1.5">
-                <Camera className="w-3.5 h-3.5 text-primary" /> Reconnaissance Faciale & État du Compte
+                <Shield className="w-3.5 h-3.5 text-primary" /> État du compte
               </h3>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <label className="block font-semibold text-foreground mb-1">Rôle de l'utilisateur</label>
                   <select
@@ -504,39 +494,6 @@ export default function EditUserModal({ user, isOpen, onClose, onUserUpdated }: 
                     <option value="PENDING">En attente de validation</option>
                   </select>
                 </div>
-              </div>
-
-              {/* Photo & Reconnaissance faciale */}
-              <div className="flex items-center justify-between p-3 rounded-xl bg-muted/40 border border-border">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl overflow-hidden bg-background border border-border flex items-center justify-center shrink-0">
-                    {formData.photoUrl ? (
-                      <img src={formData.photoUrl} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <Camera className="w-5 h-5 text-muted-foreground" />
-                    )}
-                  </div>
-                  <div>
-                    <span className="font-semibold text-foreground block">Photo faciale</span>
-                    <select
-                      value={formData.facialVerificationStatus}
-                      onChange={(e) => setFormData({ ...formData, facialVerificationStatus: e.target.value })}
-                      className="mt-1 px-2 py-1 bg-background border border-border rounded-lg text-[11px] text-foreground focus:outline-none"
-                    >
-                      <option value="VERIFIED">🟢 Vérifiée</option>
-                      <option value="PENDING">🟡 En attente</option>
-                      <option value="REJECTED">🔴 Rejetée</option>
-                    </select>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setIsPhotoModalOpen(true)}
-                  className="px-3 py-1.5 rounded-xl bg-primary text-primary-foreground font-semibold text-xs hover:bg-primary/90 transition flex items-center gap-1.5"
-                >
-                  <Camera className="w-3.5 h-3.5" /> Reprendre / Téléverser
-                </button>
               </div>
             </div>
 
@@ -577,22 +534,6 @@ export default function EditUserModal({ user, isOpen, onClose, onUserUpdated }: 
         </motion.div>
       </div>
 
-      {/* Modal webcam pour retouche photo */}
-      <FacialCaptureModal
-        isOpen={isPhotoModalOpen}
-        onClose={() => setIsPhotoModalOpen(false)}
-        initialPhoto={formData.photoUrl}
-        dossierNumber={formData.dossierNumber}
-        userName={`${formData.firstName} ${formData.lastName}`.trim()}
-        onCapture={(photoBase64) => {
-          setFormData((prev) => ({
-            ...prev,
-            photoUrl: photoBase64,
-            facialVerificationStatus: 'VERIFIED',
-          }));
-          toast.success('Nouvelle photo capturée et associée au dossier !');
-        }}
-      />
     </>
   );
 }

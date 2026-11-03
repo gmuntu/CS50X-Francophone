@@ -27,8 +27,6 @@ export default async function AdminUsersPage() {
         dialCode: true,
         dossierNumber: true,
         birthDate: true,
-        photoUrl: true,
-        facialVerificationStatus: true,
         studentType: true,
         university: true,
         paymentStatus: true,

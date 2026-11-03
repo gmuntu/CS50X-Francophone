@@ -40,8 +40,6 @@ export async function POST(request: NextRequest) {
       dialCode,
       dossierNumber,
       birthDate,
-      photoUrl,
-      facialVerificationStatus = 'PENDING',
       studentType = 'LIBRE', // 'LIBRE' | 'UNIVERSITAIRE'
       university,
       paymentStatus = 'PENDING',
@@ -179,10 +177,6 @@ export async function POST(request: NextRequest) {
         dialCode: dialCode ? String(dialCode).trim() : null,
         dossierNumber: finalDossier,
         birthDate: parsedBirthDate,
-        photoUrl: photoUrl || null,
-        facialVerificationStatus: ['PENDING', 'VERIFIED', 'REJECTED'].includes(facialVerificationStatus)
-          ? facialVerificationStatus
-          : 'PENDING',
         studentType: finalStudentType,
         university: isUniversitaire ? String(university).trim() : null,
         paymentStatus: finalPaymentStatus,
@@ -202,8 +196,6 @@ export async function POST(request: NextRequest) {
         dialCode: true,
         dossierNumber: true,
         birthDate: true,
-        photoUrl: true,
-        facialVerificationStatus: true,
         studentType: true,
         university: true,
         paymentStatus: true,
@@ -261,7 +253,6 @@ export async function PUT(request: NextRequest) {
       email,
       role,
       status,
-      facialVerificationStatus,
       paymentStatus,
       paymentMethod,
       paymentAmount,
@@ -272,7 +263,6 @@ export async function PUT(request: NextRequest) {
       dialCode,
       dossierNumber,
       birthDate,
-      photoUrl,
       newPassword,
     } = body ?? {};
 
@@ -349,13 +339,8 @@ export async function PUT(request: NextRequest) {
       data.status = ['ACTIVE', 'SUSPENDED', 'PENDING'].includes(status) ? status : existingUser.status;
     }
 
-    // 7. Biométrie & Photo
-    if (facialVerificationStatus) {
-      data.facialVerificationStatus = ['PENDING', 'VERIFIED', 'REJECTED'].includes(facialVerificationStatus)
-        ? facialVerificationStatus
-        : existingUser.facialVerificationStatus;
-    }
-    if (photoUrl !== undefined) data.photoUrl = photoUrl || null;
+    // 7. Plus de photo ni de statut « visage vérifié » sur la fiche : la photo témoin
+    //    vit dans l'empreinte (stockage privé), jamais en clair dans la base.
 
     // 8. Type d'étudiant & Paiement
     if (studentType) {
@@ -406,8 +391,6 @@ export async function PUT(request: NextRequest) {
         dialCode: true,
         dossierNumber: true,
         birthDate: true,
-        photoUrl: true,
-        facialVerificationStatus: true,
         studentType: true,
         university: true,
         paymentStatus: true,
