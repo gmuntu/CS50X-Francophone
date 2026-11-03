@@ -42,6 +42,9 @@ export async function saveLesson(lesson: Omit<SavedLesson, 'savedAt'>, onProgres
   const audio = await caches.open(AUDIO_CACHE);
   const total = lesson.audio.length + 1;
   let done = 0;
+  // Empreinte demandée AVANT la page : si un quiz change pendant le téléchargement,
+  // la semaine sera vue comme périmée (et non l'inverse).
+  const version = lesson.version ?? (await versionDe(lesson));
 
   const page = await fetch(lesson.path, { credentials: 'include' });
   if (!page.ok || page.redirected) throw new Error('page');
@@ -73,7 +76,6 @@ export async function saveLesson(lesson: Omit<SavedLesson, 'savedAt'>, onProgres
     onProgress?.(++done, total);
   }
 
-  const version = lesson.version ?? (await versionDe(lesson));
   const list = (await listSavedLessons()).filter((l) => l.id !== lesson.id);
   list.push({ ...lesson, version, audio: lesson.audio.filter((a) => !failed.includes(a)), savedAt: new Date().toISOString() });
   await writeList(list.sort((a, b) => a.id - b.id));
