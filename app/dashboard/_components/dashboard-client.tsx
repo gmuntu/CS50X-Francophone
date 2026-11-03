@@ -5,7 +5,7 @@ import Header from '@/components/header';
 import Footer from '@/components/footer';
 import {
   BookOpen, Award, TrendingUp, Brain, ArrowRight, CheckCircle,
-  FolderCheck, ShieldCheck
+  FolderCheck
 } from 'lucide-react';
 import Link from 'next/link';
 import { CS50_MODULES, CS50_PROGRAMME, numeroModule } from '@/config/course-modules';
@@ -23,11 +23,9 @@ interface Props {
     lastName?: string | null;
     email?: string | null;
     image?: string | null;
-    photoUrl?: string | null;
     dossierNumber?: string | null;
     studentType?: string | null;
     university?: string | null;
-    facialVerificationStatus?: string | null;
     role?: string | null;
   };
 }
@@ -81,13 +79,7 @@ export default function DashboardClient({ user }: Props) {
         >
           <div className="flex items-center gap-4">
             <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden border-2 border-primary/30 shadow-md shrink-0 bg-muted flex items-center justify-center">
-              {user.photoUrl ? (
-                <img
-                  src={user.photoUrl}
-                  alt={user.name || 'Photo étudiant'}
-                  className="w-full h-full object-cover"
-                />
-              ) : user.image ? (
+              {user.image ? (
                 <img
                   src={user.image}
                   alt={user.name || 'Avatar'}
@@ -97,9 +89,6 @@ export default function DashboardClient({ user }: Props) {
                 <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary text-xl font-bold">
                   {(user.firstName?.[0] || user.name?.[0] || 'E').toUpperCase()}
                 </div>
-              )}
-              {user.photoUrl && (
-                <span className="absolute bottom-1 right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-card rounded-full" title="Photo enregistrée" />
               )}
             </div>
 
@@ -129,16 +118,7 @@ export default function DashboardClient({ user }: Props) {
               )}
 
               <div className="flex items-center gap-3 pt-1 text-[11px] text-muted-foreground flex-wrap">
-                <span className="flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  {user.facialVerificationStatus === 'VERIFIED' ? 'Photo validée par l\'administration' : 'Vérification d\'identité'}
-                </span>
-                {user.email && (
-                  <>
-                    <span className="text-muted-foreground/60">•</span>
-                    <span>{user.email}</span>
-                  </>
-                )}
+                {user.email && <span>{user.email}</span>}
               </div>
             </div>
           </div>

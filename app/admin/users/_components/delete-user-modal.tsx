@@ -12,7 +12,6 @@ interface UserItem {
   lastName?: string | null;
   email: string;
   dossierNumber?: string | null;
-  photoUrl?: string | null;
 }
 
 interface DeleteUserModalProps {
@@ -132,11 +131,7 @@ export default function DeleteUserModal({
             {/* User Card */}
             <div className="p-3 bg-muted/50 border border-border rounded-xl flex items-center gap-3">
               <div className="w-11 h-11 rounded-xl overflow-hidden bg-background border border-border flex items-center justify-center shrink-0">
-                {user.photoUrl ? (
-                  <img src={user.photoUrl} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <Users className="w-5 h-5 text-muted-foreground" />
-                )}
+                <Users className="w-5 h-5 text-muted-foreground" />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="font-bold text-foreground truncate">{user.name || user.email}</p>

@@ -18,11 +18,9 @@ export default async function DashboardPage() {
         lastName: true,
         email: true,
         image: true,
-        photoUrl: true,
         dossierNumber: true,
         studentType: true,
         university: true,
-        facialVerificationStatus: true,
         role: true,
       },
     });
