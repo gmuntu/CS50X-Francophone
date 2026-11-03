@@ -35,12 +35,17 @@ async function writeList(list: SavedLesson[]) {
 
 const absolute = (u: string) => new URL(u, window.location.origin).toString();
 
-export async function saveLesson(lesson: Omit<SavedLesson, 'savedAt'>, onProgress?: (done: number, total: number) => void) {
+export async function saveLesson(
+  lesson: Omit<SavedLesson, 'savedAt'>,
+  onProgress?: (done: number, total: number) => void,
+  options: { sansAudio?: boolean } = {}
+) {
   // Demande au téléphone de ne pas effacer ces cours quand l'espace manque.
   try { await navigator.storage?.persist?.(); } catch {}
   const pages = await caches.open(PAGES_CACHE);
   const audio = await caches.open(AUDIO_CACHE);
-  const total = lesson.audio.length + 1;
+  const aTelecharger = options.sansAudio ? [] : lesson.audio;
+  const total = aTelecharger.length + 1;
   let done = 0;
   // Empreinte demandée AVANT la page : si un quiz change pendant le téléchargement,
   // la semaine sera vue comme périmée (et non l'inverse).
@@ -64,8 +69,10 @@ export async function saveLesson(lesson: Omit<SavedLesson, 'savedAt'>, onProgres
   onProgress?.(++done, total);
 
   const failed: string[] = [];
-  for (const src of lesson.audio) {
+  for (const src of aTelecharger) {
     try {
+      // Déjà sur l'appareil : on ne le retélécharge pas (économie de données).
+      if (await audio.match(absolute(src))) { onProgress?.(++done, total); continue; }
       const sameOrigin = new URL(src, window.location.origin).origin === window.location.origin;
       const res = await fetch(src, sameOrigin ? {} : { mode: 'cors' });
       if (!res.ok || res.status === 206) throw new Error(String(res.status));
@@ -76,8 +83,14 @@ export async function saveLesson(lesson: Omit<SavedLesson, 'savedAt'>, onProgres
     onProgress?.(++done, total);
   }
 
-  const list = (await listSavedLessons()).filter((l) => l.id !== lesson.id);
-  list.push({ ...lesson, version, audio: lesson.audio.filter((a) => !failed.includes(a)), savedAt: new Date().toISOString() });
+  const avant = await listSavedLessons();
+  const precedent = avant.find((l) => l.id === lesson.id);
+  // Pages seules : on garde les podcasts déjà enregistrés, sans en ajouter.
+  const audioGarde = options.sansAudio
+    ? (precedent?.audio ?? [])
+    : [...lesson.audio.filter((a) => !failed.includes(a)), ...(precedent?.audio ?? []).filter((a) => !lesson.audio.includes(a))];
+  const list = avant.filter((l) => l.id !== lesson.id);
+  list.push({ ...lesson, version, audio: audioGarde, savedAt: new Date().toISOString() });
   await writeList(list.sort((a, b) => a.id - b.id));
   return { failed };
 }

@@ -1,8 +1,12 @@
 'use client';
 
 // SavoirIA hors ligne — synchronisation automatique.
-// Dès qu'il y a Internet (Wi-Fi de préférence) : on envoie ce qui attend (quiz faits hors ligne),
-// puis on enregistre sur l'appareil toutes les semaines ouvertes des formations, podcasts compris.
+// Dès qu'il y a Internet : on envoie ce qui attend (quiz faits hors ligne), puis on enregistre
+// sur l'appareil toutes les semaines ouvertes des formations.
+// - Les pages (résumés, quiz, pages de l'application) : pour tout élève connecté, dès la première
+//   connexion, même sur données mobiles (c'est léger).
+// - Les podcasts (lourds) : seulement hors données mobiles, et pour ceux qui ont choisi le hors ligne
+//   (application installée, ordinateur SavoirIA ou podcasts déjà enregistrés).
 // Le travail reprend là où il s'était arrêté si la connexion se coupe.
 
 import { saveLesson, savePage, listSavedLessons, offlineSupported, type SavedLesson } from '@/lib/offline';
@@ -30,10 +34,11 @@ const INTERVALLE_MS = 12 * 60 * 60 * 1000; // au plus toutes les 12 h
 
 let etat: EtatSync = { enCours: false, enPause: false, etape: '', fait: 0, total: 0 };
 
-function lireMemoire(): { derniere?: string; enPause?: boolean } {
+interface Memoire { derniere?: string; dernierePages?: string; enPause?: boolean }
+function lireMemoire(): Memoire {
   try { return JSON.parse(localStorage.getItem(CLE) || '{}'); } catch { return {}; }
 }
-function ecrireMemoire(m: { derniere?: string; enPause?: boolean }) {
+function ecrireMemoire(m: Memoire) {
   try { localStorage.setItem(CLE, JSON.stringify({ ...lireMemoire(), ...m })); } catch {}
 }
 function publier(p: Partial<EtatSync>) {
@@ -64,18 +69,21 @@ export function mettreEnPause(pause: boolean) {
 export async function synchroniser(auto = false): Promise<void> {
   if (etat.enCours || typeof window === 'undefined' || !navigator.onLine || !offlineSupported()) return;
   const m = lireMemoire();
+  const recent = (iso?: string) => !!iso && Date.now() - new Date(iso).getTime() < INTERVALLE_MS;
+  let sansAudio = false;
   if (auto) {
-    if (m.enPause || connexionMobile()) return;
-    // Automatique seulement pour ceux qui utilisent SavoirIA hors ligne : application installée,
-    // ordinateur SavoirIA (Socrate local) ou au moins une semaine déjà enregistrée.
+    if (m.enPause) return;
+    // Podcasts automatiques seulement pour ceux qui utilisent SavoirIA hors ligne : application installée,
+    // ordinateur SavoirIA (Socrate local) ou des podcasts déjà enregistrés. Jamais sur données mobiles.
     const installee = window.matchMedia?.('(display-mode: standalone)').matches;
-    const dejaHorsLigne = (await listSavedLessons().catch(() => [])).length > 0;
-    const posteSavoirIA = installee || dejaHorsLigne || (await import('@/lib/socrate-local').then((x) => x.socrateLocalDisponible()).catch(() => false));
-    if (!posteSavoirIA) return;
-    if (m.derniere && Date.now() - new Date(m.derniere).getTime() < INTERVALLE_MS) {
+    const podcastsDeja = (await listSavedLessons().catch(() => [])).some((l) => l.audio.length > 0);
+    const posteSavoirIA = installee || podcastsDeja || (await import('@/lib/socrate-local').then((x) => x.socrateLocalDisponible()).catch(() => false));
+    const complete = posteSavoirIA && !connexionMobile();
+    if (complete ? recent(m.derniere) : recent(m.dernierePages ?? m.derniere)) {
       await flushQueue().catch(() => 0); // l'envoi des quiz, lui, est toujours immédiat
       return;
     }
+    sansAudio = !complete;
   }
   ecrireMemoire({ enPause: false });
   publier({ enCours: true, enPause: false, etape: 'Envoi de ta progression…', fait: 0, total: 0, erreur: undefined });
@@ -87,7 +95,10 @@ export async function synchroniser(auto = false): Promise<void> {
     const aFaire: { formation: string; lecon: { id: number; title: string; path: string; audio: string[]; version?: string } }[] = [];
     for (const f of FORMATIONS) {
       const r = await fetch(`/api/offline/manifest?course=${f.slug}`, { cache: 'no-store' }).catch(() => null);
-      if (!r || r.status === 401) { publier({ enCours: false, etape: '', erreur: 'Connecte-toi une fois avec Internet pour activer la synchronisation.' }); return; }
+      if (!r || r.status === 401) {
+        publier({ enCours: false, etape: '', erreur: auto ? undefined : 'Connecte-toi une fois avec Internet pour activer la synchronisation.' });
+        return;
+      }
       if (!r.ok) continue;
       const { lessons } = await r.json();
       for (const l of lessons ?? []) aFaire.push({ formation: f.titre, lecon: l });
@@ -103,11 +114,16 @@ export async function synchroniser(auto = false): Promise<void> {
       if (!navigator.onLine) { publier({ enCours: false, etape: 'Connexion perdue : reprise au prochain Wi-Fi' }); return; }
       const { formation, lecon } = aFaire[i];
       publier({ etape: `${formation} · ${lecon.title}`, fait: i });
-      await saveLesson(lecon).catch(() => null);
+      await saveLesson(lecon, undefined, { sansAudio }).catch(() => null);
     }
-    const derniere = new Date().toISOString();
-    ecrireMemoire({ derniere });
-    publier({ enCours: false, etape: 'À jour', fait: aFaire.length, derniere });
+    const maintenant = new Date().toISOString();
+    if (sansAudio) {
+      ecrireMemoire({ dernierePages: maintenant });
+      publier({ enCours: false, etape: 'Pages à jour (podcasts au prochain Wi-Fi ou sur demande)', fait: aFaire.length });
+    } else {
+      ecrireMemoire({ derniere: maintenant, dernierePages: maintenant });
+      publier({ enCours: false, etape: 'À jour', fait: aFaire.length, derniere: maintenant });
+    }
   } catch {
     publier({ enCours: false, etape: '', erreur: 'La synchronisation a échoué. Elle reprendra au prochain Wi-Fi.' });
   }
