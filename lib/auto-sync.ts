@@ -9,7 +9,7 @@
 //   (application installée, ordinateur SavoirIA ou podcasts déjà enregistrés).
 // Le travail reprend là où il s'était arrêté si la connexion se coupe.
 
-import { saveLesson, savePage, listSavedLessons, offlineSupported, type SavedLesson } from '@/lib/offline';
+import { saveLesson, savePage, listSavedLessons, offlineSupported, effacementsFaits, type SavedLesson } from '@/lib/offline';
 import { flushQueue } from '@/lib/sync-queue';
 
 export const FORMATIONS = [
@@ -31,6 +31,8 @@ const CLE = 'savoiria-auto-sync';
 export const EVT_SYNC = 'savoiria-auto-sync-change';
 export const PAGES_OUTILS = ['/hors-ligne', '/tuteur', '/agora', '/cs50x', '/dashboard', '/formations'];
 const INTERVALLE_MS = 12 * 60 * 60 * 1000; // au plus toutes les 12 h
+const INTERVALLE_MOBILE_MS = 24 * 60 * 60 * 1000; // pages sur données mobiles : au plus une fois par jour
+const PAGE_A_JOUR_MS = 7 * 24 * 60 * 60 * 1000; // semaine aux quiz inchangés : rafraîchie au plus chaque semaine
 
 let etat: EtatSync = { enCours: false, enPause: false, etape: '', fait: 0, total: 0 };
 
@@ -57,6 +59,19 @@ export function connexionMobile(): boolean {
   return !!c && (c.type === 'cellular' || c.saveData === true);
 }
 
+/** « Économiseur de données » activé sur le téléphone : aucun téléchargement automatique. */
+function economiseurDonnees(): boolean {
+  const c: any = typeof navigator !== 'undefined' ? (navigator as any).connection : null;
+  return !!c && c.saveData === true;
+}
+
+/** Wi-Fi ou câble certains. iPhone, Firefox… ne le disent pas : on suppose alors des données mobiles. */
+function connexionIllimiteeSure(): boolean {
+  const c: any = typeof navigator !== 'undefined' ? (navigator as any).connection : null;
+  if (!c || c.saveData === true) return false;
+  return c.type === 'wifi' || c.type === 'ethernet';
+}
+
 export function mettreEnPause(pause: boolean) {
   ecrireMemoire({ enPause: pause });
   publier({ enPause: pause, etape: pause ? 'En pause' : etat.etape });
@@ -69,23 +84,26 @@ export function mettreEnPause(pause: boolean) {
 export async function synchroniser(auto = false): Promise<void> {
   if (etat.enCours || typeof window === 'undefined' || !navigator.onLine || !offlineSupported()) return;
   const m = lireMemoire();
-  const recent = (iso?: string) => !!iso && Date.now() - new Date(iso).getTime() < INTERVALLE_MS;
+  const recent = (iso: string | undefined, ms: number) => !!iso && Date.now() - new Date(iso).getTime() < ms;
   let sansAudio = false;
   if (auto) {
-    if (m.enPause) return;
-    // Podcasts automatiques seulement pour ceux qui utilisent SavoirIA hors ligne : application installée,
-    // ordinateur SavoirIA (Socrate local) ou des podcasts déjà enregistrés. Jamais sur données mobiles.
+    if (m.enPause || economiseurDonnees()) return;
+    // Podcasts automatiques seulement pour ceux qui utilisent SavoirIA hors ligne, et seulement en Wi-Fi :
+    // ordinateur SavoirIA (Socrate local), ou application installée / podcasts déjà enregistrés
+    // sur une connexion dont on est sûr qu'elle n'est pas mobile.
     const installee = window.matchMedia?.('(display-mode: standalone)').matches;
     const podcastsDeja = (await listSavedLessons().catch(() => [])).some((l) => l.audio.length > 0);
-    const posteSavoirIA = installee || podcastsDeja || (await import('@/lib/socrate-local').then((x) => x.socrateLocalDisponible()).catch(() => false));
-    const complete = posteSavoirIA && !connexionMobile();
-    if (complete ? recent(m.derniere) : recent(m.dernierePages ?? m.derniere)) {
+    const posteLocal = await import('@/lib/socrate-local').then((x) => x.socrateLocalDisponible()).catch(() => false);
+    const complete = (posteLocal && !connexionMobile()) || ((installee || podcastsDeja) && connexionIllimiteeSure());
+    const intervallePages = connexionIllimiteeSure() ? INTERVALLE_MS : INTERVALLE_MOBILE_MS;
+    if (complete ? recent(m.derniere, INTERVALLE_MS) : recent(m.dernierePages ?? m.derniere, intervallePages)) {
       await flushQueue().catch(() => 0); // l'envoi des quiz, lui, est toujours immédiat
       return;
     }
     sansAudio = !complete;
   }
   ecrireMemoire({ enPause: false });
+  const depart = effacementsFaits();
   publier({ enCours: true, enPause: false, etape: 'Envoi de ta progression…', fait: 0, total: 0, erreur: undefined });
 
   try {
@@ -109,13 +127,21 @@ export async function synchroniser(auto = false): Promise<void> {
     for (const p of PAGES_OUTILS) await savePage(p).catch(() => false);
 
     publier({ total: aFaire.length });
+    const dejaLa = new Map((await listSavedLessons().catch(() => [] as SavedLesson[])).map((l) => [l.id, l]));
     for (let i = 0; i < aFaire.length; i++) {
+      // Déconnexion ou changement d'élève pendant la synchro : on arrête tout, sans rien réenregistrer.
+      if (effacementsFaits() !== depart) { publier({ enCours: false, etape: '' }); return; }
       if (lireMemoire().enPause) { publier({ enCours: false, enPause: true, etape: 'En pause' }); return; }
       if (!navigator.onLine) { publier({ enCours: false, etape: 'Connexion perdue : reprise au prochain Wi-Fi' }); return; }
       const { formation, lecon } = aFaire[i];
       publier({ etape: `${formation} · ${lecon.title}`, fait: i });
+      // Pages seules : une semaine déjà enregistrée dont les quiz n'ont pas changé n'est pas
+      // retéléchargée (au plus une fois par semaine), pour économiser les données.
+      const avant = dejaLa.get(lecon.id);
+      if (sansAudio && avant && lecon.version && avant.version === lecon.version && recent(avant.savedAt, PAGE_A_JOUR_MS)) continue;
       await saveLesson(lecon, undefined, { sansAudio }).catch(() => null);
     }
+    if (effacementsFaits() !== depart) { publier({ enCours: false, etape: '' }); return; }
     const maintenant = new Date().toISOString();
     if (sansAudio) {
       ecrireMemoire({ dernierePages: maintenant });

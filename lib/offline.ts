@@ -35,11 +35,20 @@ async function writeList(list: SavedLesson[]) {
 
 const absolute = (u: string) => new URL(u, window.location.origin).toString();
 
+// Compteur d'effacements (déconnexion, changement d'élève). Un enregistrement commencé avant
+// un effacement s'arrête au lieu de remettre sur l'appareil les pages de l'élève parti.
+let effacements = 0;
+export const effacementsFaits = () => effacements;
+function pasEfface(depart: number) {
+  if (depart !== effacements) throw new Error('efface');
+}
+
 export async function saveLesson(
   lesson: Omit<SavedLesson, 'savedAt'>,
   onProgress?: (done: number, total: number) => void,
   options: { sansAudio?: boolean } = {}
 ) {
+  const depart = effacements;
   // Demande au téléphone de ne pas effacer ces cours quand l'espace manque.
   try { await navigator.storage?.persist?.(); } catch {}
   const pages = await caches.open(PAGES_CACHE);
@@ -54,6 +63,7 @@ export async function saveLesson(
   const page = await fetch(lesson.path, { credentials: 'include' });
   if (!page.ok || page.redirected) throw new Error('page');
   const html = await page.clone().text();
+  pasEfface(depart);
   await pages.put(absolute(lesson.path), page);
   // Fichiers techniques de la page (scripts, styles) : sans eux, la page s'affiche mais
   // les boutons (podcast, quiz) ne marchent pas hors ligne. Nom aligné sur public/sw.js.
@@ -63,7 +73,7 @@ export async function saveLesson(
     await Promise.all(assets.map(async (a) => {
       if (await stat.match(absolute(a))) return;
       const r = await fetch(a).catch(() => null);
-      if (r?.ok) await stat.put(absolute(a), r);
+      if (r?.ok && depart === effacements) await stat.put(absolute(a), r);
     }));
   } catch {}
   onProgress?.(++done, total);
@@ -76,13 +86,16 @@ export async function saveLesson(
       const sameOrigin = new URL(src, window.location.origin).origin === window.location.origin;
       const res = await fetch(src, sameOrigin ? {} : { mode: 'cors' });
       if (!res.ok || res.status === 206) throw new Error(String(res.status));
+      pasEfface(depart);
       await audio.put(absolute(src), res);
     } catch {
+      if (depart !== effacements) break; // appareil effacé entre-temps : on s'arrête
       failed.push(src);
     }
     onProgress?.(++done, total);
   }
 
+  pasEfface(depart);
   const avant = await listSavedLessons();
   const precedent = avant.find((l) => l.id === lesson.id);
   // Pages seules : on garde les podcasts déjà enregistrés, sans en ajouter.
@@ -97,9 +110,11 @@ export async function saveLesson(
 
 /** Enregistre une page « outil » (salle de cours, Agora, accueil hors ligne…) avec ses fichiers techniques. */
 export async function savePage(path: string) {
+  const depart = effacements;
   const page = await fetch(path, { credentials: 'include' });
   if (!page.ok || page.redirected) return false;
   const html = await page.clone().text();
+  if (depart !== effacements) return false;
   await (await caches.open(PAGES_CACHE)).put(absolute(path), page);
   try {
     const assets = Array.from(new Set(html.match(/\/_next\/static\/[^"'\s)]+/g) ?? []));
@@ -107,7 +122,7 @@ export async function savePage(path: string) {
     await Promise.all(assets.map(async (a) => {
       if (await stat.match(absolute(a))) return;
       const r = await fetch(a).catch(() => null);
-      if (r?.ok) await stat.put(absolute(a), r);
+      if (r?.ok && depart === effacements) await stat.put(absolute(a), r);
     }));
   } catch {}
   return true;
@@ -150,6 +165,7 @@ export async function paquetsPerimes(): Promise<SavedLesson[]> {
  * les podcasts déjà enregistrés sont gardés. Renvoie le nombre de semaines mises à jour.
  */
 export async function mettreAJourPaquets(perimes: SavedLesson[]): Promise<number> {
+  const depart = effacements;
   const versions = await versionsActuelles();
   if (!versions) return 0;
   let faits = 0;
@@ -157,6 +173,7 @@ export async function mettreAJourPaquets(perimes: SavedLesson[]): Promise<number
     if (!(await savePage(l.path).catch(() => false))) continue;
     const list = await listSavedLessons();
     const cible = list.find((x) => x.id === l.id);
+    if (depart !== effacements) return faits;
     if (!cible) continue;
     cible.version = versions[l.id];
     cible.savedAt = new Date().toISOString();
@@ -176,13 +193,18 @@ export async function removeLesson(id: number) {
   await writeList(list.filter((l) => l.id !== id));
 }
 
-/** À appeler à la déconnexion : efface les cours enregistrés sur l'appareil. */
-export async function clearOfflineData() {
-  // Résultats de quiz en attente : on tente l'envoi avec la session actuelle, puis on vide la file
+/**
+ * À appeler à la déconnexion : efface les cours enregistrés sur l'appareil.
+ * envoyerQuiz = false quand un AUTRE élève est déjà connecté : ses résultats en attente
+ * ne doivent pas être envoyés sur le compte du nouvel élève.
+ */
+export async function clearOfflineData(options: { envoyerQuiz?: boolean } = {}) {
+  effacements++; // arrête tout enregistrement en cours (synchro automatique comprise)
+  // Résultats de quiz en attente : envoyés avec la session de leur élève, puis la file est vidée
   // pour qu'ils ne soient jamais attribués à un autre élève sur le même appareil.
   try {
     const { flushQueue, clearQueue } = await import('@/lib/sync-queue');
-    await flushQueue();
+    if (options.envoyerQuiz !== false) await flushQueue();
     clearQueue();
   } catch {}
   // Données personnelles gardées dans le navigateur (contexte de Socrate, questions notées, synchro)
@@ -199,13 +221,21 @@ export async function clearOfflineData() {
  * Appareil partagé : si un autre élève se connecte, on efface d'abord ce que le précédent
  * avait enregistré (pages, podcasts, questions), même s'il n'a pas cliqué sur « Déconnexion ».
  */
-export async function verifierChangementEleve(userId: string | undefined) {
-  if (!userId) return;
-  try {
-    const avant = localStorage.getItem('savoiria-eleve');
-    if (avant && avant !== userId) await clearOfflineData();
-    localStorage.setItem('savoiria-eleve', userId);
-  } catch {}
+let verification: { id: string; p: Promise<void> } | null = null;
+export function verifierChangementEleve(userId: string | undefined): Promise<void> {
+  if (!userId) return Promise.resolve();
+  // Une seule vérification à la fois (l'en-tête et la synchro l'appellent tous les deux).
+  if (verification?.id === userId) return verification.p;
+  const p = (async () => {
+    try {
+      const avant = localStorage.getItem('savoiria-eleve');
+      // La session est déjà celle du nouvel élève : on n'envoie pas les quiz du précédent.
+      if (avant && avant !== userId) await clearOfflineData({ envoyerQuiz: false });
+      localStorage.setItem('savoiria-eleve', userId);
+    } catch {}
+  })();
+  verification = { id: userId, p };
+  return p;
 }
 
 /** Clé de cache d'une réplique de podcast générée (formations SavoirIA sans fichier MP3). */
