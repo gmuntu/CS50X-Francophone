@@ -26,8 +26,11 @@ export async function listSavedLessons(): Promise<SavedLesson[]> {
   return res ? ((await res.json()) as SavedLesson[]) : [];
 }
 
-async function writeList(list: SavedLesson[]) {
-  await (await caches.open(META_CACHE)).put(
+async function writeList(list: SavedLesson[], depart?: number) {
+  const meta = await caches.open(META_CACHE);
+  // Vérifié juste avant l'écriture : un effacement survenu entre-temps l'annule.
+  if (depart !== undefined) pasEfface(depart);
+  await meta.put(
     META_KEY,
     new Response(JSON.stringify(list), { headers: { 'Content-Type': 'application/json' } })
   );
@@ -42,6 +45,13 @@ export const effacementsFaits = () => effacements;
 function pasEfface(depart: number) {
   if (depart !== effacements) throw new Error('efface');
 }
+const SIGNAL_EFFACEMENT = 'savoiria-effacement';
+// Déconnexion ou changement d'élève dans un AUTRE onglet : celui-ci arrête aussi ses enregistrements.
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (e) => {
+    if (e.key === SIGNAL_EFFACEMENT || e.key === 'savoiria-eleve') effacements++;
+  });
+}
 
 export async function saveLesson(
   lesson: Omit<SavedLesson, 'savedAt'>,
@@ -49,8 +59,9 @@ export async function saveLesson(
   options: { sansAudio?: boolean } = {}
 ) {
   const depart = effacements;
-  // Demande au téléphone de ne pas effacer ces cours quand l'espace manque.
-  try { await navigator.storage?.persist?.(); } catch {}
+  // Demande au téléphone de ne pas effacer ces cours quand l'espace manque
+  // (seulement quand l'élève a choisi le hors ligne complet, pas pour l'enregistrement léger automatique).
+  if (!options.sansAudio) { try { await navigator.storage?.persist?.(); } catch {} }
   const pages = await caches.open(PAGES_CACHE);
   const audio = await caches.open(AUDIO_CACHE);
   const aTelecharger = options.sansAudio ? [] : lesson.audio;
@@ -97,6 +108,7 @@ export async function saveLesson(
 
   pasEfface(depart);
   const avant = await listSavedLessons();
+  pasEfface(depart);
   const precedent = avant.find((l) => l.id === lesson.id);
   // Pages seules : on garde les podcasts déjà enregistrés, sans en ajouter.
   const audioGarde = options.sansAudio
@@ -104,7 +116,7 @@ export async function saveLesson(
     : [...lesson.audio.filter((a) => !failed.includes(a)), ...(precedent?.audio ?? []).filter((a) => !lesson.audio.includes(a))];
   const list = avant.filter((l) => l.id !== lesson.id);
   list.push({ ...lesson, version, audio: audioGarde, savedAt: new Date().toISOString() });
-  await writeList(list.sort((a, b) => a.id - b.id));
+  await writeList(list.sort((a, b) => a.id - b.id), depart);
   return { failed };
 }
 
@@ -114,8 +126,9 @@ export async function savePage(path: string) {
   const page = await fetch(path, { credentials: 'include' });
   if (!page.ok || page.redirected) return false;
   const html = await page.clone().text();
-  if (depart !== effacements) return false;
-  await (await caches.open(PAGES_CACHE)).put(absolute(path), page);
+  const pages = await caches.open(PAGES_CACHE);
+  if (depart !== effacements) return false; // vérifié au plus près de l'écriture
+  await pages.put(absolute(path), page);
   try {
     const assets = Array.from(new Set(html.match(/\/_next\/static\/[^"'\s)]+/g) ?? []));
     const stat = await caches.open(STATIC_CACHE);
@@ -177,7 +190,7 @@ export async function mettreAJourPaquets(perimes: SavedLesson[]): Promise<number
     if (!cible) continue;
     cible.version = versions[l.id];
     cible.savedAt = new Date().toISOString();
-    await writeList(list);
+    try { await writeList(list, depart); } catch { return faits; }
     faits++;
   }
   return faits;
@@ -200,6 +213,7 @@ export async function removeLesson(id: number) {
  */
 export async function clearOfflineData(options: { envoyerQuiz?: boolean } = {}) {
   effacements++; // arrête tout enregistrement en cours (synchro automatique comprise)
+  try { localStorage.setItem(SIGNAL_EFFACEMENT, String(Date.now())); } catch {} // … et dans les autres onglets
   // Résultats de quiz en attente : envoyés avec la session de leur élève, puis la file est vidée
   // pour qu'ils ne soient jamais attribués à un autre élève sur le même appareil.
   try {

@@ -11,6 +11,8 @@ export interface QueuedAttempt {
   quizId: string;
   answers: Record<string, string>;
   takenAt: string;
+  /** Élève qui a fait le quiz : le serveur refuse le résultat si un autre élève est connecté. */
+  eleve?: string;
 }
 
 function read(): QueuedAttempt[] {
@@ -28,10 +30,11 @@ async function send(a: QueuedAttempt): Promise<'ok' | 'retry' | 'drop'> {
     const res = await fetch('/api/quiz/submit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ quizId: a.quizId, answers: a.answers, takenAt: a.takenAt, queued: true }),
+      body: JSON.stringify({ quizId: a.quizId, answers: a.answers, takenAt: a.takenAt, queued: true, eleve: a.eleve }),
     });
     if (res.ok) return 'ok';
     if (res.status === 400 || res.status === 404) return 'drop'; // quiz supprimé : inutile de réessayer
+    if (res.status === 409) return 'drop'; // résultat d'un autre élève : jamais sur ce compte
     return 'retry'; // 401 (session expirée), 500, etc.
   } catch {
     return 'retry';
@@ -45,6 +48,7 @@ export async function submitQuizAttempt(quizId: string, answers: Record<string, 
     quizId,
     answers,
     takenAt: new Date().toISOString(),
+    eleve: (() => { try { return localStorage.getItem('savoiria-eleve') || undefined; } catch { return undefined; } })(),
   };
   if (navigator.onLine && (await send(a)) === 'ok') return true;
   write([...read(), a]);

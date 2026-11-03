@@ -30,6 +30,9 @@ export interface EtatSync {
 const CLE = 'savoiria-auto-sync';
 export const EVT_SYNC = 'savoiria-auto-sync-change';
 export const PAGES_OUTILS = ['/hors-ligne', '/tuteur', '/agora', '/cs50x', '/dashboard', '/formations'];
+// Enregistrement léger automatique (élève qui n'a pas choisi le hors ligne, ordinateur public possible) :
+// pas de pages personnelles (tableau de bord, Agora) ni de Socrate.
+const PAGES_OUTILS_LEGER = ['/hors-ligne', '/cs50x', '/formations'];
 const INTERVALLE_MS = 12 * 60 * 60 * 1000; // au plus toutes les 12 h
 const INTERVALLE_MOBILE_MS = 24 * 60 * 60 * 1000; // pages sur données mobiles : au plus une fois par jour
 const PAGE_A_JOUR_MS = 7 * 24 * 60 * 60 * 1000; // semaine aux quiz inchangés : rafraîchie au plus chaque semaine
@@ -124,7 +127,7 @@ export async function synchroniser(auto = false): Promise<void> {
 
     // Les pages « outils » de l'application, pour qu'elles s'ouvrent aussi sans Internet
     publier({ etape: "Enregistrement de l'application…" });
-    for (const p of PAGES_OUTILS) await savePage(p).catch(() => false);
+    for (const p of sansAudio ? PAGES_OUTILS_LEGER : PAGES_OUTILS) await savePage(p).catch(() => false);
 
     publier({ total: aFaire.length });
     const dejaLa = new Map((await listSavedLessons().catch(() => [] as SavedLesson[])).map((l) => [l.id, l]));
@@ -138,7 +141,8 @@ export async function synchroniser(auto = false): Promise<void> {
       // Pages seules : une semaine déjà enregistrée dont les quiz n'ont pas changé n'est pas
       // retéléchargée (au plus une fois par semaine), pour économiser les données.
       const avant = dejaLa.get(lecon.id);
-      if (sansAudio && avant && lecon.version && avant.version === lecon.version && recent(avant.savedAt, PAGE_A_JOUR_MS)) continue;
+      // Formations sans empreinte de quiz (L'essentiel de l'IA) : la date d'enregistrement suffit.
+      if (sansAudio && avant && (lecon.version ? avant.version === lecon.version : true) && recent(avant.savedAt, PAGE_A_JOUR_MS)) continue;
       await saveLesson(lecon, undefined, { sansAudio }).catch(() => null);
     }
     if (effacementsFaits() !== depart) { publier({ enCours: false, etape: '' }); return; }
