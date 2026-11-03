@@ -14,6 +14,7 @@ import TutorMessageCard from '@/components/tutor-message-card';
 import MyTrainingsCard from '@/components/home/my-trainings-card';
 import IdentityReminder from '@/components/identity/identity-reminder';
 import OfflineBanner from '@/components/home/offline-banner';
+import PaquetsPerimes from '@/components/pwa/paquets-perimes';
 
 interface Props {
   user: {
@@ -221,6 +222,7 @@ export default function DashboardClient({ user }: Props) {
         </div>
 
         {/* Main Content Layout */}
+        <PaquetsPerimes />
         <OfflineBanner />
 
         <IdentityReminder />

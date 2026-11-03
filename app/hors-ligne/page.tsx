@@ -10,6 +10,7 @@ import {
   synchroniser, mettreEnPause, etatSync, contenusEnregistres, espaceStockage,
   EVT_SYNC, FORMATIONS, type EtatSync,
 } from '@/lib/auto-sync';
+import PaquetsPerimes from '@/components/pwa/paquets-perimes';
 
 const NB_SEMAINES: Record<string, number> = { cs50x: 11, 'ia-essentiels': 8 };
 
@@ -75,6 +76,8 @@ export default function HorsLignePage() {
             <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800"><WifiOff className="w-3.5 h-3.5" /> Hors ligne</span>
           )}
         </div>
+
+        <PaquetsPerimes />
 
         <section className="rounded-2xl border border-border bg-card p-4">
           <p className="font-extrabold text-foreground">Bonjour{prenom ? ` ${prenom}` : ''} 👋</p>
