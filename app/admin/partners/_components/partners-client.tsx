@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Header from '@/components/header';
 import toast from 'react-hot-toast';
 import { ArrowLeft, Building2, CalendarDays, KeyRound, Copy, Plus, RefreshCw, Power } from 'lucide-react';
+import PostesEcole, { type Poste } from './postes-ecole';
 
 type Data = { institutions: any[]; courses: any[]; sessions: any[] };
 
@@ -13,12 +14,19 @@ const fmt = (d: string) => new Date(d).toLocaleDateString('fr-FR', { day: 'numer
 export default function PartnersClient() {
   const [data, setData] = useState<Data | null>(null);
   const [busy, setBusy] = useState(false);
+  const [postes, setPostes] = useState<Poste[]>([]);
 
   // Formulaires
   const [inst, setInst] = useState({ name: '', acronym: '', country: '', type: 'UNIVERSITY', contactEmail: '' });
   const [plan, setPlan] = useState({ courseId: '', year: new Date().getFullYear() + 1, firstStart: '' });
 
+  const chargerPostes = async () => {
+    const r = await fetch('/api/admin/postes').catch(() => null);
+    if (r?.ok) setPostes((await r.json()).postes ?? []);
+  };
+
   const load = async () => {
+    chargerPostes();
     const res = await fetch('/api/admin/partners');
     const json = await res.json();
     if (!res.ok) return toast.error(json?.error || 'Erreur');
@@ -260,6 +268,8 @@ export default function PartnersClient() {
                         <p className="text-xs text-muted-foreground">Planifiez d&apos;abord une session (étape 1) pour générer un code.</p>
                       )}
                     </div>
+
+                    <PostesEcole institutionId={i.id} postes={postes.filter((p) => p.institutionId === i.id)} onChange={chargerPostes} />
                   </div>
                 );
               })}

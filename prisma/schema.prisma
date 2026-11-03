@@ -326,8 +326,23 @@ model Institution {
   contactEmail String?
   codes        AccessCode[]
   students     User[]
+  postes       PosteEcole[]
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
+}
+
+// Ordinateur SavoirIA d'une école (hors ligne). Il échange avec le site central grâce à sa clé :
+// il envoie les résultats des élèves de l'école et reçoit leurs comptes. Seule l'empreinte de la clé est gardée.
+model PosteEcole {
+  id              String      @id @default(cuid())
+  institutionId   String
+  institution     Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  nom             String
+  cleHash         String      @unique
+  active          Boolean     @default(true)
+  derniereSynchro DateTime?
+  createdAt       DateTime    @default(now())
+  @@index([institutionId])
 }
 
 model CourseSession {

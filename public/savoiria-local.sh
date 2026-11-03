@@ -16,6 +16,9 @@ set -euo pipefail
 MODELE="${MODELE:-gemma4:e2b}"
 # Clé de synchronisation du contenu (la même que CONTENU_SYNC_CLE sur Vercel)
 CONTENU_SYNC_CLE="${CONTENU_SYNC_CLE:-$(cat /var/lib/savoiria/.contenu-cle 2>/dev/null || true)}"
+# Clé de l'ordinateur d'école (Administration > Partenaires > Nouvel ordinateur d'école) :
+# comptes des élèves de l'école sur ce poste et envoi de leurs résultats au site.
+POSTE_CLE="${POSTE_CLE:-$(cat /var/lib/savoiria/.poste-cle 2>/dev/null || true)}"
 DEPOT="https://github.com/gmuntu/CS50X-Francophone.git"
 # Les ordinateurs n'installent que les versions validées : étiquettes « poste-v1 », « poste-v2 »…
 ETIQUETTES='poste-v*'
@@ -31,6 +34,9 @@ command -v ollama >/dev/null || { echo "Installez d'abord savoiria-poste.sh"; ex
 export DEBIAN_FRONTEND=noninteractive
 if [ -z "$CONTENU_SYNC_CLE" ] && [ -r /dev/tty ]; then
   read -rsp "Clé de synchronisation du contenu (Entrée pour passer) : " CONTENU_SYNC_CLE </dev/tty; echo
+fi
+if [ -z "$POSTE_CLE" ] && [ -r /dev/tty ]; then
+  read -rsp "Clé de l'ordinateur d'école (Entrée pour passer) : " POSTE_CLE </dev/tty; echo
 fi
 install -d -m 700 /root/savoiria
 
@@ -92,8 +98,12 @@ GOOGLE_TTS_API_KEY=local
 # Contenu pédagogique récupéré du serveur en ligne à chaque mise à jour
 SAVOIRIA_SERVEUR=https://www.savoiria.online
 CONTENU_SYNC_CLE=$CONTENU_SYNC_CLE
+# Ordinateur d'école : élèves de l'école et envoi de leurs résultats (vide = compte commun seulement)
+POSTE_CLE=$POSTE_CLE
+SYNCHRO_ETAT=/var/lib/savoiria/synchro-ecole.json
 EOF
 mkdir -p /var/lib/savoiria && [ -n "$CONTENU_SYNC_CLE" ] && { echo "$CONTENU_SYNC_CLE" > /var/lib/savoiria/.contenu-cle; chmod 600 /var/lib/savoiria/.contenu-cle; }
+[ -n "$POSTE_CLE" ] && { ( umask 077; echo "$POSTE_CLE" > /var/lib/savoiria/.poste-cle ); chown root:root /var/lib/savoiria/.poste-cle; }
 chown -R savoiria:savoiria "$SITE_DIR"
 # Secrets lisibles par le service seul : le compte étudiant ne peut ni lire .env ni le code.
 chmod 600 "$SITE_DIR/.env"
@@ -148,6 +158,8 @@ EOF
 cat > /usr/local/bin/savoiria-maj <<EOF
 #!/usr/bin/env bash
 # Met à jour SavoirIA (code + contenu des cours) quand Internet est disponible.
+# Verrou commun avec savoiria-synchro : jamais les deux en même temps.
+exec 9>/run/lock/savoiria.lock; flock 9
 curl -fsI --max-time 10 https://www.savoiria.online >/dev/null 2>&1 || { echo "Pas d'Internet : mise à jour plus tard."; exit 0; }
 cd "$SITE_DIR"
 G() { sudo -u savoiria git -C "$SITE_DIR" "\$@"; }
@@ -166,6 +178,33 @@ ollama pull "$MODELE" >/dev/null 2>&1 || true
 echo "SavoirIA est à jour."
 EOF
 chmod +x /usr/local/bin/savoiria-maj
+# Synchronisation de l'école (toutes les 15 min, seulement avec Internet et une clé de poste)
+cat > /usr/local/bin/savoiria-synchro <<EOF
+#!/usr/bin/env bash
+exec 9>/run/lock/savoiria.lock; flock -n 9 || exit 0   # mise à jour en cours : on attend le prochain passage
+grep -q '^POSTE_CLE=.' "$SITE_DIR/.env" || exit 0
+[ -f "$SITE_DIR/scripts/synchro-ecole.ts" ] || exit 0
+curl -fsI --max-time 10 https://www.savoiria.online >/dev/null 2>&1 || exit 0
+sudo -u savoiria bash -c "cd '$SITE_DIR' && npx tsx --require dotenv/config scripts/synchro-ecole.ts"
+EOF
+chmod +x /usr/local/bin/savoiria-synchro
+cat > /etc/systemd/system/savoiria-synchro.service <<'EOF'
+[Unit]
+Description=Synchronisation des élèves de l'école avec SavoirIA en ligne
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/savoiria-synchro
+EOF
+cat > /etc/systemd/system/savoiria-synchro.timer <<'EOF'
+[Unit]
+Description=Synchronise l'école toutes les 15 minutes quand Internet est là
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=15min
+Persistent=true
+[Install]
+WantedBy=timers.target
+EOF
 cat > /etc/systemd/system/savoiria-maj.service <<'EOF'
 [Unit]
 Description=Mise à jour de SavoirIA quand Internet est disponible
@@ -184,7 +223,9 @@ Persistent=true
 WantedBy=timers.target
 EOF
 systemctl daemon-reload
-systemctl enable --now savoiria-site savoiria-maj.timer
+systemctl enable --now savoiria-site savoiria-maj.timer savoiria-synchro.timer
+# Première synchronisation de l'école tout de suite : les élèves peuvent se connecter avec leur compte
+[ -n "$POSTE_CLE" ] && { /usr/local/bin/savoiria-synchro && echo "   [OK] Élèves de l'école reçus" || echo "   [ATTENTION] Synchronisation de l'école à vérifier (journalctl -u savoiria-synchro)"; }
 
 # ---------------------------------------------------------------------
 etape "7/7  SavoirIA s'ouvre sur l'ordinateur (et non plus sur Internet)"
