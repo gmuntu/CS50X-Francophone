@@ -1,9 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useSession } from 'next-auth/react';
 import { Download, X, WifiOff, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { flushQueue, pendingCount, SYNC_EVENT } from '@/lib/sync-queue';
+import { verifierChangementEleve } from '@/lib/offline';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -17,6 +19,20 @@ export default function PwaRegister() {
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [offline, setOffline] = useState(false);
   const [pending, setPending] = useState(0);
+  const { data: session, status } = useSession();
+  const eleve = useRef<string | undefined>(undefined);
+
+  // Dès la connexion : on enregistre les cours sur l'appareil (pages tout de suite,
+  // podcasts seulement en Wi-Fi). D'abord, on efface ce qu'un autre élève aurait laissé.
+  useEffect(() => {
+    const id = status === 'authenticated' ? session?.user?.id : undefined;
+    eleve.current = id;
+    if (!id || !navigator.onLine) return;
+    verifierChangementEleve(id)
+      .then(() => import('@/lib/auto-sync'))
+      .then((m) => m.synchroniser(true))
+      .catch(() => {});
+  }, [status, session?.user?.id]);
 
   useEffect(() => {
     if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
@@ -40,8 +56,8 @@ export default function PwaRegister() {
       setOffline(!navigator.onLine);
       if (navigator.onLine) {
         sync();
-        // SavoirIA hors ligne : met à jour les cours enregistrés dès qu'il y a du Wi-Fi.
-        import('@/lib/auto-sync').then((m) => m.synchroniser(true)).catch(() => {});
+        // SavoirIA hors ligne : met à jour les cours enregistrés au retour du réseau (élève connecté).
+        if (eleve.current) import('@/lib/auto-sync').then((m) => m.synchroniser(true)).catch(() => {});
       }
     };
     const onQueue = () => setPending(pendingCount());

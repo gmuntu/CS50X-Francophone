@@ -9,10 +9,14 @@ export async function POST(request: NextRequest) {
     const session = await auth();
     const userId = session?.user?.id;
     const body = await request.json();
-    const { quizId, answers, takenAt, queued } = body ?? {};
+    const { quizId, answers, takenAt, queued, eleve } = body ?? {};
 
     // Résultat fait hors ligne puis synchronisé : il doit être rattaché à un élève connecté.
     if (queued && !userId) return NextResponse.json({ error: 'Session expirée' }, { status: 401 });
+    // Appareil partagé : un résultat fait par un autre élève n'est jamais enregistré sur ce compte.
+    if (queued && typeof eleve === 'string' && eleve && eleve !== userId) {
+      return NextResponse.json({ error: "Résultat d'un autre élève" }, { status: 409 });
+    }
 
     // Date réelle du quiz (bornée : pas dans le futur, pas plus de 90 jours en arrière).
     let createdAt: Date | undefined;

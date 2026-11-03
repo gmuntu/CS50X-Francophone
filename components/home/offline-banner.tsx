@@ -6,9 +6,9 @@ export default function OfflineBanner() {
       <div className="text-4xl sm:text-5xl" aria-hidden>📥</div>
       <div className="flex-1">
         <p className="text-xl sm:text-2xl font-extrabold">Apprenez même sans Internet</p>
-        <p className="text-sm text-white/90">Enregistrez une semaine sur votre téléphone quand vous avez du réseau, puis révisez partout : résumés, podcasts, quiz.</p>
+        <p className="text-sm text-white/90">Vos cours s'enregistrent tout seuls sur cet appareil dès votre connexion : résumés et quiz tout de suite, podcasts au Wi-Fi. Révisez ensuite partout.</p>
         <div className="mt-2.5 flex flex-wrap gap-2 text-xs font-semibold">
-          {['1. Ouvrir une semaine', '2. « Disponible hors ligne »', '3. Réviser sans connexion'].map((s) => (
+          {['1. Se connecter une fois', '2. Wi-Fi pour les podcasts', '3. Réviser sans connexion'].map((s) => (
             <span key={s} className="rounded-full bg-white/15 px-2.5 py-1">{s}</span>
           ))}
         </div>
