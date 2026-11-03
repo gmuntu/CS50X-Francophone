@@ -58,7 +58,7 @@ model User {
   dossierNumber           String?    @unique
   birthDate               DateTime?
   // Anciennes colonnes de la fausse « vérification faciale » : plus lues ni écrites par le site.
-  // Les photos ont été effacées à la main ; colonnes gardées pour ne pas casser la mise à jour de la base.
+  // Les anciennes photos sont à effacer à la main (fichier SQL hors dépôt) ; colonnes gardées pour ne pas casser la mise à jour de la base.
   photoUrl                String?    @db.Text
   facialVerificationStatus String    @default("PENDING")
   studentType             String     @default("LIBRE")
