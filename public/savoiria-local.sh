@@ -114,7 +114,8 @@ etape "5/7  Construction du site (5 à 15 minutes)"
 sudo -u savoiria bash -c "cd '$SITE_DIR' && npm ci --no-audit --no-fund && npx prisma generate && npx prisma db push --skip-generate && npx tsx --require dotenv/config scripts/importer-contenu.ts; npm run build"
 
 # Compte étudiant local (actif tout de suite) : mot de passe propre à cet ordinateur
-MDP_WEB=$(tr -dc 'a-hjkmnp-z2-9' </dev/urandom | head -c 10)
+# head lit 512 octets puis s'arrête, tr lit jusqu'au bout : pas de « tube cassé » (code 141) avec pipefail
+MDP_WEB=$(head -c 512 /dev/urandom | tr -dc 'a-hjkmnp-z2-9' | cut -c1-10)
 sudo -u savoiria MDP_WEB="$MDP_WEB" bash -c "cd '$SITE_DIR' && node -e \"
 const { PrismaClient } = require('@prisma/client'); const bcrypt = require('bcryptjs');
 const p = new PrismaClient();

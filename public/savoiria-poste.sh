@@ -52,7 +52,10 @@ if ! [ -f /usr/local/include/cs50.h ] && ! [ -f /usr/include/cs50.h ]; then
 fi
 
 # Bibliothèque CS50 pour Python
-pip3 install --break-system-packages --quiet cs50
+# Si Ubuntu a déjà installé un des composants (ex. « blinker »), pip ne peut pas le remplacer :
+# on réessaie en installant notre propre copie, sans toucher à celle d'Ubuntu.
+pip3 install --break-system-packages --quiet cs50 \
+  || pip3 install --break-system-packages --quiet --ignore-installed cs50
 
 # Raccourci « make » comme dans CS50 : clang avec la bibliothèque cs50
 cat > /etc/profile.d/cs50.sh <<'EOF'
@@ -94,7 +97,8 @@ etape "5/7  Compte étudiant « $ETUDIANT »"
 if ! id "$ETUDIANT" >/dev/null 2>&1; then
   adduser --disabled-password --gecos "Étudiant SavoirIA" "$ETUDIANT"
   # Mot de passe différent sur chaque ordinateur, noté dans un fichier lisible par l'administrateur seul
-  MDP_ET=$(tr -dc 'a-hjkmnp-z2-9' </dev/urandom | head -c 8)
+  # head lit 512 octets puis s'arrête, tr lit jusqu'au bout : pas de « tube cassé » (code 141) avec pipefail
+  MDP_ET=$(head -c 512 /dev/urandom | tr -dc 'a-hjkmnp-z2-9' | cut -c1-8)
   echo "$ETUDIANT:$MDP_ET" | chpasswd
   install -d -m 700 /root/savoiria
   echo "Compte Linux $ETUDIANT : $MDP_ET" >> /root/savoiria/mots-de-passe.txt
@@ -170,7 +174,7 @@ sqlite3 --version >/dev/null && echo "   [OK] SQLite"
 if ollama list | grep -q "${MODELE%%:*}"; then
   echo "   [OK] Socrate hors ligne ($MODELE)"
   echo "   Test rapide :"
-  ollama run "$MODELE" "Réponds en une phrase, en français : qu'est-ce qu'une variable en programmation ?" || true
+  ollama run "$MODELE" "Réponds en une phrase, en français : qu'est-ce qu'une variable en programmation ?" </dev/null || true
 else
   echo "   [ERREUR] Modèle $MODELE absent"; OK=0
 fi
