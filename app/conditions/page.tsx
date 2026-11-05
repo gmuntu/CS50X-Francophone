@@ -9,7 +9,7 @@ export default function ConditionsPage() {
     <LegalPage title="Conditions d'utilisation" updated={LEGAL.updated}
       summary="SavoirIA est un accompagnement indépendant en français. Utilisez-le pour apprendre, respectez les autres, et vérifiez ce que dit l'IA.">
       <h2>1. Le service</h2>
-      <p>SavoirIA propose des formations en ligne en français : résumés, podcasts, quiz, tuteur Socrate (intelligence artificielle) à l'écrit, à l'oral et sur WhatsApp, et un mode hors ligne. Le service peut évoluer, être amélioré ou interrompu temporairement.</p>
+      <p>SavoirIA propose des formations en ligne en français : résumés, podcasts, quiz, tuteur Socrate (intelligence artificielle) à l'écrit et à l'oral (chat WhatsApp à venir), et un mode hors ligne. Le service peut évoluer, être amélioré ou interrompu temporairement.</p>
 
       <h2>2. Votre compte</h2>
       <ul>

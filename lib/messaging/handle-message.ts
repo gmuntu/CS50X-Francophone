@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { CS50_MODULES } from '@/config/course-modules';
 import { findUserByPhone } from '@/lib/messaging/phone';
 import { tutorReply, type HistoryMsg } from '@/lib/messaging/tutor-reply';
+import { whatsappActif, MESSAGE_PAUSE } from '@/lib/messaging/whatsapp-actif';
 
 // Logique commune Twilio (SMS / WhatsApp bac à sable) et Meta (WhatsApp Cloud API) :
 // retrouve l'élève, gère les commandes, appelle Socrate et renvoie le texte brut de la réponse.
@@ -16,6 +17,8 @@ export async function handleIncoming(opts: { from: string; body: string; channel
   const body = opts.body.trim();
   const max = opts.maxChars;
   const out = (t: string) => t;
+  // Chat WhatsApp en pause (approbation de Meta en attente) : même réponse pour tous, sans appeler l'IA.
+  if (channel === 'whatsapp' && !whatsappActif()) return out(MESSAGE_PAUSE);
   const user = await findUserByPhone(from.replace('whatsapp:', ''));
   if (!user) {
     return out(
