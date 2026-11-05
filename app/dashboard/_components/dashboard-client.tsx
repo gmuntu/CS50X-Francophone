@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { CS50_MODULES, CS50_PROGRAMME, numeroModule } from '@/config/course-modules';
 import { motion } from 'framer-motion';
 import TutorMessageCard from '@/components/tutor-message-card';
+import EncadreVersionTest from '@/components/version-test';
 import MyTrainingsCard from '@/components/home/my-trainings-card';
 import IdentityReminder from '@/components/identity/identity-reminder';
 import OfflineBanner from '@/components/home/offline-banner';
@@ -202,6 +203,7 @@ export default function DashboardClient({ user }: Props) {
         </div>
 
         {/* Main Content Layout */}
+        {(user?.studentType === 'TESTEUR' || user?.role === 'ADMIN') && <EncadreVersionTest />}
         <PaquetsPerimes />
         <OfflineBanner />
 

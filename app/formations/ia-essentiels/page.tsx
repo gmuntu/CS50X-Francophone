@@ -30,7 +30,7 @@ export default async function IaCoursePage() {
             <h1 className="mt-3 text-3xl sm:text-4xl font-extrabold tracking-tight">{IA_TITLE}</h1>
             <p className="mt-2 max-w-2xl text-muted-foreground">Comprendre et utiliser l'intelligence artificielle au travail, en français, avec Socrate. Aucune connaissance technique nécessaire.</p>
             <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold">
-              {['⏱ 5 semaines', '🕐 2 à 3 h / semaine', '🟢 Débutant', '📥 Fonctionne hors ligne', '💬 Tuteur sur WhatsApp', '🎙️ Tuteur vocal'].map((t) => (
+              {['⏱ 5 semaines', '🕐 2 à 3 h / semaine', '🟢 Débutant', '📥 Fonctionne hors ligne', '💬 WhatsApp : chat avec le tuteur (à venir)', '🎙️ Tuteur vocal'].map((t) => (
                 <span key={t} className="rounded-lg border border-border bg-card px-3 py-1.5">{t}</span>
               ))}
             </div>

@@ -15,6 +15,7 @@ export default function Footer() {
           <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-2 text-xs font-semibold text-muted-foreground">
             <Link href="/courses" className="hover:text-foreground transition-colors">Cours</Link>
             <Link href="/tuteur" className="hover:text-foreground transition-colors">Tuteur Socrate</Link>
+            <Link href="/version-test" className="hover:text-foreground transition-colors">Version de test</Link>
             <Link href="/confidentialite" className="hover:text-foreground transition-colors">Confidentialité</Link>
             <Link href="/conditions" className="hover:text-foreground transition-colors">Conditions</Link>
             <a href={`mailto:${LEGAL.contactEmail}`} className="hover:text-foreground transition-colors">Contact</a>

@@ -81,7 +81,7 @@ export default function ProfileClient({ user, phone: initialPhone, dialCode: ini
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-muted-foreground mb-1.5">Téléphone (pour le tuteur par SMS / WhatsApp)</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1.5">Téléphone (pour le chat WhatsApp avec le tuteur, à venir)</label>
               <div className="flex gap-2">
                 <input
                   value={dialCode}
