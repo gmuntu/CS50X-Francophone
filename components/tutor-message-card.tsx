@@ -1,6 +1,7 @@
 'use client';
 
 import { MessageSquare, MessageCircle, KeyRound } from 'lucide-react';
+import { whatsappActif } from '@/lib/messaging/whatsapp-actif';
 
 // Numéro WhatsApp de Socrate. Par défaut : le numéro d'essai Twilio (bac à sable),
 // remplaçable dans Vercel par le numéro officiel sans toucher au code.
@@ -12,9 +13,8 @@ const SMS = process.env.NEXT_PUBLIC_TUTOR_SMS_NUMBER;
 
 const waLink = (text: string) => `https://wa.me/${WA.replace(/\D/g, '')}?text=${encodeURIComponent(text)}`;
 
-// La carte reste cachée tant que Meta n'a pas approuvé le numéro officiel :
-// mettre NEXT_PUBLIC_WHATSAPP_ACTIF=1 dans Vercel (puis redéployer) pour l'afficher.
-const ACTIF = process.env.NEXT_PUBLIC_WHATSAPP_ACTIF === '1';
+// La carte reste cachée tant que Meta n'a pas approuvé le numéro officiel (voir whatsapp-actif.ts).
+const ACTIF = whatsappActif();
 
 /** Carte « Socrate sur WhatsApp », affichée seulement quand le service est ouvert. */
 export default function TutorMessageCard({ compact = false }: { compact?: boolean }) {

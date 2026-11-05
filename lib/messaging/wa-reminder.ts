@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { whatsappActif } from '@/lib/messaging/whatsapp-actif';
 
 // Rappel « join » du bac à sable Twilio : envoyé 48 h après la connexion, avant l'expiration à 72 h.
 // Variables : TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_SANDBOX_JOIN (ex. « join sable-tigre »),
@@ -27,6 +28,7 @@ async function sendWhatsApp(to: string, text: string) {
 }
 
 export async function runWaReminders() {
+  if (!whatsappActif()) return { sent: 0, errors: ['Chat WhatsApp en pause (NEXT_PUBLIC_WHATSAPP_ACTIF)'] };
   if (!process.env.TWILIO_SANDBOX_JOIN) return { sent: 0, errors: ['TWILIO_SANDBOX_JOIN non configuré'] };
   const now = Date.now();
   const users = await prisma.user.findMany({

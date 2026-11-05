@@ -6,6 +6,7 @@ import { NextRequest, after } from 'next/server';
 import { handleIncoming } from '@/lib/messaging/handle-message';
 import { sendWhatsAppText, markRead } from '@/lib/messaging/meta-whatsapp';
 import { clip, waFormat } from '@/lib/messaging/sms-text';
+import { whatsappActif, MESSAGE_PAUSE } from '@/lib/messaging/whatsapp-actif';
 
 // Webhook WhatsApp Cloud API (Meta) : Socrate répond aux élèves sur le numéro officiel SavoirIA.
 // Variables : WHATSAPP_VERIFY_TOKEN (mot choisi, à recopier dans Meta), WHATSAPP_APP_SECRET (clé secrète de l'app),
@@ -48,7 +49,9 @@ export async function POST(req: NextRequest) {
       await markRead(m.id);
       const text = m.type === 'text' ? String(m.text?.body || '') : '';
       try {
-        const answer = text
+        const answer = !whatsappActif()
+          ? MESSAGE_PAUSE
+          : text
           ? await handleIncoming({ from: '+' + from, body: text, channel: 'whatsapp', maxChars: WA_MAX })
           : "Je ne lis que les messages ecrits pour l'instant. Ecrivez votre question, ou AIDE.";
         await sendWhatsAppText(from, clip(waFormat(answer), WA_MAX));

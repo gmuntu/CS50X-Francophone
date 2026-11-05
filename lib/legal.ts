@@ -4,5 +4,5 @@ export const LEGAL = {
   location: process.env.NEXT_PUBLIC_LEGAL_LOCATION || 'Canada',
   contactEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL || 'contact@savoiria.online',
   minAge: Number(process.env.NEXT_PUBLIC_MIN_AGE || 16),
-  updated: '15 octobre 2026',
+  updated: '5 novembre 2026',
 };
