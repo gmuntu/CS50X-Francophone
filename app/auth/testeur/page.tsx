@@ -83,7 +83,7 @@ function TesterSignup() {
           <input required type="password" minLength={10} value={form.password} onChange={set('password')} className={input} />
         </div>
         <div>
-          <label className={label}>Téléphone (facultatif, pour tester le tuteur WhatsApp)</label>
+          <label className={label}>Téléphone (facultatif, pour le chat WhatsApp avec le tuteur, à venir)</label>
           <div className="flex gap-2">
             <input value={form.dialCode} onChange={set('dialCode')} placeholder="+243" inputMode="tel" className={`${input} w-24`} />
             <input value={form.phone} onChange={set('phone')} placeholder="812345678" inputMode="tel" className={input} />

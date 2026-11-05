@@ -7,7 +7,7 @@ import ReadyCourses from '@/components/home/ready-courses';
 import { TRACKS, DISCLAIMER } from '@/lib/catalog';
 
 const FEATURES = [
-  { title: 'Tuteur Socrate', desc: 'Écrit, vocal et sur WhatsApp' },
+  { title: 'Tuteur Socrate', desc: 'Écrit et vocal · WhatsApp à venir' },
   { title: 'Hors ligne', desc: 'Résumés, podcasts et quiz sans Internet' },
   { title: 'Voix africaines', desc: "Podcasts Socrate et l'étudiante" },
   { title: 'Un seul compte', desc: 'Toutes vos formations au même endroit' },

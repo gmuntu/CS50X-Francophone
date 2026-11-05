@@ -12,8 +12,13 @@ const SMS = process.env.NEXT_PUBLIC_TUTOR_SMS_NUMBER;
 
 const waLink = (text: string) => `https://wa.me/${WA.replace(/\D/g, '')}?text=${encodeURIComponent(text)}`;
 
-/** Carte « Socrate sur WhatsApp » : toujours visible dans l'application. */
+// La carte reste cachée tant que Meta n'a pas approuvé le numéro officiel :
+// mettre NEXT_PUBLIC_WHATSAPP_ACTIF=1 dans Vercel (puis redéployer) pour l'afficher.
+const ACTIF = process.env.NEXT_PUBLIC_WHATSAPP_ACTIF === '1';
+
+/** Carte « Socrate sur WhatsApp », affichée seulement quand le service est ouvert. */
 export default function TutorMessageCard({ compact = false }: { compact?: boolean }) {
+  if (!ACTIF) return null;
   return (
     <div className={`bg-card border border-border/80 rounded-2xl ${compact ? 'p-4' : 'p-5'} shadow-soft-sm space-y-3`}>
       <div className="flex items-center gap-2.5">
