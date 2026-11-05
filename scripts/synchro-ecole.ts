@@ -157,7 +157,12 @@ async function main() {
     await writeFile(ETAT, JSON.stringify({ derniereSynchro, institutionId }), { mode: 0o600 });
     console.log('Synchronisation de l’école terminée.');
   } catch (e) {
-    if (e instanceof PosteRefuse) { await bloquerLEcole(etat.institutionId); process.exitCode = 1; return; }
+    if (e instanceof PosteRefuse) {
+      console.log("Le site refuse la clé de cet ordinateur : clé mal collée, ou ordinateur désactivé dans Administration > Partenaires.");
+      await bloquerLEcole(etat.institutionId);
+      process.exitCode = 1;
+      return;
+    }
     throw e;
   }
 }

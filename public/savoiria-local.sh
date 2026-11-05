@@ -38,6 +38,13 @@ fi
 if [ -z "$POSTE_CLE" ] && [ -r /dev/tty ]; then
   read -rsp "Clé de l'ordinateur d'école (Entrée pour passer) : " POSTE_CLE </dev/tty; echo
 fi
+# Une clé d'ordinateur d'école commence toujours par « poste_ » (souvent, c'est l'autre clé qui a été collée deux fois).
+while [ -n "$POSTE_CLE" ] && [[ "$POSTE_CLE" != poste_* ]]; do
+  [ -r /dev/tty ] || { echo "Clé de l'ordinateur d'école invalide (elle commence par poste_)."; exit 1; }
+  echo "Ce n'est pas une clé d'ordinateur d'école : elle commence toujours par « poste_ »."
+  read -rsp "Clé de l'ordinateur d'école (Entrée pour passer) : " POSTE_CLE </dev/tty; echo
+done
+[ -n "$CONTENU_SYNC_CLE" ] && [ "$CONTENU_SYNC_CLE" = "$POSTE_CLE" ] && { echo "Les deux clés sont identiques : recommencez."; exit 1; }
 install -d -m 700 /root/savoiria
 
 # ---------------------------------------------------------------------
@@ -114,7 +121,8 @@ etape "5/7  Construction du site (5 à 15 minutes)"
 sudo -u savoiria bash -c "cd '$SITE_DIR' && npm ci --no-audit --no-fund && npx prisma generate && npx prisma db push --skip-generate && npx tsx --require dotenv/config scripts/importer-contenu.ts; npm run build"
 
 # Compte étudiant local (actif tout de suite) : mot de passe propre à cet ordinateur
-MDP_WEB=$(tr -dc 'a-hjkmnp-z2-9' </dev/urandom | head -c 10)
+# head lit 512 octets puis s'arrête, tr lit jusqu'au bout : pas de « tube cassé » (code 141) avec pipefail
+MDP_WEB=$(head -c 512 /dev/urandom | tr -dc 'a-hjkmnp-z2-9' | cut -c1-10)
 sudo -u savoiria MDP_WEB="$MDP_WEB" bash -c "cd '$SITE_DIR' && node -e \"
 const { PrismaClient } = require('@prisma/client'); const bcrypt = require('bcryptjs');
 const p = new PrismaClient();

@@ -411,7 +411,7 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
 
   const handleDownloadAudio = () => {
     if (!currentScript?.audioUrl) {
-      alert('Le fichier MP3 n\u2019est pas encore disponible pour cette session. Utilisez « Écouter avec Socrate » pour la lecture vocale.');
+      alert('Le fichier MP3 n\u2019est pas encore disponible pour cette session. Utilisez « Écouter le podcast du jour » pour la lecture vocale.');
       return;
     }
     const a = document.createElement('a');
@@ -779,7 +779,7 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
               }`}
             >
               {isDayLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : isSpeakingDay ? <Square className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-              {isDayLoading ? 'Préparation…' : isSpeakingDay ? 'Arrêter la voix' : 'Écouter avec Socrate'}
+              {isDayLoading ? 'Préparation…' : isSpeakingDay ? 'Arrêter la voix' : 'Écouter le podcast du jour'}
             </button>
             {currentScript?.audioUrl && (
               <button
@@ -888,7 +888,7 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
             <div className="w-6 h-6 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
               <Landmark className="w-3.5 h-3.5" />
             </div>
-            <span className="text-xs sm:text-sm font-bold text-foreground">Discussion avec Socrate</span>
+            <span className="text-xs sm:text-sm font-bold text-foreground">Questions au tuteur</span>
           </div>
           {mode === 'en-ligne' && (
             <span className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">
@@ -976,7 +976,7 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
           <button
             type="button"
             onClick={startListening}
-            title={isListening ? "J\u2019écoute… (clique pour arrêter)" : "Parler à Socrate"}
+            title={isListening ? "J\u2019écoute… (clique pour arrêter)" : "Dicter ma question"}
             className={`p-2.5 rounded-xl border transition shrink-0 ${
               isListening
                 ? 'bg-rose-600 text-white border-rose-500 animate-pulse'

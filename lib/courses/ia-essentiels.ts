@@ -199,7 +199,7 @@ Une réponse ne vous plaît pas ? Ne recommencez pas tout : **continuez la conve
 - Écrivez en français simple : phrases courtes, un sujet à la fois.
 - Vous pouvez demander une traduction ou une version en lingala, wolof, swahili, bambara… mais **faites vérifier** par quelqu'un qui parle bien la langue : l'IA est souvent moins précise dans les langues africaines.
 
-## Exercice oral avec Socrate Agora
+## Exercice oral avec le tuteur vocal
 Plus bas sur cette page, dictez à Socrate un prompt pour une vraie tâche. Il vous aide à l'améliorer, étape par étape, avec la méthode en 5 étapes.`,
     keyPoints: [
       "Un prompt est votre demande à l'IA : la qualité de la réponse dépend de la qualité de la demande.",

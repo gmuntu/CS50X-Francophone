@@ -68,7 +68,8 @@ export async function demanderSocrateSite(
   surQuestion(question);
   if (!question) { surPhrase("Je n'ai pas bien entendu. Réessaie en parlant un peu plus près du micro.", ''); return; }
 
-  const contexte = (corps.contexte ?? '').slice(0, 2500);
+  // Court : la route ajoute déjà le résumé de la semaine (attente plus courte sur le poste).
+  const contexte = (corps.contexte ?? '').slice(0, 800);
   const r = await fetch('/api/tutor', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
