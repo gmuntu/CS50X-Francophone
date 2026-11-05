@@ -170,6 +170,8 @@ export const CS50_MODULES: CourseModuleConfig[] = [
     slug: 'bonus-cybersecurite',
     description: "Leçon bonus, hors programme officiel CS50x : sécurité informatique, cryptographie, HTTPS et bonnes pratiques.",
     notebookUrl: 'https://notebooklm.google.com/notebook/c694a329-339d-4aa0-b1e4-5ad5788fccd4',
+    // Conférence officielle « CS50x 2024 - Cybersecurity » (anglais) ; version française Moon2⁺Studio à venir.
+    videoUrl: 'https://www.youtube.com/embed/EKof-cJiTG8',
     difficulty: 'Avancé',
     topics: ['Sécurité', 'Cryptographie', 'HTTPS'],
     imageUrl: 'https://images.stockcake.com/public/b/c/3/bc366a2d-6aed-4bc5-98fa-cbce2a9d9a5e/digital-security-shield-stockcake.jpg',
