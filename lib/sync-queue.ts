@@ -4,6 +4,8 @@
 // Les résultats sont gardés sur l'appareil puis envoyés automatiquement au retour du réseau.
 
 const KEY = 'savoiria-quiz-queue';
+// Ordinateur d'école : le serveur du site est sur la machine, il répond même sans Internet.
+const SERVEUR_JOIGNABLE = () => process.env.NEXT_PUBLIC_SAVOIRIA_LOCAL === '1' || navigator.onLine;
 export const SYNC_EVENT = 'savoiria-sync-change';
 
 export interface QueuedAttempt {
@@ -50,7 +52,7 @@ export async function submitQuizAttempt(quizId: string, answers: Record<string, 
     takenAt: new Date().toISOString(),
     eleve: (() => { try { return localStorage.getItem('savoiria-eleve') || undefined; } catch { return undefined; } })(),
   };
-  if (navigator.onLine && (await send(a)) === 'ok') return true;
+  if (SERVEUR_JOIGNABLE() && (await send(a)) === 'ok') return true;
   write([...read(), a]);
   return false;
 }
@@ -58,7 +60,7 @@ export async function submitQuizAttempt(quizId: string, answers: Record<string, 
 let flushing = false;
 /** Envoie tout ce qui attend. Renvoie le nombre de résultats synchronisés. */
 export async function flushQueue(): Promise<number> {
-  if (flushing || !navigator.onLine) return 0;
+  if (flushing || !SERVEUR_JOIGNABLE()) return 0;
   flushing = true;
   let sent = 0;
   try {

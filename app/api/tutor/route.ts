@@ -8,6 +8,10 @@ import { prisma } from '@/lib/prisma';
 import { readCourseSource } from '@/lib/content-generator';
 import { IA_SLUG, IA_SYSTEM_PROMPT, iaWeekContext } from '@/lib/courses/ia-essentiels';
 
+// Sur un ordinateur d'école, Gemma lit le texte envoyé à environ 80 mots par seconde :
+// des notes plus courtes divisent l'attente avant la réponse (≈ 27 s -> ≈ 10 s).
+const NOTES_MAX = process.env.SAVOIRIA_LOCAL === '1' ? 1500 : 6000;
+
 const SYSTEM_PROMPT = `Tu es Socrate, un tuteur socratique expert en informatique et programmation, spécialisé dans le cours CS50 de Harvard pour les étudiants francophones.
 Ton rôle est de guider les étudiants vers la compréhension profonde par des questions socratiques stimulantes, sans donner directement les réponses toutes faites.
 
@@ -58,7 +62,7 @@ export async function POST(request: NextRequest) {
         }
         const source = readCourseSource(moduleId);
         if (source) {
-          moduleContext += `\n\n--- NOTES DE COURS SOURCE ---\n${source.slice(0, 6000)}`;
+          moduleContext += `\n\n--- NOTES DE COURS SOURCE ---\n${source.slice(0, NOTES_MAX)}`;
         }
         moduleContext += `\n\nAppuie tes relances socratiques sur ce matériel pédagogique.`;
       }

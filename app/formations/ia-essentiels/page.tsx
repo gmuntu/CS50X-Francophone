@@ -30,7 +30,7 @@ export default async function IaCoursePage() {
             <h1 className="mt-3 text-3xl sm:text-4xl font-extrabold tracking-tight">{IA_TITLE}</h1>
             <p className="mt-2 max-w-2xl text-muted-foreground">Comprendre et utiliser l'intelligence artificielle au travail, en français, avec Socrate. Aucune connaissance technique nécessaire.</p>
             <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold">
-              {['⏱ 5 semaines', '🕐 2 à 3 h / semaine', '🟢 Débutant', '📥 Fonctionne hors ligne', '💬 Tuteur sur WhatsApp', '🎙️ Socrate Agora'].map((t) => (
+              {['⏱ 5 semaines', '🕐 2 à 3 h / semaine', '🟢 Débutant', '📥 Fonctionne hors ligne', '💬 Tuteur sur WhatsApp', '🎙️ Tuteur vocal'].map((t) => (
                 <span key={t} className="rounded-lg border border-border bg-card px-3 py-1.5">{t}</span>
               ))}
             </div>
@@ -108,7 +108,7 @@ export default async function IaCoursePage() {
                   </div>
                   {w.oral && (
                     <p className="mt-2 rounded-lg border border-violet-200 dark:border-violet-900 bg-violet-50 dark:bg-violet-950/30 px-3 py-2 text-xs text-violet-900 dark:text-violet-200">
-                      🎙️ <b>Exercice oral avec Socrate Agora :</b> dictez un prompt à voix haute, Socrate vous aide à l'améliorer étape par étape.
+                      🎙️ <b>Exercice oral avec le tuteur vocal :</b> dictez un prompt à voix haute, Socrate vous aide à l'améliorer étape par étape.
                     </p>
                   )}
                   <p className="mt-2 text-xs text-muted-foreground">📄 Résumé · 🎧 Podcast Socrate & l'étudiante · ✅ Quiz{w.oral ? ' · 🎙️ Exercice oral' : ''} · 📥 Hors ligne</p>

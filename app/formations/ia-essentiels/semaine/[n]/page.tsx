@@ -64,7 +64,7 @@ export default async function IaWeekPage({ params }: { params: Promise<{ n: stri
         )}
 
         <div className="rounded-2xl border border-border bg-card p-4 sm:p-5 space-y-3">
-          <p className="font-bold">🎙️ Socrate Agora : parler de vive voix</p>
+          <p className="font-bold">🎙️ Tuteur vocal : parler de vive voix</p>
           <VoiceErrorBoundary>
             <VoiceTutor moduleId={1000 + n} context={context} systemPrompt={IA_SYSTEM_PROMPT}
               hint="Posez votre question à voix haute ; vous pouvez couper la parole à Socrate." />

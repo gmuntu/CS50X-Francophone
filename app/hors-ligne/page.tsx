@@ -99,7 +99,7 @@ export default function HorsLignePage() {
         {/* Raccourcis (liens classiques : le service worker sert les pages enregistrées) */}
         <div className="grid grid-cols-3 gap-2">
           <a href={reprendre?.path ?? '/tuteur'} className="rounded-2xl border border-border bg-card p-3 text-center text-sm font-bold hover:border-primary/40"><GraduationCap className="mx-auto mb-1 w-5 h-5 text-primary" />Salle de cours</a>
-          <a href="/agora" className="rounded-2xl border border-border bg-card p-3 text-center text-sm font-bold hover:border-primary/40"><Mic className="mx-auto mb-1 w-5 h-5 text-primary" />Parler à Socrate</a>
+          <a href="/agora" className="rounded-2xl border border-border bg-card p-3 text-center text-sm font-bold hover:border-primary/40"><Mic className="mx-auto mb-1 w-5 h-5 text-primary" />Tuteur vocal</a>
           <a href="/formations" className="rounded-2xl border border-border bg-card p-3 text-center text-sm font-bold hover:border-primary/40"><BookOpen className="mx-auto mb-1 w-5 h-5 text-primary" />Mes formations</a>
         </div>
 

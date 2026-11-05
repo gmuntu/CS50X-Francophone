@@ -52,7 +52,7 @@ export default function ProblemSocrate({ week, slug, name, index, explication }:
   return (
     <VoiceErrorBoundary>
       <VoiceTutor moduleId={3000 + week * 100 + index} context={context} systemPrompt={prompt(name, week)} onActive={pauseVideo}
-        idleLabel="Parler avec Socrate"
+        idleLabel="Poser ma question à voix haute"
         hint="Posez votre question à voix haute sur l'exercice ou la vidéo. Socrate vous guide, sans donner la solution." />
     </VoiceErrorBoundary>
   );

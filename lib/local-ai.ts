@@ -35,6 +35,9 @@ function unAUn<T>(tache: () => Promise<T>): Promise<T> {
 }
 const AUDIO_MAX = 10 * 1024 * 1024; // 10 Mo
 const DELAI_GEMMA = 120_000;
+// Gemma reste en mémoire en permanence : sinon la première question après 30 min d'attente
+// coûte 1 à 2 minutes de chargement. Sur un ordinateur d'école, il ne sert qu'à SavoirIA.
+const GARDER = -1;
 
 function executer(cmd: string, args: string[], entree?: string, delaiMs = 180_000): Promise<string> {
   return unAUn(() => new Promise<string>((ok, ko) => {
@@ -87,7 +90,7 @@ async function gemmaComplet(corps: any): Promise<Response> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: MODELE, messages: versMessagesOllama(corps), stream: false, think: false,
-      keep_alive: '30m', options: optionsOllama(corps), ...(json ? { format: 'json' } : {}),
+      keep_alive: GARDER, options: optionsOllama(corps), ...(json ? { format: 'json' } : {}),
     }),
     signal: AbortSignal.timeout(DELAI_GEMMA),
   }).catch(() => null);
@@ -97,17 +100,24 @@ async function gemmaComplet(corps: any): Promise<Response> {
   return new Response(JSON.stringify(enGemini(texte)), { status: 200, headers: { 'Content-Type': 'application/json' } });
 }
 
+// En flux, on ne coupe pas une réponse longue : seulement si Gemma se tait trop longtemps
+// (un petit ordinateur d'école met plus de 2 minutes à écrire une explication complète).
+const SILENCE_GEMMA = 90_000;
+
 async function gemmaFlux(corps: any): Promise<Response> {
+  const arret = new AbortController();
+  let minuteur = setTimeout(() => arret.abort(), DELAI_GEMMA); // premier mot (modèle à charger)
+  const relancer = () => { clearTimeout(minuteur); minuteur = setTimeout(() => arret.abort(), SILENCE_GEMMA); };
   const r = await fetch(`${OLLAMA}/api/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: MODELE, messages: versMessagesOllama(corps), stream: true, think: false,
-      keep_alive: '30m', options: optionsOllama(corps),
+      keep_alive: GARDER, options: optionsOllama(corps),
     }),
-    signal: AbortSignal.timeout(DELAI_GEMMA),
+    signal: arret.signal,
   }).catch(() => null);
-  if (!r?.ok || !r.body) return indisponible();
+  if (!r?.ok || !r.body) { clearTimeout(minuteur); return indisponible(); }
   const lecteur = r.body.getReader();
   const dec = new TextDecoder();
   const enc = new TextEncoder();
@@ -119,9 +129,10 @@ async function gemmaFlux(corps: any): Promise<Response> {
     async pull(ctrl) {
       for (;;) {
         let morceau;
-        try { morceau = await lecteur.read(); } catch { ctrl.close(); return; } // délai dépassé en cours de route
+        try { morceau = await lecteur.read(); } catch { clearTimeout(minuteur); ctrl.close(); return; } // Gemma s'est tue trop longtemps
         const { value, done } = morceau;
-        if (done) { ctrl.close(); return; }
+        if (done) { clearTimeout(minuteur); ctrl.close(); return; }
+        relancer();
         reste += dec.decode(value, { stream: true });
         const lignes = reste.split('\n');
         reste = lignes.pop() ?? '';
@@ -137,6 +148,7 @@ async function gemmaFlux(corps: any): Promise<Response> {
         if (transmis) return;
       }
     },
+    cancel() { clearTimeout(minuteur); arret.abort(); }, // l'élève a quitté la page : Gemma s'arrête
   });
   return new Response(flux, { status: 200, headers: { 'Content-Type': 'text/event-stream' } });
 }
@@ -242,4 +254,9 @@ export function activerIALocale() {
     return original(entree, init);
   };
   console.log(`[SavoirIA local] IA sur cet ordinateur : ${MODELE} + Whisper + Piper`);
+  // Charge Gemma dès le démarrage, pour que la première question d'un élève ne l'attende pas.
+  original(`${OLLAMA}/api/generate`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: MODELE, keep_alive: GARDER }),
+  }).catch(() => {});
 }

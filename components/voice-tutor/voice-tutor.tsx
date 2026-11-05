@@ -17,10 +17,10 @@ interface Props {
 }
 
 const LABELS = {
-  idle: 'Parler avec Socrate',
+  idle: 'Poser ma question à voix haute',
   connecting: 'Connexion…',
   listening: 'Je vous écoute…',
-  speaking: 'Socrate parle…',
+  speaking: 'Le tuteur répond…',
   error: 'Réessayer',
 } as const;
 
@@ -188,7 +188,7 @@ function SocrateLocal({ mode, context, moduleId, onActive }: { mode: ModeSocrate
     );
   }
 
-  const libelle = { idle: 'Parler avec Socrate', listening: 'Je t\'écoute… (appuie pour envoyer)', thinking: 'Socrate réfléchit…', speaking: 'Socrate parle…' }[etat];
+  const libelle = { idle: 'Poser ma question à voix haute', listening: 'Je t\'écoute… (appuie pour envoyer)', thinking: 'Le tuteur réfléchit…', speaking: 'Le tuteur répond…' }[etat];
   const couleur = etat === 'listening' ? 'bg-rose-600 animate-pulse' : etat === 'speaking' ? 'bg-[#7c3aed]' : etat === 'thinking' ? 'bg-slate-400' : 'bg-primary hover:bg-primary/90';
   return (
     <div className="flex flex-col gap-2 p-4 rounded-2xl border border-amber-200 bg-card">

@@ -32,9 +32,9 @@ export default function Header() {
   const inCs50 = ['/cs50x', '/courses', '/tuteur', '/agora'].some((p) => pathname === p || pathname?.startsWith(p + '/'));
   const cs50Items = [
     { label: '📖 Le programme', href: '/cs50x' },
-    { label: '🧩 Problèmes', href: '/courses/cs50x/problemes' },
     { label: '🎓 Salle de cours', href: '/tuteur' },
-    { label: '🎙️ Parler à Socrate', href: '/agora' },
+    { label: '🧩 Problèmes', href: '/courses/cs50x/problemes' },
+    { label: '🎙️ Tuteur vocal', href: '/agora' },
   ];
 
   return (

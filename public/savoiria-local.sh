@@ -38,6 +38,13 @@ fi
 if [ -z "$POSTE_CLE" ] && [ -r /dev/tty ]; then
   read -rsp "Clé de l'ordinateur d'école (Entrée pour passer) : " POSTE_CLE </dev/tty; echo
 fi
+# Une clé d'ordinateur d'école commence toujours par « poste_ » (souvent, c'est l'autre clé qui a été collée deux fois).
+while [ -n "$POSTE_CLE" ] && [[ "$POSTE_CLE" != poste_* ]]; do
+  [ -r /dev/tty ] || { echo "Clé de l'ordinateur d'école invalide (elle commence par poste_)."; exit 1; }
+  echo "Ce n'est pas une clé d'ordinateur d'école : elle commence toujours par « poste_ »."
+  read -rsp "Clé de l'ordinateur d'école (Entrée pour passer) : " POSTE_CLE </dev/tty; echo
+done
+[ -n "$CONTENU_SYNC_CLE" ] && [ "$CONTENU_SYNC_CLE" = "$POSTE_CLE" ] && { echo "Les deux clés sont identiques : recommencez."; exit 1; }
 install -d -m 700 /root/savoiria
 
 # ---------------------------------------------------------------------
