@@ -2,7 +2,7 @@
 # =====================================================================
 #  SavoirIA LOCAL — tout le site SavoirIA sur l'ordinateur, sans Internet.
 #  L'IA du site (Socrate, voix, micro, génération des contenus) passe par
-#  Gemma 4 (Ollama), Whisper et Piper installés sur la machine.
+#  Gemma 4 (Ollama), Whisper, Pocket TTS (voix naturelle) et Piper (secours) installés sur la machine.
 #
 #  Prérequis : savoiria-poste.sh et savoiria-voix.sh déjà installés.
 #  Utilisation (une fois, avec Internet) :
@@ -85,6 +85,18 @@ G fetch --tags --force origin
 VERSION=$(G tag -l "$ETIQUETTES" --sort=-v:refname | head -1)
 if [ -n "$VERSION" ]; then G checkout -q --force "$VERSION"; else G checkout -q --force origin/main; fi
 echo "   Version installée : ${VERSION:-main}"
+# Copie de l'installateur de la voix appartenant à l'administrateur : savoiria-maj le lance avec tous
+# les droits, il ne doit donc jamais venir du dossier du site (que le compte du site peut modifier) :
+# il est téléchargé directement depuis GitHub, pour la version validée.
+install -d -m 755 /usr/local/lib/savoiria/voix
+if [[ "${VERSION:-}" =~ ^poste-v[0-9]+$ ]]; then
+  BRUT="https://raw.githubusercontent.com/gmuntu/CS50X-Francophone/$VERSION/scripts/poste-voix"
+  for F in installer.sh serveur_pocket.py requirements-pocket.txt; do
+    T=$(mktemp)
+    if curl -fsSL "$BRUT/$F" -o "$T"; then install -m 644 "$T" "/usr/local/lib/savoiria/voix/$F"; fi
+    rm -f "$T"
+  done
+fi
 SECRET_FICHIER=/var/lib/savoiria/.secret
 [ -f "$SECRET_FICHIER" ] || { head -c 32 /dev/urandom | base64 > "$SECRET_FICHIER"; chmod 600 "$SECRET_FICHIER"; chown savoiria "$SECRET_FICHIER"; }
 ( umask 077; cat > "$SITE_DIR/.env" ) <<EOF
@@ -183,6 +195,9 @@ if [ "\$(G rev-parse HEAD)" != "\$AVANT" ] || [ "\$AUDIO_APRES" != "\$AUDIO_AVAN
   sudo -u savoiria bash -c "npm run build" && systemctl restart savoiria-site
 fi
 ollama pull "$MODELE" >/dev/null 2>&1 || true
+# Voix naturelle : vérifiée, puis préparation des podcasts nouveaux. Copie de l'administrateur seulement ;
+# une nouvelle version de la voix s'installe en relançant savoiria-local.sh.
+[ -f /usr/local/lib/savoiria/voix/installer.sh ] && { bash /usr/local/lib/savoiria/voix/installer.sh || true; }
 echo "SavoirIA est à jour."
 EOF
 chmod +x /usr/local/bin/savoiria-maj
@@ -232,6 +247,8 @@ WantedBy=timers.target
 EOF
 systemctl daemon-reload
 systemctl enable --now savoiria-site savoiria-maj.timer savoiria-synchro.timer
+# Voix naturelle du poste (Pocket TTS) ; si elle échoue, Piper reste la voix du poste
+[ -f /usr/local/lib/savoiria/voix/installer.sh ] && bash /usr/local/lib/savoiria/voix/installer.sh || echo "   (voix naturelle : se réinstallera à la prochaine mise à jour)"
 # Première synchronisation de l'école tout de suite : les élèves peuvent se connecter avec leur compte
 [ -n "$POSTE_CLE" ] && { /usr/local/bin/savoiria-synchro && echo "   [OK] Élèves de l'école reçus" || echo "   [ATTENTION] Synchronisation de l'école à vérifier (journalctl -u savoiria-synchro)"; }
 
