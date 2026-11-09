@@ -1,6 +1,7 @@
 # Serveur de voix naturelle d'un ordinateur d'école SavoirIA (Ubuntu, sans carte graphique).
 # Moteur : Kyutai Pocket TTS (modèle CC BY 4.0), en français.
 # Voix « javert » pour Socrate (homme), « estelle » pour l'étudiante (femme) : toutes deux CC0.
+# Mode rapide (calcul allégé, choisi à l'oreille par le propriétaire) : deux fois plus vite que la parole.
 #
 # POST /tts  {"texte": "...", "voix": "homme" | "femme", "garder": bool, "prepa": bool}  ->  audio WAV.
 #   garder : la voix fabriquée est gardée sur le disque (podcasts) ; une 2e demande identique est immédiate.
@@ -19,7 +20,7 @@ CACHE_MAX = int(os.environ.get("VOIX_CACHE_MO", "2000")) * 1024 * 1024
 VOIX = {"homme": os.environ.get("VOIX_HOMME", "javert"), "femme": os.environ.get("VOIX_FEMME", "estelle")}
 TEXTE_MAX = 2000  # caractères par demande
 
-modele = TTSModel.load_model(language="french")
+modele = TTSModel.load_model(language="french", quantize=os.environ.get("VOIX_RAPIDE", "1") == "1")
 ETATS = {k: modele.get_state_for_audio_prompt(v) for k, v in VOIX.items()}
 os.makedirs(CACHE, mode=0o700, exist_ok=True)
 ATTENTE_PREPA = 600  # une préparation qui attend plus de 10 min abandonne (elle reprendra plus tard)
