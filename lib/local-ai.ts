@@ -2,7 +2,7 @@
 //
 // Quand SAVOIRIA_LOCAL=1, les appels du site vers les services Google sont détournés :
 //   - Gemini (texte, réponses de Socrate, génération de contenu)  -> Gemma 4 via Ollama
-//   - Google Text-to-Speech / Gemini-TTS (voix, podcasts)          -> Piper (voix d'homme / de femme)
+//   - Google Text-to-Speech / Gemini-TTS (voix, podcasts)          -> Pocket TTS (voix naturelle), Piper en secours
 //   - Google Speech-to-Text (micro)                                 -> Whisper (whisper.cpp)
 // Le reste du code ne change pas : il croit parler à Google.
 
@@ -10,12 +10,13 @@ import { spawn } from 'node:child_process';
 import { mkdtemp, readFile, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { texteVoixLocale } from '@/lib/voix-texte';
 
 const DOSSIER = process.env.SAVOIRIA_DOSSIER || '/opt/savoiria';
 const OLLAMA = process.env.OLLAMA_URL || 'http://127.0.0.1:11434';
 const MODELE = process.env.MODELE || 'gemma4:e2b';
 const PIPER = `${DOSSIER}/piper-venv/bin/piper`;
-// Voix naturelle (Qwen3-TTS) servie sur cet ordinateur, si elle est installée. Sinon : Piper.
+// Voix naturelle (Pocket TTS sur les postes Ubuntu, Qwen3-TTS sur Mac) servie sur cet ordinateur, si elle est installée. Sinon : Piper.
 const VOIX_LOCALE = process.env.VOIX_LOCALE_URL?.trim().replace(/\/$/, '') || '';
 const VOIX_HOMME = `${DOSSIER}/voix/socrate.onnx`;
 const VOIX_FEMME = `${DOSSIER}/voix/etudiante.onnx`;
@@ -167,14 +168,18 @@ async function piper(texte: string, femme: boolean): Promise<string> {
 
 const VOIX_AUDIO_MAX = 20 * 1024 * 1024; // 20 Mo : bien plus que 2 minutes de voix
 
-/** Voix naturelle (serveur Qwen3-TTS de cet ordinateur) -> WAV en base64, ou null si indisponible. */
-async function voixNaturelle(texte: string, femme: boolean): Promise<string | null> {
+/**
+ * Voix naturelle (serveur de voix de cet ordinateur) -> WAV en base64, ou null si indisponible.
+ * `garder` : réplique de podcast, gardée sur le disque du poste (préparée à l'avance, rejouée aussitôt).
+ */
+async function voixNaturelle(texte: string, femme: boolean, garder: boolean): Promise<string | null> {
   try {
     const r = await fetch(`${VOIX_LOCALE}/tts`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ texte: texte.slice(0, 2000), voix: femme ? 'femme' : 'homme' }),
-      signal: AbortSignal.timeout(60_000),
+      body: JSON.stringify({ texte: texteVoixLocale(texte), voix: femme ? 'femme' : 'homme', garder }),
+      // 60 s d'attente au plus dans la file du serveur, puis le calcul (environ le temps de la phrase).
+      signal: AbortSignal.timeout(120_000),
     });
     if (!r.ok || Number(r.headers.get('content-length') ?? 0) > VOIX_AUDIO_MAX) return null;
     const audio = Buffer.from(await r.arrayBuffer());
@@ -189,9 +194,10 @@ async function synthese(corps: any): Promise<Response> {
   const nomVoix = String(corps?.voice?.name ?? '');
   // Les voix féminines du site (l'étudiante des podcasts) -> voix de femme ; tout le reste -> Socrate.
   const femme = /Aoede|Kore|Leda|Zephyr|Callirrhoe|Autonoe|Despina|Erinome|Laomedeia|Pulcherrima|Vindemiatrix|Achernar|Gacrux|Sulafat/i.test(nomVoix);
-  // D'abord la voix naturelle (Qwen3-TTS : Socrate / l'étudiante) ; si elle ne répond pas, Piper prend le relais.
+  // D'abord la voix naturelle (Socrate / l'étudiante) ; si elle ne répond pas, Piper prend le relais.
   if (VOIX_LOCALE && texte.trim()) {
-    const audio = await voixNaturelle(texte, femme);
+    // Une consigne de style n'accompagne que les répliques de podcast (Gemini-TTS) : celles-là sont gardées.
+    const audio = await voixNaturelle(texte, femme, Boolean(corps?.input?.prompt));
     if (audio) return new Response(JSON.stringify({ audioContent: audio }), { status: 200, headers: { 'Content-Type': 'application/json' } });
   }
   try {
@@ -253,7 +259,7 @@ export function activerIALocale() {
     if (url.includes('speech.googleapis.com')) return reconnaissance(corps());
     return original(entree, init);
   };
-  console.log(`[SavoirIA local] IA sur cet ordinateur : ${MODELE} + Whisper + Piper`);
+  console.log(`[SavoirIA local] IA sur cet ordinateur : ${MODELE} + Whisper + ${VOIX_LOCALE ? "voix naturelle" : "Piper"}`);
   // Charge Gemma dès le démarrage, pour que la première question d'un élève ne l'attende pas.
   original(`${OLLAMA}/api/generate`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },

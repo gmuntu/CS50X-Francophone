@@ -2,7 +2,7 @@
 # =====================================================================
 #  SavoirIA LOCAL — tout le site SavoirIA sur l'ordinateur, sans Internet.
 #  L'IA du site (Socrate, voix, micro, génération des contenus) passe par
-#  Gemma 4 (Ollama), Whisper et Piper installés sur la machine.
+#  Gemma 4 (Ollama), Whisper, Pocket TTS (voix naturelle) et Piper (secours) installés sur la machine.
 #
 #  Prérequis : savoiria-poste.sh et savoiria-voix.sh déjà installés.
 #  Utilisation (une fois, avec Internet) :
@@ -183,6 +183,8 @@ if [ "\$(G rev-parse HEAD)" != "\$AVANT" ] || [ "\$AUDIO_APRES" != "\$AUDIO_AVAN
   sudo -u savoiria bash -c "npm run build" && systemctl restart savoiria-site
 fi
 ollama pull "$MODELE" >/dev/null 2>&1 || true
+# Voix naturelle : installée ou mise à jour, puis préparation des podcasts nouveaux
+[ -f scripts/poste-voix/installer.sh ] && { bash scripts/poste-voix/installer.sh || true; }
 echo "SavoirIA est à jour."
 EOF
 chmod +x /usr/local/bin/savoiria-maj
@@ -232,6 +234,8 @@ WantedBy=timers.target
 EOF
 systemctl daemon-reload
 systemctl enable --now savoiria-site savoiria-maj.timer savoiria-synchro.timer
+# Voix naturelle du poste (Pocket TTS) ; si elle échoue, Piper reste la voix du poste
+bash "$SITE_DIR/scripts/poste-voix/installer.sh" || echo "   (voix naturelle : se réinstallera à la prochaine mise à jour)"
 # Première synchronisation de l'école tout de suite : les élèves peuvent se connecter avec leur compte
 [ -n "$POSTE_CLE" ] && { /usr/local/bin/savoiria-synchro && echo "   [OK] Élèves de l'école reçus" || echo "   [ATTENTION] Synchronisation de l'école à vérifier (journalctl -u savoiria-synchro)"; }
 

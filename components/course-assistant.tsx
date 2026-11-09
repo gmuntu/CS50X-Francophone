@@ -14,6 +14,7 @@ import {
   detecterMode, demanderSocrateLocal, pcm16VersWav, noterQuestion,
   questionsEnAttente, viderQuestionsEnAttente, ORDINATEUR_LOCAL, type ModeSocrate,
 } from '@/lib/socrate-local';
+import { sanitizeForVoice } from '@/lib/voix-texte';
 
 type DayType = 'MONDAY' | 'WEDNESDAY' | 'FRIDAY';
 
@@ -33,17 +34,6 @@ const DAY_LABELS: Record<DayType, string> = {
   WEDNESDAY: 'Mercredi',
   FRIDAY: 'Vendredi',
 };
-
-// Nettoie le texte pour une lecture vocale limpide (retire le Markdown brut).
-function sanitizeForVoice(text: string): string {
-  return (text ?? '')
-    .replace(/```[\s\S]*?```/g, ' (bloc de code) ')
-    .replace(/`[^`]*`/g, ' code ')
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-    .replace(/[*_#>]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
 
 // Découpe un long texte en segments (≤ maxLen) aux frontières de phrases,
 // pour respecter la limite d'entrée de Google Cloud TTS.
@@ -210,7 +200,14 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
   }, []);
 
   // Fallback : synthèse vocale du navigateur (utilisée si Google Cloud TTS indisponible).
+  // Jamais sur un ordinateur d'école : sa voix robotique ferait mauvaise impression ;
+  // le poste a sa propre voix (Pocket TTS, puis Piper en secours).
   const speak = useCallback((text: string, onEnd?: () => void) => {
+    if (ORDINATEUR_LOCAL) {
+      alert('La voix de cet ordinateur ne répond pas pour le moment. Réessaie dans un instant.');
+      onEnd?.();
+      return;
+    }
     if (typeof window === 'undefined' || !window.speechSynthesis) {
       alert('La synthèse vocale n\u2019est pas supportée par votre navigateur.');
       onEnd?.();
@@ -288,7 +285,8 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
     const gen = ++speechGenRef.current;
     const stale = () => gen !== speechGenRef.current;
     speechCancelRef.current = false;
-    const chunks = chunkText(clean);
+    // Sur le poste, des segments courts : chacun se fabrique pendant la lecture du précédent.
+    const chunks = ORDINATEUR_LOCAL ? chunkText(clean, 300, 160) : chunkText(clean);
     if (chunks.length === 0) { onEnd(); return; }
 
     // On teste le 1er segment via Google : s'il échoue, repli complet navigateur.
@@ -382,6 +380,18 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
           .filter((d: any) => d?.text)
           .map((d: any) => ({ speaker: d?.speaker === 'Socrate' ? 'Socrate' as const : 'Étudiant' as const, text: String(d.text) }))
       : [];
+    const jouerMp3 = (url: string) => {
+      const audio = new Audio(url);
+      dayAudioRef.current = audio;
+      audio.onended = () => setIsSpeakingDay(false);
+      setIsSpeakingDay(true);
+      audio.play().catch(() => setIsSpeakingDay(false));
+    };
+    // Sur un ordinateur d'école : le MP3 copié du site d'abord (voix naturelles, lecture immédiate).
+    if (ORDINATEUR_LOCAL && currentScript?.audioUrl) {
+      jouerMp3(currentScript.audioUrl);
+      return;
+    }
     if (lines.length >= 2) {
       setIsDayLoading(true);
       setIsSpeakingDay(true);
@@ -390,11 +400,7 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
     }
     // Sinon : fichier MP3 pré-généré.
     if (currentScript?.audioUrl) {
-      const audio = new Audio(currentScript.audioUrl);
-      dayAudioRef.current = audio;
-      audio.onended = () => setIsSpeakingDay(false);
-      setIsSpeakingDay(true);
-      audio.play().catch(() => setIsSpeakingDay(false));
+      jouerMp3(currentScript.audioUrl);
       return;
     }
     const text = currentScript?.cleanTtsText

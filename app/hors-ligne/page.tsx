@@ -166,6 +166,10 @@ export default function HorsLignePage() {
             <li className="flex justify-between py-2"><span>🦉 Socrate (Gemma 4 · voix)</span>
               <span className={`font-bold ${socrate ? 'text-emerald-700' : 'text-muted-foreground'}`}>{socrate ? '✓ installé' : 'ordinateurs SavoirIA'}</span></li>
           </ul>
+          {socrate && (
+            // Licence CC BY 4.0 du modèle de voix : citer Kyutai.
+            <p className="text-xs text-muted-foreground">Voix : <a href="https://huggingface.co/kyutai/pocket-tts" className="underline">Pocket TTS de Kyutai</a> (CC BY 4.0), voix « javert » et « estelle » (CC0).</p>
+          )}
           {toutes.length > 0 && (
             <details className="text-sm">
               <summary className="cursor-pointer font-bold text-primary">Voir les {toutes.length} semaines enregistrées</summary>
