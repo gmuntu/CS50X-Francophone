@@ -14,7 +14,7 @@ import numpy as np
 from pocket_tts import TTSModel
 
 PORT = int(os.environ.get("PORT", "8766"))
-CACHE = os.environ.get("VOIX_CACHE", "/var/lib/savoiria/voix-cache")
+CACHE = os.environ.get("VOIX_CACHE", "/var/cache/savoiria-voix")
 CACHE_MAX = int(os.environ.get("VOIX_CACHE_MO", "2000")) * 1024 * 1024
 VOIX = {"homme": os.environ.get("VOIX_HOMME", "javert"), "femme": os.environ.get("VOIX_FEMME", "estelle")}
 TEXTE_MAX = 2000  # caractères par demande
@@ -22,6 +22,7 @@ TEXTE_MAX = 2000  # caractères par demande
 modele = TTSModel.load_model(language="french")
 ETATS = {k: modele.get_state_for_audio_prompt(v) for k, v in VOIX.items()}
 os.makedirs(CACHE, mode=0o700, exist_ok=True)
+ATTENTE_PREPA = 600  # une préparation qui attend plus de 10 min abandonne (elle reprendra plus tard)
 
 # Un seul calcul à la fois. Les demandes des élèves passent avant la préparation à l'avance.
 cond = threading.Condition()
@@ -45,8 +46,18 @@ def en_wav(audio: np.ndarray, taux: int) -> bytes:
     return tampon.getvalue()
 
 
-def taille_cache() -> int:
-    return sum(e.stat().st_size for e in os.scandir(CACHE) if e.is_file())
+def faire_place(besoin: int) -> None:
+    """Cache plein : on retire les répliques les plus anciennes (elles seront refaites au besoin)."""
+    fichiers = sorted((e for e in os.scandir(CACHE) if e.is_file()), key=lambda e: e.stat().st_mtime)
+    total = sum(e.stat().st_size for e in fichiers)
+    for e in fichiers:
+        if total + besoin <= CACHE_MAX:
+            break
+        total -= e.stat().st_size
+        try:
+            os.remove(e.path)
+        except OSError:
+            pass
 
 
 def fabriquer(texte: str, voix: str, prepa: bool) -> bytes:
@@ -54,7 +65,8 @@ def fabriquer(texte: str, voix: str, prepa: bool) -> bytes:
     with cond:
         if prepa:
             # La préparation attend qu'aucun élève n'attende ; elle ne bloque jamais quelqu'un.
-            cond.wait_for(lambda: not occupe and eleves_en_attente == 0)
+            if not cond.wait_for(lambda: not occupe and eleves_en_attente == 0, timeout=ATTENTE_PREPA):
+                raise Occupe()
         else:
             eleves_en_attente += 1
             try:
@@ -114,7 +126,8 @@ class Gestion(BaseHTTPRequestHandler):
                 with open(fichier, "rb") as f:
                     return self._repondre(200, f.read(), "audio/wav")
             wav = fabriquer(texte, voix, bool(donnees.get("prepa")))
-            if donnees.get("garder") and taille_cache() + len(wav) <= CACHE_MAX:
+            if donnees.get("garder") and len(wav) <= CACHE_MAX:
+                faire_place(len(wav))
                 provisoire = fichier + ".part"
                 with open(provisoire, "wb") as f:
                     f.write(wav)

@@ -3,6 +3,8 @@
 #  SavoirIA — voix naturelle d'un ordinateur d'école (Ubuntu) : Kyutai Pocket TTS
 #    Socrate = voix « javert », l'étudiante = voix « estelle » (CC0), modèle CC BY 4.0.
 #  Lancé par savoiria-local.sh et par savoiria-maj ; ne refait rien si c'est déjà installé.
+#  Ce script tourne en administrateur : il est lancé depuis sa copie /usr/local/lib/savoiria/voix
+#  (appartenant à l'administrateur, posée par savoiria-local.sh), jamais depuis le dossier du site.
 #  Téléchargement une seule fois avec Internet (environ 1 Go), ensuite tout marche hors ligne.
 #  Si quelque chose échoue, le poste garde Piper : il n'est jamais muet.
 # =====================================================================
@@ -13,10 +15,9 @@ SITE_DIR="$DOSSIER/site"
 ICI="$(cd "$(dirname "$0")" && pwd)"
 VENV="$DOSSIER/pocket-venv"
 MODELES="$DOSSIER/pocket-modeles"
-CACHE=/var/lib/savoiria/voix-cache
+CACHE=/var/cache/savoiria-voix
 PORT=8766
 POCKET=4.0.1
-TORCH=2.15.0
 
 [[ $EUID -eq 0 ]] || { echo "Lancez ce script avec sudo."; exit 1; }
 # Redémarrer la voix seulement si quelque chose a changé (jamais au milieu d'une réponse sans raison)
@@ -30,12 +31,13 @@ if [ "$("$VENV/bin/pip" show pocket-tts 2>/dev/null | awk '/^Version/{print $2}'
   CHANGE=1
   rm -rf "$VENV"
   python3 -m venv "$VENV"
-  "$VENV/bin/pip" install --quiet --upgrade pip
-  "$VENV/bin/pip" install --quiet "torch==$TORCH" --index-url https://download.pytorch.org/whl/cpu
-  "$VENV/bin/pip" install --quiet "pocket-tts==$POCKET"
+  # Chaque fichier est vérifié par son empreinte : une bibliothèque piégée sur Internet serait refusée.
+  "$VENV/bin/pip" install --quiet --require-hashes --no-deps -r "$ICI/requirements-pocket.txt" \
+    --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
 fi
 
 install -d -o savoiria -g savoiria -m 755 "$MODELES"
+[ -L "$CACHE" ] && rm -f "$CACHE"   # jamais un raccourci vers un autre dossier
 install -d -o savoiria -g savoiria -m 700 "$CACHE"
 cmp -s "$ICI/serveur_pocket.py" "$DOSSIER/serveur_pocket.py" || CHANGE=1
 install -m 644 "$ICI/serveur_pocket.py" "$DOSSIER/serveur_pocket.py"
@@ -63,6 +65,14 @@ Environment=PORT=$PORT
 Environment=VOIX_CACHE=$CACHE
 ExecStart=$VENV/bin/python $DOSSIER/serveur_pocket.py
 Restart=always
+# Isolé : rien d'autre à écrire que son cache, aucun accès réseau hors de cet ordinateur
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadWritePaths=$CACHE
+IPAddressDeny=any
+IPAddressAllow=localhost
 # Gemma et le site passent avant si la mémoire manque
 MemoryMax=2500M
 Nice=5
@@ -97,7 +107,8 @@ if ! curl -fs "http://127.0.0.1:$PORT/sante" >/dev/null 2>&1; then
   echo "   [ATTENTION] La voix naturelle ne démarre pas (journalctl -u savoiria-voix) : le poste garde Piper."; exit 0
 fi
 if ! grep -q '^VOIX_LOCALE_URL=' "$SITE_DIR/.env"; then
-  echo "VOIX_LOCALE_URL=http://127.0.0.1:$PORT" >> "$SITE_DIR/.env"
+  # Écrit par le compte du site lui-même (l'administrateur ne suit pas de raccourci posé dans le dossier du site)
+  sudo -u savoiria sh -c 'echo "VOIX_LOCALE_URL=http://127.0.0.1:$1" >> "$2"' _ "$PORT" "$SITE_DIR/.env"
   systemctl restart savoiria-site 2>/dev/null || true
 fi
 systemctl start --no-block savoiria-podcasts
