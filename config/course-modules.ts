@@ -9,7 +9,10 @@ export interface CourseModuleConfig {
   slug: string;
   description: string;
   videoUrl?: string;
-  /** Version doublée en français (YouTube, non répertoriée). */
+  /**
+   * Version doublée en français (YouTube, non répertoriée).
+   * Doublage : Moon2⁺Studio, voix « Rémy » (la même pour toutes les semaines).
+   */
   videoUrlFr?: string;
   /** Podcast de la semaine (MP3 dans public/podcasts). Aucun pour l'instant : les anciens fichiers étaient vides. */
   podcastUrl?: string;
