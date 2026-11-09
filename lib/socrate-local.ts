@@ -82,8 +82,11 @@ export async function demanderSocrateSite(
   });
   if (!r.ok || !r.body) throw new Error('Socrate indisponible');
 
-  // Chaque phrase complète est lue dès qu'elle arrive, dans l'ordre.
-  const dire = async (phrase: string) => {
+  // Chaque phrase complète est lue dès qu'elle arrive, dans l'ordre. La voix travaille à côté :
+  // on continue de lire la réponse de Gemma sans l'attendre (sinon les deux se freinent).
+  let suite = Promise.resolve();
+  const dire = (phrase: string) => { suite = suite.then(() => direPhrase(phrase)); };
+  const direPhrase = async (phrase: string) => {
     const texte = phrase.replace(/[*_#`>]/g, '').trim();
     if (!texte) return;
     let audio = '';
@@ -108,9 +111,10 @@ export async function demanderSocrateSite(
       try { texte += JSON.parse(l.slice(6))?.choices?.[0]?.delta?.content ?? ''; } catch {}
     }
     const fin = texte.search(/[.!?…](\s|$)(?![\s\S]*[.!?…](\s|$))/);
-    if (fin >= 0) { const phrases = texte.slice(0, fin + 1); texte = texte.slice(fin + 1); await dire(phrases); }
+    if (fin >= 0) { const phrases = texte.slice(0, fin + 1); texte = texte.slice(fin + 1); dire(phrases); }
   }
-  await dire(texte);
+  dire(texte);
+  await suite;
 }
 
 /**

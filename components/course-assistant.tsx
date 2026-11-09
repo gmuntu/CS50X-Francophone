@@ -374,7 +374,8 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
     stopAllSpeech();
     unlockAudio();
     speechCancelRef.current = false;
-    // Dialogue disponible : podcast à deux voix africaines (Socrate + l'étudiante).
+    // Dialogue disponible : podcast à deux voix (en ligne : voix Google ; sur un ordinateur d'école :
+    // Javert et Estelle, préparés à l'avance par le poste).
     const lines = Array.isArray(currentScript?.dialogue)
       ? currentScript.dialogue
           .filter((d: any) => d?.text)
@@ -387,11 +388,6 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
       setIsSpeakingDay(true);
       audio.play().catch(() => setIsSpeakingDay(false));
     };
-    // Sur un ordinateur d'école : le MP3 copié du site d'abord (voix naturelles, lecture immédiate).
-    if (ORDINATEUR_LOCAL && currentScript?.audioUrl) {
-      jouerMp3(currentScript.audioUrl);
-      return;
-    }
     if (lines.length >= 2) {
       setIsDayLoading(true);
       setIsSpeakingDay(true);

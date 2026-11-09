@@ -1,5 +1,5 @@
-// SavoirIA LOCAL : prépare à l'avance, avec la voix naturelle du poste, les podcasts qui n'ont pas
-// de MP3 copié du site (ex. une semaine toute neuve). Chaque réplique est gardée sur le disque :
+// SavoirIA LOCAL : prépare à l'avance, avec la voix naturelle du poste (Javert et Estelle), tous les
+// podcasts du cours. Chaque réplique est gardée sur le disque :
 // quand l'élève clique sur « Écouter le podcast du jour », elle est rejouée aussitôt.
 // Lancé en arrière-plan après l'installation et chaque mise à jour (savoiria-podcasts.service).
 // Les demandes des élèves passent toujours avant : la préparation ne ralentit personne.
@@ -12,7 +12,6 @@ const VOIX = process.env.VOIX_LOCALE_URL?.trim().replace(/\/$/, '');
 async function main() {
   if (!VOIX) { console.log('Pas de voix naturelle sur ce poste : rien à préparer.'); return; }
   const scripts = await prisma.audioScript.findMany({
-    where: { audioUrl: null },
     orderBy: [{ lessonId: 'asc' }, { dayOfWeek: 'asc' }],
     select: { lessonId: true, dayOfWeek: true, dialogue: true },
   });
@@ -23,13 +22,19 @@ async function main() {
     for (const l of lignes) {
       const texte = texteVoixLocale(repliquePodcast(String(l?.text ?? '')));
       if (!texte.trim()) continue;
-      const r = await fetch(`${VOIX}/tts`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        // Même voix que le site : Socrate = homme, l'étudiante = femme.
-        body: JSON.stringify({ texte, voix: l?.speaker === 'Socrate' ? 'homme' : 'femme', garder: true, prepa: true }),
-      }).catch(() => null);
-      if (!r?.ok) { console.log(`Voix indisponible (${r?.status ?? 'pas de réponse'}) : on reprendra plus tard.`); return; }
+      // Poste très occupé par les élèves : on patiente et on réessaie (10 fois au plus).
+      let r: Response | null = null;
+      for (let essai = 0; essai < 10; essai++) {
+        r = await fetch(`${VOIX}/tts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          // Même voix que le site : Socrate = homme, l'étudiante = femme.
+          body: JSON.stringify({ texte, voix: l?.speaker === 'Socrate' ? 'homme' : 'femme', garder: true, prepa: true }),
+        }).catch(() => null);
+        if (r?.status !== 503) break;
+        await new Promise((ok) => setTimeout(ok, 60_000));
+      }
+      if (!r?.ok) { console.log(`Voix indisponible (${r?.status ?? 'pas de réponse'}) : on reprendra à la prochaine mise à jour.`); return; }
       await r.arrayBuffer();
       faites++;
     }

@@ -162,12 +162,15 @@ cat > /etc/systemd/system/savoiria-site.service <<EOF
 Description=SavoirIA (local, hors ligne)
 After=network.target postgresql.service ollama.service
 Wants=postgresql.service ollama.service
+# Ne jamais abandonner : pendant une mise à jour (bibliothèques réinstallées), le site redémarre jusqu'à ce que tout soit prêt
+StartLimitIntervalSec=0
 
 [Service]
 User=savoiria
 WorkingDirectory=$SITE_DIR
 ExecStart=/usr/bin/npm run start -- -p $PORT -H 127.0.0.1
 Restart=always
+RestartSec=5
 Environment=NODE_ENV=production
 
 [Install]
@@ -247,6 +250,8 @@ WantedBy=timers.target
 EOF
 systemctl daemon-reload
 systemctl enable --now savoiria-site savoiria-maj.timer savoiria-synchro.timer
+systemctl reset-failed savoiria-site 2>/dev/null || true
+systemctl restart savoiria-site   # repart sur la version qui vient d'être construite
 # Voix naturelle du poste (Pocket TTS) ; si elle échoue, Piper reste la voix du poste
 [ -f /usr/local/lib/savoiria/voix/installer.sh ] && bash /usr/local/lib/savoiria/voix/installer.sh || echo "   (voix naturelle : se réinstallera à la prochaine mise à jour)"
 # Première synchronisation de l'école tout de suite : les élèves peuvent se connecter avec leur compte
