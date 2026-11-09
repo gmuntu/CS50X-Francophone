@@ -86,11 +86,17 @@ VERSION=$(G tag -l "$ETIQUETTES" --sort=-v:refname | head -1)
 if [ -n "$VERSION" ]; then G checkout -q --force "$VERSION"; else G checkout -q --force origin/main; fi
 echo "   Version installée : ${VERSION:-main}"
 # Copie de l'installateur de la voix appartenant à l'administrateur : savoiria-maj le lance avec tous
-# les droits, il ne doit donc jamais venir du dossier du site (que le compte du site peut modifier).
+# les droits, il ne doit donc jamais venir du dossier du site (que le compte du site peut modifier) :
+# il est téléchargé directement depuis GitHub, pour la version validée.
 install -d -m 755 /usr/local/lib/savoiria/voix
-for F in installer.sh serveur_pocket.py requirements-pocket.txt; do
-  [ -f "$SITE_DIR/scripts/poste-voix/$F" ] && install -m 644 "$SITE_DIR/scripts/poste-voix/$F" /usr/local/lib/savoiria/voix/
-done
+if [[ "${VERSION:-}" =~ ^poste-v[0-9]+$ ]]; then
+  BRUT="https://raw.githubusercontent.com/gmuntu/CS50X-Francophone/$VERSION/scripts/poste-voix"
+  for F in installer.sh serveur_pocket.py requirements-pocket.txt; do
+    T=$(mktemp)
+    if curl -fsSL "$BRUT/$F" -o "$T"; then install -m 644 "$T" "/usr/local/lib/savoiria/voix/$F"; fi
+    rm -f "$T"
+  done
+fi
 SECRET_FICHIER=/var/lib/savoiria/.secret
 [ -f "$SECRET_FICHIER" ] || { head -c 32 /dev/urandom | base64 > "$SECRET_FICHIER"; chmod 600 "$SECRET_FICHIER"; chown savoiria "$SECRET_FICHIER"; }
 ( umask 077; cat > "$SITE_DIR/.env" ) <<EOF
