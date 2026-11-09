@@ -1,7 +1,8 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Send } from 'lucide-react';
+import { prechaufferTuteur } from '@/lib/socrate-local';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
 
@@ -11,6 +12,7 @@ export default function SocrateChat({ course, week, starter }: { course: string;
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
+  useEffect(() => prechaufferTuteur({ course, week }), [course, week]);
 
   const send = async () => {
     const text = input.trim();

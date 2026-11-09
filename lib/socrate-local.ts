@@ -49,6 +49,19 @@ export function pcm16VersWav(pcmB64: string, taux = 16000): string {
 }
 
 /**
+ * Ordinateur d'école : Gemma lit le contexte du tuteur en arrière-plan dès l'ouverture de la page,
+ * pour que la première question soit rapide. Ne fait rien en ligne.
+ */
+export function prechaufferTuteur(corps: { moduleId?: number; course?: string; week?: number; voix?: boolean }): () => void {
+  if (!ORDINATEUR_LOCAL) return () => {};
+  // Petit délai : un élève qui ne fait que passer sur la page ne lance rien.
+  const t = setTimeout(() => {
+    fetch('/api/tutor/prechauffer', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corps) }).catch(() => {});
+  }, 1500);
+  return () => clearTimeout(t);
+}
+
+/**
  * Sur l'ordinateur SavoirIA, le site a déjà Whisper, Gemma et la voix de Socrate :
  * on passe par ses routes (micro -> /api/stt, réponse -> /api/tutor, voix -> /api/speech).
  * Marche aussi depuis un autre appareil relié au poste par le Wi-Fi.
@@ -75,6 +88,7 @@ export async function demanderSocrateSite(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       moduleId: corps.moduleId,
+      voix: true, // contexte court sur le poste : réponse orale de 2 à 4 phrases
       messages: [{ role: 'user', content: contexte
         ? `(Question posée à voix haute : réponds en 2 à 4 phrases courtes, sans code ni liste.)\nContexte : ${contexte}\n\nQuestion : ${question}`
         : `(Question posée à voix haute : réponds en 2 à 4 phrases courtes, sans code ni liste.)\n${question}` }],

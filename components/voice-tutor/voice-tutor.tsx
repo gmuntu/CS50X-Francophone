@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Mic, MicOff, Loader2, Volume2, AlertTriangle } from 'lucide-react';
 import { useGeminiLive } from '@/hooks/useGeminiLive';
-import { detecterMode, demanderSocrateLocal, demanderSocrateSite, pcm16VersWav, ORDINATEUR_LOCAL, type ModeSocrate } from '@/lib/socrate-local';
+import { detecterMode, demanderSocrateLocal, demanderSocrateSite, pcm16VersWav, prechaufferTuteur, ORDINATEUR_LOCAL, type ModeSocrate } from '@/lib/socrate-local';
 
 interface Props {
   moduleId: number;
@@ -111,6 +111,7 @@ function SocrateLocal({ mode, context, moduleId, onActive }: { mode: ModeSocrate
   const [reponse, setReponse] = useState('');
   const rec = useRef<MediaRecorder | null>(null);
   const ctxAudio = useRef<AudioContext | null>(null);
+  useEffect(() => prechaufferTuteur({ moduleId, voix: true }), [moduleId]);
 
   const jouer = async (b64: string) => {
     const AC: any = (window as any).AudioContext || (window as any).webkitAudioContext;

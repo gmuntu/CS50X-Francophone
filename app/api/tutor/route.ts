@@ -3,25 +3,8 @@ export const dynamic = 'force-dynamic';
 import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { quotaIA } from '@/lib/quota';
-import { CS50_MODULES } from '@/config/course-modules';
-import { prisma } from '@/lib/prisma';
-import { readCourseSource } from '@/lib/content-generator';
-import { IA_SLUG, IA_SYSTEM_PROMPT, iaWeekContext } from '@/lib/courses/ia-essentiels';
+import { systemeTuteur } from '@/lib/tuteur-contexte';
 
-// Sur un ordinateur d'école, Gemma lit le texte envoyé à environ 80 mots par seconde :
-// des notes plus courtes divisent l'attente avant la réponse (≈ 27 s -> ≈ 10 s).
-const NOTES_MAX = process.env.SAVOIRIA_LOCAL === '1' ? 1500 : 6000;
-
-const SYSTEM_PROMPT = `Tu es Socrate, un tuteur socratique expert en informatique et programmation, spécialisé dans le cours CS50 de Harvard pour les étudiants francophones.
-Ton rôle est de guider les étudiants vers la compréhension profonde par des questions socratiques stimulantes, sans donner directement les réponses toutes faites.
-
-Règles :
-- Réponds TOUJOURS en français
-- Utilise la méthode socratique : pose des questions qui invitent au raisonnement logique et à l'expérimentation
-- Encourage, sois bienveillant et empathique, ne décourage jamais
-- Si l'étudiant pose une question d'intuition ("Pourquoi ce concept a-t-il été inventé ?"), donne d'abord une analogie concrète du monde réel puis pose-lui une question guidée
-- Quand tu montres ou décris du code, explique l'intuition de chaque instruction
-- Adapte ton niveau au contexte de la question et du module actuel`;
 
 export async function POST(request: NextRequest) {
   try {
@@ -40,35 +23,8 @@ export async function POST(request: NextRequest) {
     const messages = (Array.isArray(body?.messages) ? body.messages : []).slice(-30).map((m: any) => ({
       ...m, content: String(m?.content ?? '').slice(0, 4000),
     }));
-    const isIa = course === IA_SLUG;
 
-    const mod = CS50_MODULES?.find?.((m: any) => m?.id === moduleId);
-    let moduleContext = mod
-      ? `\nModule actuel : ${mod.title}\nSujets : ${mod.topics?.join?.(', ')}\nDescription : ${mod.description}`
-      : '';
-
-    if (isIa) moduleContext = `\n\n--- COURS DE LA SEMAINE ---\n${iaWeekContext(Number(week) || 1).slice(0, 12000)}`;
-
-    // Intégration du matériel pédagogique du module
-    try {
-      if (!isIa && typeof moduleId === 'number' && !Number.isNaN(moduleId)) {
-        const summary = await prisma.videoSummary.findUnique({ where: { lessonId: moduleId } });
-        if (summary) {
-          const concepts = Array.isArray(summary.keyConcepts) ? (summary.keyConcepts as any[]) : [];
-          const conceptsText = concepts
-            .map((c: any) => `- ${c?.term} : ${c?.definition}`)
-            .join('\n');
-          moduleContext += `\n\n--- MATÉRIEL PÉDAGOGIQUE DU MODULE (référence) ---\nRésumé : ${summary.overview}\n${conceptsText ? `Concepts clés :\n${conceptsText}\n` : ''}À retenir : ${summary.pedagogicalTakeaway}`;
-        }
-        const source = readCourseSource(moduleId);
-        if (source) {
-          moduleContext += `\n\n--- NOTES DE COURS SOURCE ---\n${source.slice(0, NOTES_MAX)}`;
-        }
-        moduleContext += `\n\nAppuie tes relances socratiques sur ce matériel pédagogique.`;
-      }
-    } catch (e) {
-      console.error('Tutor context enrichment error:', e);
-    }
+    const systeme = await systemeTuteur({ moduleId, course, week, voix: body?.voix === true });
 
     const geminiKey = process.env.GEMINI_API_KEY || process.env.EMINI_API_KEY;
     const abacusKey = process.env.ABACUSAI_API_KEY;
@@ -95,7 +51,7 @@ export async function POST(request: NextRequest) {
 
       const geminiPayload = {
         systemInstruction: {
-          parts: [{ text: (isIa ? IA_SYSTEM_PROMPT : SYSTEM_PROMPT) + moduleContext }],
+          parts: [{ text: systeme }],
         },
         contents: rawContents,
         generationConfig: {
@@ -212,7 +168,7 @@ export async function POST(request: NextRequest) {
     // 2. ALTERNATIVE : ABACUS.AI (si configuré)
     if (abacusKey && !abacusKey.startsWith('AQ.')) {
       const apiMessages = [
-        { role: 'system', content: (isIa ? IA_SYSTEM_PROMPT : SYSTEM_PROMPT) + moduleContext },
+        { role: 'system', content: systeme },
         ...((messages ?? [])?.map?.((m: any) => ({ role: m?.role ?? 'user', content: m?.content ?? '' })) ?? []),
       ];
 
