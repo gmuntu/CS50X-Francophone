@@ -97,6 +97,22 @@ WorkingDirectory=$SITE_DIR
 ExecStart=/usr/bin/npx tsx --require dotenv/config scripts/preparer-podcasts.ts
 Nice=10
 EOF
+# Avant une démonstration : « sudo savoiria-podcasts-pret » dit si tous les podcasts sont prêts.
+cat > /usr/local/bin/savoiria-podcasts-pret <<'EOF2'
+#!/usr/bin/env bash
+ETAT=$(systemctl show -p ActiveState --value savoiria-podcasts)
+if [ "$ETAT" = activating ] || [ "$ETAT" = active ]; then
+  echo "⏳ Préparation des podcasts en cours. Dernier prêt : $(journalctl -u savoiria-podcasts -o cat -n 20 --no-pager | grep 'prêt' | tail -1)"
+  exit 1
+fi
+FIN=$(journalctl -u savoiria-podcasts -o cat -n 50 --no-pager | grep -E 'Podcasts préparés|Voix indisponible|Pas de voix' | tail -1)
+case "$FIN" in
+  *"Podcasts préparés"*) echo "✅ Tous les podcasts sont prêts. $FIN" ;;
+  "") echo "❓ Préparation pas encore lancée : sudo systemctl start savoiria-podcasts"; exit 1 ;;
+  *) echo "⚠️  $FIN (relancer : sudo systemctl start savoiria-podcasts)"; exit 1 ;;
+esac
+EOF2
+chmod 755 /usr/local/bin/savoiria-podcasts-pret
 systemctl daemon-reload
 systemctl enable savoiria-voix >/dev/null 2>&1
 if [ $CHANGE = 1 ] || ! systemctl is-active --quiet savoiria-voix; then systemctl restart savoiria-voix; fi

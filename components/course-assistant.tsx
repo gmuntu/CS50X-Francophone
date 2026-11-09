@@ -12,7 +12,7 @@ import type { CourseModuleConfig } from '@/config/course-modules';
 import InteractiveQuizModal from '@/components/interactive-quiz-modal';
 import {
   detecterMode, demanderSocrateLocal, pcm16VersWav, noterQuestion,
-  questionsEnAttente, viderQuestionsEnAttente, ORDINATEUR_LOCAL, type ModeSocrate,
+  questionsEnAttente, viderQuestionsEnAttente, prechaufferTuteur, ORDINATEUR_LOCAL, type ModeSocrate,
 } from '@/lib/socrate-local';
 import { sanitizeForVoice } from '@/lib/voix-texte';
 
@@ -183,6 +183,7 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
   }, []);
 
   useEffect(() => () => stopAllSpeech(), [stopAllSpeech]);
+  useEffect(() => prechaufferTuteur({ moduleId }), [moduleId]);
 
   // Détecte la connexion et la présence d'un Socrate local, et suit les changements.
   useEffect(() => {

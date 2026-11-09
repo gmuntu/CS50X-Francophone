@@ -84,7 +84,35 @@ const enGemini = (texte: string) => ({
   candidates: [{ content: { role: 'model', parts: [{ text: texte }] }, finishReason: 'STOP' }],
 });
 
+// Gemma au travail : la préparation des podcasts se met en pause, le processeur est pour l'élève.
+// Compteur gardé sur globalThis : le même pour toutes les pages du site (/api/tutor/prechauffer le lit).
+const G = globalThis as any;
+G.__savoiriaGemmaActives ??= 0;
+function signalerVoix(occupe: boolean) {
+  if (!VOIX_LOCALE) return;
+  fetch(`${VOIX_LOCALE}/gemma`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ occupe }), signal: AbortSignal.timeout(2000),
+  }).catch(() => {});
+}
+function debutGemma(corps: any): () => void {
+  // Une autre demande que la lecture à l'avance remplace le contexte que Gemma garde en mémoire.
+  if (!corps?.prechauffage) G.__savoiriaDernierPrechauffage = undefined;
+  if (G.__savoiriaGemmaActives++ === 0) signalerVoix(true);
+  let fini = false;
+  return () => {
+    if (fini) return;
+    fini = true;
+    if (--G.__savoiriaGemmaActives === 0) signalerVoix(false);
+  };
+}
+
 async function gemmaComplet(corps: any): Promise<Response> {
+  const fin = debutGemma(corps);
+  try { return await gemmaCompletTache(corps); } finally { fin(); }
+}
+
+async function gemmaCompletTache(corps: any): Promise<Response> {
   const json = corps?.generationConfig?.responseMimeType === 'application/json';
   const r = await fetch(`${OLLAMA}/api/chat`, {
     method: 'POST',
@@ -106,6 +134,7 @@ async function gemmaComplet(corps: any): Promise<Response> {
 const SILENCE_GEMMA = 90_000;
 
 async function gemmaFlux(corps: any): Promise<Response> {
+  const fin = debutGemma(corps);
   const arret = new AbortController();
   let minuteur = setTimeout(() => arret.abort(), DELAI_GEMMA); // premier mot (modèle à charger)
   const relancer = () => { clearTimeout(minuteur); minuteur = setTimeout(() => arret.abort(), SILENCE_GEMMA); };
@@ -118,7 +147,7 @@ async function gemmaFlux(corps: any): Promise<Response> {
     }),
     signal: arret.signal,
   }).catch(() => null);
-  if (!r?.ok || !r.body) { clearTimeout(minuteur); return indisponible(); }
+  if (!r?.ok || !r.body) { clearTimeout(minuteur); fin(); return indisponible(); }
   const lecteur = r.body.getReader();
   const dec = new TextDecoder();
   const enc = new TextEncoder();
@@ -130,9 +159,9 @@ async function gemmaFlux(corps: any): Promise<Response> {
     async pull(ctrl) {
       for (;;) {
         let morceau;
-        try { morceau = await lecteur.read(); } catch { clearTimeout(minuteur); ctrl.close(); return; } // Gemma s'est tue trop longtemps
+        try { morceau = await lecteur.read(); } catch { clearTimeout(minuteur); fin(); ctrl.close(); return; } // Gemma s'est tue trop longtemps
         const { value, done } = morceau;
-        if (done) { clearTimeout(minuteur); ctrl.close(); return; }
+        if (done) { clearTimeout(minuteur); fin(); ctrl.close(); return; }
         relancer();
         reste += dec.decode(value, { stream: true });
         const lignes = reste.split('\n');
@@ -149,7 +178,7 @@ async function gemmaFlux(corps: any): Promise<Response> {
         if (transmis) return;
       }
     },
-    cancel() { clearTimeout(minuteur); arret.abort(); }, // l'élève a quitté la page : Gemma s'arrête
+    cancel() { clearTimeout(minuteur); fin(); arret.abort(); }, // l'élève a quitté la page : Gemma s'arrête
   });
   return new Response(flux, { status: 200, headers: { 'Content-Type': 'text/event-stream' } });
 }

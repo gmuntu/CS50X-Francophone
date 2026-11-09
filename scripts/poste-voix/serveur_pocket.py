@@ -6,12 +6,14 @@
 # POST /tts  {"texte": "...", "voix": "homme" | "femme", "garder": bool, "prepa": bool}  ->  audio WAV.
 #   garder : la voix fabriquée est gardée sur le disque (podcasts) ; une 2e demande identique est immédiate.
 #   prepa  : préparation à l'avance ; elle cède toujours la place aux demandes des élèves.
+# POST /gemma {"occupe": bool} : le site signale que Gemma répond à un élève ; la préparation attend.
 # GET /sante -> "ok".
 # N'écoute que cet ordinateur (127.0.0.1). Une seule voix fabriquée à la fois.
-import hashlib, io, json, os, threading, wave
+import hashlib, io, json, os, threading, time, wave
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import numpy as np
+import torch
 from pocket_tts import TTSModel
 
 PORT = int(os.environ.get("PORT", "8766"))
@@ -24,11 +26,14 @@ modele = TTSModel.load_model(language="french", quantize=os.environ.get("VOIX_RA
 ETATS = {k: modele.get_state_for_audio_prompt(v) for k, v in VOIX.items()}
 os.makedirs(CACHE, mode=0o700, exist_ok=True)
 ATTENTE_PREPA = 600  # une préparation qui attend plus de 10 min abandonne (elle reprendra plus tard)
+FILS = torch.get_num_threads()  # tous les cœurs pour un élève, un seul pour la préparation
+GEMMA_MAX = 300  # sans nouvelle du site, la pause « Gemma occupé » se lève d'elle-même après 5 min
 
 # Un seul calcul à la fois. Les demandes des élèves passent avant la préparation à l'avance.
 cond = threading.Condition()
 occupe = False
 eleves_en_attente = 0
+gemma_jusqua = 0.0  # pause de la préparation tant que Gemma répond à un élève
 
 
 class Occupe(Exception):
@@ -65,9 +70,13 @@ def fabriquer(texte: str, voix: str, prepa: bool) -> bytes:
     global occupe, eleves_en_attente
     with cond:
         if prepa:
-            # La préparation attend qu'aucun élève n'attende ; elle ne bloque jamais quelqu'un.
-            if not cond.wait_for(lambda: not occupe and eleves_en_attente == 0, timeout=ATTENTE_PREPA):
-                raise Occupe()
+            # La préparation attend qu'aucun élève n'attende la voix ni Gemma ; elle ne bloque jamais quelqu'un.
+            # (réveil chaque seconde : la fin de la pause « Gemma » est une simple heure)
+            limite = time.time() + ATTENTE_PREPA
+            while occupe or eleves_en_attente or time.time() < gemma_jusqua:
+                if time.time() > limite:
+                    raise Occupe()
+                cond.wait(timeout=1)
         else:
             eleves_en_attente += 1
             try:
@@ -78,6 +87,7 @@ def fabriquer(texte: str, voix: str, prepa: bool) -> bytes:
                 eleves_en_attente -= 1
         occupe = True
     try:
+        torch.set_num_threads(1 if prepa else FILS)
         audio = modele.generate_audio(ETATS[voix], texte).numpy().reshape(-1)
     finally:
         with cond:
@@ -108,11 +118,22 @@ class Gestion(BaseHTTPRequestHandler):
         self._repondre(404, b"", "text/plain")
 
     def do_POST(self):
-        if self.path != "/tts":
+        global gemma_jusqua
+        if self.path not in ("/tts", "/gemma"):
             return self._repondre(404, b"", "text/plain")
         # Seulement des demandes JSON adressées à cet ordinateur (pas une page web quelconque).
         if self.headers.get("Host") not in HOTES or not (self.headers.get("Content-Type") or "").startswith("application/json"):
             return self._repondre(403, b"interdit", "text/plain")
+        if self.path == "/gemma":
+            try:
+                taille = int(self.headers.get("Content-Length") or 0)
+                occupe_gemma = bool(json.loads(self.rfile.read(min(max(taille, 0), 200)) or b"{}").get("occupe"))
+            except Exception:
+                return self._repondre(400, b"", "text/plain")
+            with cond:
+                gemma_jusqua = time.time() + GEMMA_MAX if occupe_gemma else 0.0
+                cond.notify_all()
+            return self._repondre(204, b"", "text/plain")
         try:
             taille = int(self.headers.get("Content-Length") or 0)
             if taille <= 0 or taille > 20_000:
