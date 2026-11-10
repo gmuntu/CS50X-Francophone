@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/auth';
+import { roleActuel } from '@/lib/securite';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
 // Validation du projet final par un formateur (ou demande d'une 2e défense).
 export async function PATCH(req: Request) {
-  const session = await auth();
-  if (!['ADMIN', 'INSTRUCTOR'].includes((session?.user as any)?.role)) return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
+  if (!['ADMIN', 'INSTRUCTOR'].includes((await roleActuel()) ?? '')) return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
   const body = await req.json().catch(() => ({}));
   if (body?.voiceMatch !== undefined && body?.id) {
     const voiceMatch = body.voiceMatch === 'MATCH' ? 'MATCH' : body.voiceMatch === 'MISMATCH' ? 'MISMATCH' : null;

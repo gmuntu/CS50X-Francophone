@@ -4,6 +4,8 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { normalizeCode, formatDateFr } from '@/lib/tester-codes';
+import { tropDEssais } from '@/lib/quota';
+import { adresseIP } from '@/lib/securite';
 
 /**
  * Inscription express d'un testeur avec un code TEST-XXXX-XXXX.
@@ -12,6 +14,10 @@ import { normalizeCode, formatDateFr } from '@/lib/tester-codes';
  */
 export async function POST(request: Request) {
   try {
+    // Anti-robots : 60 tentatives d'inscription par heure et par adresse IP (une classe entière derrière la même connexion, erreurs de saisie comprises)
+    if (await tropDEssais('inscription-testeur', adresseIP(request), 60)) {
+      return NextResponse.json({ error: 'Trop d\'inscriptions depuis cette connexion. Réessayez dans une heure.' }, { status: 429 });
+    }
     const { code, firstName, lastName, email, password, dialCode, phone } = (await request.json()) ?? {};
 
     const errors: string[] = [];

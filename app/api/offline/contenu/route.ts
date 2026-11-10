@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { cleEgale } from '@/lib/securite';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,7 +12,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: Request) {
   const attendue = process.env.CONTENU_SYNC_CLE?.trim();
   if (!attendue) return NextResponse.json({ error: 'Synchronisation non configurée (CONTENU_SYNC_CLE)' }, { status: 503 });
-  if (req.headers.get('x-savoiria-cle') !== attendue) return NextResponse.json({ error: 'Clé invalide' }, { status: 401 });
+  if (!cleEgale(req.headers.get('x-savoiria-cle'), attendue)) return NextResponse.json({ error: 'Clé invalide' }, { status: 401 });
 
   const lecons = await prisma.lesson.findMany({
     orderBy: { id: 'asc' },

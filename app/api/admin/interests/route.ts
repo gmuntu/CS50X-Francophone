@@ -1,4 +1,4 @@
-import { auth } from '@/auth';
+import { roleActuel } from '@/lib/securite';
 import { prisma } from '@/lib/prisma';
 import { ALL_COURSES } from '@/lib/catalog';
 
@@ -6,8 +6,7 @@ export const dynamic = 'force-dynamic';
 
 // Export CSV (s'ouvre dans Excel) des demandes « Me prévenir ».
 export async function GET() {
-  const session = await auth();
-  if ((session?.user as any)?.role !== 'ADMIN') return new Response('Accès refusé', { status: 403 });
+  if ((await roleActuel()) !== 'ADMIN') return new Response('Accès refusé', { status: 403 });
 
   const rows = await prisma.courseInterest.findMany({ orderBy: [{ courseSlug: 'asc' }, { createdAt: 'asc' }] });
   const title = (slug: string) => ALL_COURSES.find((c) => c.slug === slug)?.title ?? slug;
