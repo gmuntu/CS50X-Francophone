@@ -8,8 +8,8 @@ import { adresseIP } from '@/lib/securite';
 
 export async function POST(request: Request) {
   try {
-    // Anti-robots : 30 inscriptions par heure et par adresse IP (assez pour une classe entière derrière la même connexion)
-    if (await tropDEssais('inscription', adresseIP(request), 30)) {
+    // Anti-robots : 60 tentatives d'inscription par heure et par adresse IP (une classe entière derrière la même connexion, erreurs de saisie comprises)
+    if (await tropDEssais('inscription', adresseIP(request), 60)) {
       return NextResponse.json({ error: 'Trop d\'inscriptions depuis cette connexion. Réessayez dans une heure.' }, { status: 429 });
     }
     const body = await request.json();
