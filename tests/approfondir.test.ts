@@ -8,13 +8,18 @@ const { session, quota } = vi.hoisted(() => ({
   quota: { bloque: null as Response | null },
 }));
 vi.mock('@/auth', () => ({ auth: async () => session.valeur }));
-vi.mock('@/lib/quota', () => ({ quotaIA: async () => quota.bloque }));
+vi.mock('@/lib/quota', () => ({ quotaIA: async () => quota.bloque, depasse: async () => quota.bloque !== null }));
+vi.mock('@/lib/poste-ecole', () => ({
+  ENTETE_POSTE: 'x-savoiria-poste',
+  posteDeLaRequete: async (r: Request) => (r.headers.get('x-savoiria-poste') === 'poste_ok' ? { id: 'p1' } : null),
+}));
 vi.mock('@/lib/tuteur-contexte', () => ({ systemeTuteur: async () => 'CONSIGNES DU TUTEUR' }));
 
 import { contexteTuteur, validerContenu } from '@/lib/approfondir/types';
 import { contenuSemaine } from '@/lib/approfondir/contenus';
 import { POST as analyser } from '@/app/api/approfondir/analyser/route';
 import { POST as tuteur } from '@/app/api/tutor/route';
+import { GET as posteVerifie, POST as posteAnalyse } from '@/app/api/poste/approfondir/route';
 
 const exemple = {
   semaine: 0,
@@ -166,5 +171,46 @@ describe('Relecture sécurité', () => {
     const corps = JSON.parse(String(appel.mock.calls[0][1].body));
     expect(corps.systemInstruction.parts[0].text).not.toContain('MES NOTES PERSO');
     expect(corps.contents.at(-1).parts[0].text).toContain('MES NOTES PERSO');
+  });
+});
+
+describe('Ordinateur d’école avec Internet : analyse relayée vers le site', () => {
+  const notesForm = () => { const f = new FormData(); f.append('notes', 'Le binaire utilise deux chiffres, 0 et 1, pour représenter toute information.'); return f; };
+
+  it('le poste relaie vers le site avec sa clé de poste (pas de clé Gemini sur le poste)', async () => {
+    vi.stubEnv('SAVOIRIA_LOCAL', '1');
+    vi.stubEnv('POSTE_CLE', 'poste_ok');
+    vi.stubEnv('SAVOIRIA_SERVEUR', 'https://www.savoiria.online');
+    const appel = vi.fn(async (..._args: [string, RequestInit]) => Response.json(exemple));
+    vi.stubGlobal('fetch', appel);
+    const r = await analyser(envoi(notesForm()));
+    expect(r.status).toBe(200);
+    const [url, init] = appel.mock.calls[0];
+    expect(url).toBe('https://www.savoiria.online/api/poste/approfondir');
+    expect((init.headers as Record<string, string>)['x-savoiria-poste']).toBe('poste_ok');
+  });
+
+  it('le poste sans Internet : « Disponible avec Internet »', async () => {
+    vi.stubEnv('SAVOIRIA_LOCAL', '1');
+    vi.stubEnv('POSTE_CLE', 'poste_ok');
+    vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('réseau coupé'); }));
+    const r = await analyser(envoi(notesForm()));
+    expect(r.status).toBe(503);
+    expect((await r.json()).error).toBe('Disponible avec Internet');
+  });
+
+  it('le site refuse un poste inconnu', async () => {
+    const req = new Request('http://localhost/api/poste/approfondir', { method: 'POST', body: notesForm(), headers: { 'x-savoiria-poste': 'poste_faux' } });
+    expect((await posteAnalyse(req)).status).toBe(401);
+    expect((await posteVerifie(new Request('http://localhost/api/poste/approfondir'))).status).toBe(401);
+  });
+
+  it('le site applique la limite du jour du poste avant d’appeler Gemini', async () => {
+    quota.bloque = new Response('{}', { status: 429 });
+    const appel = vi.fn();
+    vi.stubGlobal('fetch', appel);
+    const req = new Request('http://localhost/api/poste/approfondir', { method: 'POST', body: notesForm(), headers: { 'x-savoiria-poste': 'poste_ok' } });
+    expect((await posteAnalyse(req)).status).toBe(429);
+    expect(appel).not.toHaveBeenCalled();
   });
 });

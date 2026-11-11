@@ -23,6 +23,29 @@ function useEnLigne() {
   return enLigne;
 }
 
+/**
+ * « Envoyer un PDF » / « Coller mes notes » : possible dès qu'il y a Internet, y compris sur un ordinateur
+ * d'école (il relaie vers le site en ligne). Demandé au serveur, revérifié à chaque changement de connexion.
+ */
+function useAnalyseDisponible() {
+  const [dispo, setDispo] = useState<boolean | null>(null);
+  useEffect(() => {
+    let actif = true;
+    const verifier = () => {
+      if (!navigator.onLine) { setDispo(false); return; }
+      fetch('/api/approfondir/disponible', { cache: 'no-store' })
+        .then((r) => r.json())
+        .then((d) => { if (actif) setDispo(d?.disponible === true); })
+        .catch(() => { if (actif) setDispo(false); });
+    };
+    verifier();
+    window.addEventListener('online', verifier);
+    window.addEventListener('offline', verifier);
+    return () => { actif = false; window.removeEventListener('online', verifier); window.removeEventListener('offline', verifier); };
+  }, []);
+  return dispo;
+}
+
 type Echange = { question: string; reponse: string };
 
 /** Réponse écrite du tuteur (même route que l'assistant de cours), en flux. */
@@ -56,9 +79,10 @@ async function demanderTuteur(corps: object, surTexte: (t: string) => void) {
  */
 export default function SalleApprofondir({ moduleId, prepare }: { moduleId: number; prepare: ContenuApprofondir | null }) {
   const enLigne = useEnLigne();
+  const analyseDispo = useAnalyseDisponible();
   const [contenu, setContenu] = useState<ContenuApprofondir | null>(prepare);
   const [notionId, setNotionId] = useState<string | undefined>(prepare?.notions[0]?.id);
-  const [panneau, setPanneau] = useState<'ferme' | 'pdf' | 'notes'>(prepare ? 'ferme' : 'notes');
+  const [panneau, setPanneau] = useState<'ferme' | 'pdf' | 'notes'>('ferme');
   const [notes, setNotes] = useState('');
   const [analyse, setAnalyse] = useState<{ enCours: boolean; erreur?: string }>({ enCours: false });
   const [infoOuverte, setInfoOuverte] = useState(false);
@@ -139,7 +163,7 @@ export default function SalleApprofondir({ moduleId, prepare }: { moduleId: numb
     { icone: Lightbulb, libelle: 'Donne un exemple de la vie de tous les jours', texte: `Donne un exemple de la vie de tous les jours, en Afrique francophone si possible, pour la notion « ${notion.titre} ».` },
   ] : [];
 
-  const indispo = !enLigne;
+  const indispo = analyseDispo !== true;
   const btnPanneau = 'inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50';
 
   return (
@@ -149,7 +173,7 @@ export default function SalleApprofondir({ moduleId, prepare }: { moduleId: numb
           <h2 id="titre-approfondir" className="sr-only">Approfondir le sujet</h2>
           {contenu && <p className="text-base text-muted-foreground">Sujet : <strong className="text-foreground">{contenu.sujet}</strong></p>}
         </div>
-        {!enLigne && <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-900 dark:bg-amber-900/40 dark:text-amber-100">Mode sans Internet</span>}
+        {!enLigne && <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-900 dark:bg-amber-900/40 dark:text-amber-100">{analyseDispo ? 'Tuteur sur cet ordinateur' : 'Mode sans Internet'}</span>}
       </header>
 
       {/* Commencer ou changer de document */}
@@ -179,7 +203,7 @@ export default function SalleApprofondir({ moduleId, prepare }: { moduleId: numb
               className={`${btnPanneau} border-border bg-card hover:bg-muted`}><ClipboardPaste className="h-4 w-4" /> Coller mes notes</button>
             <input ref={fichierRef} type="file" accept="application/pdf" className="hidden" onChange={(e) => { envoyerPdf(e.target.files?.[0]); e.target.value = ''; }} />
           </div>
-          {indispo && <p className="text-xs font-semibold text-muted-foreground">Disponible avec Internet</p>}
+          {indispo && <p className="text-xs font-semibold text-muted-foreground">{analyseDispo === null ? 'Vérification de la connexion…' : 'Disponible avec Internet'}</p>}
           {!indispo && panneau === 'notes' && (
             <div>
               <label htmlFor="mes-notes" className="sr-only">Coller mes notes</label>
@@ -199,7 +223,7 @@ export default function SalleApprofondir({ moduleId, prepare }: { moduleId: numb
 
       {!contenu ? (
         <p className="mt-6 rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-          {enLigne ? 'Le cours préparé de cette semaine arrive bientôt. En attendant, envoyez un PDF ou collez vos notes.' : 'Le cours préparé de cette semaine arrive bientôt.'}
+          {analyseDispo ? 'Le cours préparé de cette semaine arrive bientôt. En attendant, envoyez un PDF ou collez vos notes.' : 'Le cours préparé de cette semaine arrive bientôt.'}
         </p>
       ) : notion && (
         <div className="mt-5 grid gap-5 2xl:grid-cols-5 2xl:items-start">
