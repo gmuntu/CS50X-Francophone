@@ -36,11 +36,12 @@ function entreesZip(z: Buffer): EntreeZip[] | null {
 
 function lireEntree(z: Buffer, e: EntreeZip, budget: { reste: number; vus: Set<number> }): string | null {
   const p = e.decalage;
-  // Deux entrées qui pointent vers les mêmes données : piège, on ne lit qu'une fois.
-  if (budget.vus.has(p) || budget.reste <= 0) return null;
-  budget.vus.add(p);
+  if (budget.reste <= 0) return null;
   if (p + 30 > z.length || z.readUInt32LE(p) !== 0x04034b50) return null;
   const debut = p + 30 + z.readUInt16LE(p + 26) + z.readUInt16LE(p + 28);
+  // Deux entrées qui pointent vers les mêmes données : piège, on ne lit qu'une fois.
+  if (budget.vus.has(debut)) return null;
+  budget.vus.add(debut);
   const donnees = z.subarray(debut, debut + e.taille);
   try {
     const max = Math.min(XML_MAX, budget.reste);
@@ -48,7 +49,9 @@ function lireEntree(z: Buffer, e: EntreeZip, budget: { reste: number; vus: Set<n
     if (!brut) return null;
     budget.reste -= brut.length;
     return brut.toString('utf8');
-  } catch {}
+  } catch {
+    budget.reste = 0; // décompression trop grosse ou abîmée : on arrête de lire ce document
+  }
   return null;
 }
 
