@@ -8,8 +8,11 @@ const SERVEUR = () => (process.env.SAVOIRIA_SERVEUR || 'https://www.savoiria.onl
 const CLE = () => (process.env.POSTE_CLE || '').trim();
 const HORS_LIGNE = 'Disponible avec Internet';
 
+/** La clé du poste ne part jamais en clair : adresse du site en https obligatoire. */
+const relaisPossible = () => !!CLE() && SERVEUR().startsWith('https://');
+
 export async function relaisPoste(request: Request): Promise<Response> {
-  if (!CLE()) return erreur(HORS_LIGNE, 503);
+  if (!relaisPossible()) return erreur(HORS_LIGNE, 503);
   let form: FormData;
   try { form = await request.formData(); } catch { return erreur('Envoi illisible.', 400); }
   try {
@@ -30,7 +33,7 @@ let memo: { ok: boolean; at: number } | null = null;
 
 /** Le site en ligne répond-il à ce poste ? (vérifié au plus toutes les 30 secondes) */
 export async function relaisDisponible(): Promise<boolean> {
-  if (!CLE()) return false;
+  if (!relaisPossible()) return false;
   if (memo && Date.now() - memo.at < 30_000) return memo.ok;
   let ok = false;
   try {

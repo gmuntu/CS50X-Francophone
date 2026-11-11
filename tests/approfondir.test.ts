@@ -199,6 +199,16 @@ describe('Ordinateur d’école avec Internet : analyse relayée vers le site', 
     expect((await r.json()).error).toBe('Disponible avec Internet');
   });
 
+  it('la clé du poste ne part jamais vers une adresse http (en clair)', async () => {
+    vi.stubEnv('SAVOIRIA_LOCAL', '1');
+    vi.stubEnv('POSTE_CLE', 'poste_ok');
+    vi.stubEnv('SAVOIRIA_SERVEUR', 'http://www.savoiria.online');
+    const appel = vi.fn();
+    vi.stubGlobal('fetch', appel);
+    expect((await analyser(envoi(notesForm()))).status).toBe(503);
+    expect(appel).not.toHaveBeenCalled();
+  });
+
   it('le site refuse un poste inconnu', async () => {
     const req = new Request('http://localhost/api/poste/approfondir', { method: 'POST', body: notesForm(), headers: { 'x-savoiria-poste': 'poste_faux' } });
     expect((await posteAnalyse(req)).status).toBe(401);
