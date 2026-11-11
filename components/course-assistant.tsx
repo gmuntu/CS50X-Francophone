@@ -14,6 +14,7 @@ import {
   detecterMode, demanderSocrateLocal, pcm16VersWav, noterQuestion,
   questionsEnAttente, viderQuestionsEnAttente, prechaufferTuteur, ORDINATEUR_LOCAL, type ModeSocrate,
 } from '@/lib/socrate-local';
+import { enregistrementVersPcm16 as toPcm16 } from '@/lib/audio-pcm';
 import { sanitizeForVoice } from '@/lib/voix-texte';
 
 type DayType = 'MONDAY' | 'WEDNESDAY' | 'FRIDAY';
@@ -27,6 +28,8 @@ interface Props {
   moduleConfig: CourseModuleConfig;
   audioScripts: any[];
   quizzes: any[];
+  /** Bouton « Ouvrir le Notebook » : seulement si l'interrupteur SALLE_APPROFONDIR réaffiche NotebookLM. */
+  notebook?: boolean;
 }
 
 const DAY_LABELS: Record<DayType, string> = {
@@ -90,7 +93,7 @@ const MessageMarkdown = React.memo(function MessageMarkdown({ content }: { conte
     </ReactMarkdown>  );
 });
 
-export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }: Props) {
+export default function CourseAssistant({ moduleConfig, audioScripts, quizzes, notebook = true }: Props) {
   const moduleId = moduleConfig?.id ?? 0;
 
   const [selectedDay, setSelectedDay] = useState<DayType>('MONDAY');
@@ -439,33 +442,6 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
 
   // Enregistrement micro (repli quand le navigateur n'a pas de reconnaissance vocale intégrée)
   const recorderRef = useRef<MediaRecorder | null>(null);
-
-  // Convertit l'enregistrement (webm sur Android/Chrome, mp4 sur iPhone) en PCM 16 kHz mono,
-  // un format que Google comprend quel que soit le téléphone.
-  const toPcm16 = async (blob: Blob): Promise<string> => {
-    const AC: any = (window as any).AudioContext || (window as any).webkitAudioContext;
-    const ctx = new AC();
-    try {
-      const buf = await blob.arrayBuffer();
-      // Forme « rappel » : compatible avec les anciens Safari.
-      const decoded: AudioBuffer = await new Promise((res, rej) => ctx.decodeAudioData(buf, res, rej));
-      const rate = 16000;
-      const off = new OfflineAudioContext(1, Math.ceil(decoded.duration * rate), rate);
-      const src = off.createBufferSource();
-      src.buffer = decoded;
-      src.connect(off.destination);
-      src.start();
-      const out = (await off.startRendering()).getChannelData(0);
-      const bytes = new Uint8Array(out.length * 2);
-      const view = new DataView(bytes.buffer);
-      for (let i = 0; i < out.length; i++) view.setInt16(i * 2, Math.max(-1, Math.min(1, out[i])) * 0x7fff, true);
-      let binary = '';
-      for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-      return btoa(binary);
-    } finally {
-      ctx.close?.();
-    }
-  };
 
   const transcribeWithGoogle = async (blob: Blob) => {
     try {
@@ -833,8 +809,8 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
           )}
         </div>
 
-        {/* Notebook */}
-        {moduleConfig?.notebookUrl ? (
+        {/* Notebook (masqué quand « Approfondir le sujet » le remplace) */}
+        {!notebook ? null : moduleConfig?.notebookUrl ? (
           <a
             href={moduleConfig.notebookUrl}
             target="_blank"

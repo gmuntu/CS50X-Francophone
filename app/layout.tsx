@@ -1,11 +1,13 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, Kalam } from 'next/font/google';
 import './globals.css';
 import { Providers } from '@/components/providers';
 
 export const dynamic = 'force-dynamic';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
+// Écriture « à la craie » des titres du tableau (Approfondir le sujet). Intégrée au site : marche hors ligne.
+const craie = Kalam({ subsets: ['latin'], weight: ['400', '700'], variable: '--font-craie', display: 'swap' });
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXTAUTH_URL || 'http://localhost:3000'),
@@ -32,7 +34,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr" suppressHydrationWarning>
-      <body className={`${inter.variable} font-sans antialiased`} suppressHydrationWarning>
+      <body className={`${inter.variable} ${craie.variable} font-sans antialiased`} suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>

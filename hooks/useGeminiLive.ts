@@ -55,7 +55,7 @@ function pcm16ToFloat(b64: string) {
 
 export type TranscriptLine = { who: 'eleve' | 'socrate'; text: string };
 
-export function useGeminiLive(lessonContext: string, systemPrompt: string = SYSTEM_PROMPT, opts: { transcript?: boolean; opening?: string; onStream?: (s: MediaStream) => void } = {}) {
+export function useGeminiLive(lessonContext: string, systemPrompt: string = SYSTEM_PROMPT, opts: { transcript?: boolean; opening?: string; onStream?: (s: MediaStream) => void; maxMinutes?: number } = {}) {
   const [status, setStatus] = useState<LiveStatus>('idle');
   // Transcription écrite de la conversation (défense orale) : texte seulement, aucun audio conservé.
   const [transcript, setTranscript] = useState<TranscriptLine[]>([]);
@@ -68,6 +68,11 @@ export function useGeminiLive(lessonContext: string, systemPrompt: string = SYST
     });
   }, []);
   const [error, setError] = useState<string | null>(null);
+  // Micro coupé : la connexion reste ouverte, mais on n'envoie plus le son.
+  const [muted, setMuted] = useState(false);
+  const mutedRef = useRef(false);
+  const toggleMute = useCallback(() => { mutedRef.current = !mutedRef.current; setMuted(mutedRef.current); }, []);
+  const limiteRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const wsRef = useRef<WebSocket | null>(null);
   const micCtxRef = useRef<AudioContext | null>(null);
@@ -83,6 +88,7 @@ export function useGeminiLive(lessonContext: string, systemPrompt: string = SYST
   }, []);
 
   const stop = useCallback(() => {
+    if (limiteRef.current) { clearTimeout(limiteRef.current); limiteRef.current = null; }
     try { wsRef.current?.close(); } catch {}
     wsRef.current = null;
     try { streamRef.current?.getTracks().forEach((t) => t.stop()); } catch {}
@@ -125,6 +131,8 @@ export function useGeminiLive(lessonContext: string, systemPrompt: string = SYST
     if (wsRef.current) return;
     setError(null);
     setTranscript([]);
+    mutedRef.current = false;
+    setMuted(false);
     setStatus('connecting');
     // iPhone/Safari : le son n'est autorisé que si les lecteurs audio sont créés ET relancés
     // pendant le clic lui-même (avant tout « await »). Sinon ils restent muets et Socrate « boude ».
@@ -193,7 +201,7 @@ export function useGeminiLive(lessonContext: string, systemPrompt: string = SYST
             URL.revokeObjectURL(url);
             const node = new AudioWorkletNode(ctx, 'pcm-capture');
             node.port.onmessage = (e) => {
-              if (wsRef.current?.readyState === WebSocket.OPEN) {
+              if (!mutedRef.current && wsRef.current?.readyState === WebSocket.OPEN) {
                 wsRef.current.send(JSON.stringify({
                   realtimeInput: { audio: { data: toBase64(e.data), mimeType: 'audio/pcm;rate=16000' } },
                 }));
@@ -201,6 +209,8 @@ export function useGeminiLive(lessonContext: string, systemPrompt: string = SYST
             };
             ctx.createMediaStreamSource(stream).connect(node);
             setStatus('listening');
+            // Durée limitée (coûts) : la session s'arrête seule.
+            if (opts.maxMinutes) limiteRef.current = setTimeout(() => fail(`Session terminée après ${opts.maxMinutes} minutes. Vous pouvez en relancer une.`), opts.maxMinutes * 60_000);
             // Socrate parle en premier (ex. : ouverture de la défense orale).
             if (opts.opening && wsRef.current?.readyState === WebSocket.OPEN) {
               wsRef.current.send(JSON.stringify({ clientContent: { turns: [{ role: 'user', parts: [{ text: opts.opening }] }], turnComplete: true } }));
@@ -232,9 +242,9 @@ export function useGeminiLive(lessonContext: string, systemPrompt: string = SYST
       console.error('useGeminiLive', e);
       fail('Le tuteur vocal a rencontré un problème.');
     }
-  }, [fail, lessonContext, systemPrompt, playChunk, stop, stopPlayback, opts.transcript, opts.opening, opts.onStream, addLine]);
+  }, [fail, lessonContext, systemPrompt, playChunk, stop, stopPlayback, opts.transcript, opts.opening, opts.onStream, opts.maxMinutes, addLine]);
 
   useEffect(() => () => stop(), [stop]);
 
-  return { status, error, start, stop, transcript, setTranscript };
+  return { status, error, start, stop, transcript, setTranscript, muted, toggleMute };
 }

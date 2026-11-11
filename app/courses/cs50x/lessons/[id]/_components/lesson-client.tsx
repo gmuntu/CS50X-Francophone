@@ -12,6 +12,8 @@ import InteractiveQuizModal from '@/components/interactive-quiz-modal';
 import CourseAssistant from '@/components/course-assistant';
 import OfflineLessonButton from '@/components/pwa/offline-lesson-button';
 import NotebookCard from '@/components/notebook-card';
+import SalleApprofondir from '@/components/approfondir/salle-approfondir';
+import type { ContenuApprofondir } from '@/lib/approfondir/types';
 import IdentityReminder from '@/components/identity/identity-reminder';
 import FinalProject from '@/components/formations/ia/final-project';
 import WeekPackButton from '@/components/pwa/week-pack-button';
@@ -23,9 +25,13 @@ interface Props {
   moduleConfig: CourseModuleConfig;
   lesson: any;
   userId: string;
+  /** Interrupteur Vercel SALLE_APPROFONDIR : « approfondir » (par défaut) ou « notebooklm ». */
+  salle: 'approfondir' | 'notebooklm';
+  /** Cours préparé de la semaine (content/approfondir), ou null. */
+  approfondir: ContenuApprofondir | null;
 }
 
-export default function LessonClient({ moduleConfig, lesson, userId }: Props) {
+export default function LessonClient({ moduleConfig, lesson, userId, salle, approfondir }: Props) {
   const [activeTab, setActiveTab] = useState<'video' | 'audio' | 'quiz' | 'exercises'>('video');
   const [quizModalOpen, setQuizModalOpen] = useState(false);
   const [selectedQuiz, setSelectedQuiz] = useState<any>(null);
@@ -99,7 +105,11 @@ export default function LessonClient({ moduleConfig, lesson, userId }: Props) {
           <p className="text-sm sm:text-base text-muted-foreground max-w-3xl leading-relaxed">{moduleConfig?.description}</p>
         </motion.div>
 
-        <div className="mb-8"><NotebookCard url={moduleConfig?.notebookUrl} /></div>
+        <div className="mb-8">
+          {salle === 'notebooklm'
+            ? <NotebookCard url={moduleConfig?.notebookUrl} />
+            : <SalleApprofondir moduleId={moduleConfig.id} prepare={approfondir} />}
+        </div>
 
         {/* Semaine 10 : projet final CS50x + défense orale avec Socrate */}
         {moduleConfig?.id === 10 && <div className="mb-8"><FinalProject course="cs50x" /></div>}
@@ -310,7 +320,7 @@ export default function LessonClient({ moduleConfig, lesson, userId }: Props) {
 
           {/* Sticky Assistant Socratique Column */}
           <div className="lg:col-span-1 lg:sticky lg:top-20">
-            <CourseAssistant moduleConfig={moduleConfig} audioScripts={audioScripts} quizzes={quizzes} />
+            <CourseAssistant moduleConfig={moduleConfig} audioScripts={audioScripts} quizzes={quizzes} notebook={salle === 'notebooklm'} />
           </div>
         </div>
       </main>

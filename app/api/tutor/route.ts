@@ -24,7 +24,16 @@ export async function POST(request: NextRequest) {
       ...m, content: String(m?.content ?? '').slice(0, 4000),
     }));
 
-    const systeme = await systemeTuteur({ moduleId, course, week, voix: body?.voix === true });
+    let systeme = await systemeTuteur({ moduleId, course, week, voix: body?.voix === true });
+    // « Approfondir le sujet » : même tuteur, avec seulement le résumé du document et la notion affichée.
+    const approfondir = typeof body?.approfondir?.contexte === 'string' ? body.approfondir.contexte.slice(0, 6000) : '';
+    if (approfondir) {
+      systeme += `\n\n--- APPROFONDIR LE SUJET (document étudié par l'élève) ---\n${approfondir}\n`
+        + (body.approfondir.mode === 'expliquer'
+          ? "L'élève t'explique la notion avec ses mots. Dis d'abord ce qui est juste, puis ce qui manque ou est inexact, puis pose UNE question de vérification. Reste bref."
+          : "Appuie-toi sur ce document et cite sa page quand c'est utile. Explications simples, en français, avec un exemple concret si possible.");
+    }
+    const modeleTexte = approfondir ? 'gemini-3.8-flash' : 'gemini-3.6-flash';
 
     const geminiKey = process.env.GEMINI_API_KEY || process.env.EMINI_API_KEY;
     const abacusKey = process.env.ABACUSAI_API_KEY;
@@ -62,7 +71,7 @@ export async function POST(request: NextRequest) {
         } as Record<string, unknown>,
       };
 
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:streamGenerateContent?alt=sse&key=${geminiKey}`;
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modeleTexte}:streamGenerateContent?alt=sse&key=${geminiKey}`;
 
       const geminiRes = await fetch(geminiUrl, {
         method: 'POST',
@@ -76,7 +85,7 @@ export async function POST(request: NextRequest) {
 
         // Fallback non-streaming avec generateContent (sans réglage de réflexion, au cas où il serait refusé)
         delete (geminiPayload.generationConfig as Record<string, unknown>).thinkingConfig;
-        const fallbackUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${geminiKey}`;
+        const fallbackUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modeleTexte}:generateContent?key=${geminiKey}`;
         const fallbackRes = await fetch(fallbackUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
