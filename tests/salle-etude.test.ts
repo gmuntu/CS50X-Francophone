@@ -53,8 +53,24 @@ describe('Envoyer un document : PDF, Word, PowerPoint ou texte', () => {
     });
     expect(texteDocument('cours.pptx', pptx)).toBe('[DIAPO 1]\nPremière\n\n[DIAPO 2]\nDeuxième');
   });
+  it('fichier piégé (texte plein de « < ») : lu en une fraction de seconde', () => {
+    const piege = zip({ 'word/document.xml': '<'.repeat(2_000_000) });
+    const debut = Date.now();
+    texteDocument('piege.docx', piege);
+    expect(Date.now() - debut).toBeLessThan(2000);
+  });
+
+  it('bombe ZIP : 200 diapositives qui pointent vers les mêmes données, lues une seule fois', () => {
+    const pptx = zip(Object.fromEntries(Array.from({ length: 200 }, (_, i) => [`ppt/slides/slide${i + 1}.xml`, '<a:p/>'.repeat(1_000_000)])));
+    const debut = Date.now();
+    texteDocument('bombe.pptx', pptx);
+    expect(Date.now() - debut).toBeLessThan(5000);
+  });
+
   it('ancien format ou faux fichier : refusé', () => {
     expect(texteDocument('cours.doc', Buffer.from('xxxx'))).toBeNull();
     expect(texteDocument('cours.docx', Buffer.from('pas un zip'))).toBeNull();
+    expect(texteDocument('cours.pptx', Buffer.from('PK'))).toBeNull();
+    expect(texteDocument('cours.docx', Buffer.concat([zip({ 'word/document.xml': '<w:p/>' }).subarray(0, 40), Buffer.alloc(30)]))).toBeNull();
   });
 });

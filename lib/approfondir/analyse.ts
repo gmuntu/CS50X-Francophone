@@ -95,8 +95,11 @@ export async function analyserFormulaire(request: Request, avantAppel: () => Pro
   const parts: Record<string, unknown>[] = [{ text: CONSIGNE }];
   let nomDocument = 'Mes notes';
   const estFichier = fichier instanceof File && fichier.size > 0;
-  const octets = estFichier ? Buffer.from(await (fichier as File).arrayBuffer()) : null;
   if (estFichier && (fichier as File).size > PDF_MAX) return erreur('Le fichier dépasse 4 Mo.', 413);
+  if (!estFichier && notes.length < 40) return erreur('Envoyez un PDF ou collez au moins quelques phrases de notes.', 400);
+  // Limite du jour vérifiée AVANT de lire le fichier : un envoi piégé répété est vite bloqué.
+  { const bloque = await avantAppel(); if (bloque) return bloque; }
+  const octets = estFichier ? Buffer.from(await (fichier as File).arrayBuffer()) : null;
   // Word, PowerPoint ou texte : on en extrait le texte, puis il est étudié comme des notes.
   const texteExtrait = octets && octets.subarray(0, 4).toString('latin1') !== '%PDF' ? texteDocument((fichier as File).name, octets) : null;
   if (octets && octets.subarray(0, 4).toString('latin1') !== '%PDF' && !texteExtrait) {
@@ -116,8 +119,6 @@ export async function analyserFormulaire(request: Request, avantAppel: () => Pro
   } else {
     return erreur('Envoyez un PDF ou collez au moins quelques phrases de notes.', 400);
   }
-
-  { const bloque = await avantAppel(); if (bloque) return bloque; }
 
   const cle = process.env.GEMINI_API_KEY;
   if (!cle) return erreur('Service indisponible pour le moment.', 503);

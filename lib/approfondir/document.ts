@@ -4,6 +4,7 @@
 import { inflateRawSync } from 'node:zlib';
 
 const XML_MAX = 8 * 1024 * 1024; // par fichier XML décompressé
+const TOTAL_MAX = 20 * 1024 * 1024; // pour tout le document (contre les « bombes ZIP »)
 const TEXTE_MAX = 60_000;
 
 type EntreeZip = { nom: string; methode: number; taille: number; decalage: number };
@@ -33,14 +34,20 @@ function entreesZip(z: Buffer): EntreeZip[] | null {
   return entrees;
 }
 
-function lireEntree(z: Buffer, e: EntreeZip): string | null {
+function lireEntree(z: Buffer, e: EntreeZip, budget: { reste: number; vus: Set<number> }): string | null {
   const p = e.decalage;
+  // Deux entrées qui pointent vers les mêmes données : piège, on ne lit qu'une fois.
+  if (budget.vus.has(p) || budget.reste <= 0) return null;
+  budget.vus.add(p);
   if (p + 30 > z.length || z.readUInt32LE(p) !== 0x04034b50) return null;
   const debut = p + 30 + z.readUInt16LE(p + 26) + z.readUInt16LE(p + 28);
   const donnees = z.subarray(debut, debut + e.taille);
   try {
-    if (e.methode === 0) return donnees.subarray(0, XML_MAX).toString('utf8');
-    if (e.methode === 8) return inflateRawSync(donnees, { maxOutputLength: XML_MAX }).toString('utf8');
+    const max = Math.min(XML_MAX, budget.reste);
+    const brut = e.methode === 0 ? donnees.subarray(0, max) : e.methode === 8 ? inflateRawSync(donnees, { maxOutputLength: max }) : null;
+    if (!brut) return null;
+    budget.reste -= brut.length;
+    return brut.toString('utf8');
   } catch {}
   return null;
 }
@@ -49,7 +56,8 @@ const ENTITES: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"',
 function texteXml(xml: string, finParagraphe: RegExp): string {
   return xml
     .replace(finParagraphe, '\n')
-    .replace(/<[^>]+>/g, '')
+    .replace(/<[^<>]*>/g, '')
+    .replace(/[<>]/g, ' ')
     .replace(/&(amp|lt|gt|quot|apos);/g, (_, n) => ENTITES[n])
     .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Math.min(Number(n), 0x10ffff)))
     .replace(/[ \t]+/g, ' ')
@@ -62,16 +70,22 @@ function texteXml(xml: string, finParagraphe: RegExp): string {
  * Les diapositives sont repérées « [DIAPO n] » pour que chaque notion garde sa page d'origine.
  */
 export function texteDocument(nom: string, octets: Buffer): string | null {
+  // Fichier abîmé ou piégé : jamais d'erreur qui ferait planter la route, simplement « non pris en charge ».
+  try { return lireTexte(nom, octets); } catch { return null; }
+}
+
+function lireTexte(nom: string, octets: Buffer): string | null {
   const ext = nom.toLowerCase().split('.').pop() ?? '';
   if (ext === 'txt' || ext === 'md') return octets.toString('utf8').slice(0, TEXTE_MAX);
   if (ext !== 'docx' && ext !== 'pptx') return null;
-  if (octets.readUInt32LE(0) !== 0x04034b50) return null; // signature ZIP « PK »
+  if (octets.length < 22 || octets.readUInt32LE(0) !== 0x04034b50) return null; // signature ZIP « PK »
   const entrees = entreesZip(octets);
   if (!entrees) return null;
+  const budget = { reste: TOTAL_MAX, vus: new Set<number>() };
 
   if (ext === 'docx') {
     const e = entrees.find((x) => x.nom === 'word/document.xml');
-    const xml = e && lireEntree(octets, e);
+    const xml = e && lireEntree(octets, e, budget);
     return xml ? texteXml(xml, /<\/w:p>/g).slice(0, TEXTE_MAX) : null;
   }
   const diapos = entrees
@@ -81,7 +95,8 @@ export function texteDocument(nom: string, octets: Buffer): string | null {
     .slice(0, 200);
   let texte = '';
   for (const { e, n } of diapos) {
-    const xml = lireEntree(octets, e);
+    if (budget.reste <= 0) break;
+    const xml = lireEntree(octets, e, budget);
     if (xml) texte += `[DIAPO ${n}]\n${texteXml(xml, /<\/a:p>/g)}\n\n`;
     if (texte.length > TEXTE_MAX) break;
   }
