@@ -1,0 +1,549 @@
+{
+  "semaine": 11,
+  "sujet": "Intelligence artificielle",
+  "resume": "Comment fonctionnent les IA d'aujourd'hui : bien formuler ses demandes, arbres de décision et minimax pour les jeux, apprentissage automatique et par renforcement, réseaux de neurones et apprentissage profond, puis grands modèles de langage et IA générative, avec leurs limites.",
+  "documents": [
+    {
+      "id": "wp-canard",
+      "titre": "Méthode du canard en plastique",
+      "url": "https://fr.wikipedia.org/wiki/M%C3%A9thode_du_canard_en_plastique",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-iag",
+      "titre": "Intelligence artificielle générative",
+      "url": "https://fr.wikipedia.org/wiki/Intelligence_artificielle_g%C3%A9n%C3%A9rative",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-prompt",
+      "titre": "Ingénierie de prompt",
+      "url": "https://fr.wikipedia.org/wiki/Ing%C3%A9nierie_de_prompt",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-arbre",
+      "titre": "Arbre de décision",
+      "url": "https://fr.wikipedia.org/wiki/Arbre_de_d%C3%A9cision",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-minimax",
+      "titre": "Algorithme minimax",
+      "url": "https://fr.wikipedia.org/wiki/Algorithme_minimax",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-aa",
+      "titre": "Apprentissage automatique",
+      "url": "https://fr.wikipedia.org/wiki/Apprentissage_automatique",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-renforcement",
+      "titre": "Apprentissage par renforcement",
+      "url": "https://fr.wikipedia.org/wiki/Apprentissage_par_renforcement",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-profond",
+      "titre": "Apprentissage profond",
+      "url": "https://fr.wikipedia.org/wiki/Apprentissage_profond",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-neurones",
+      "titre": "Réseau de neurones artificiels",
+      "url": "https://fr.wikipedia.org/wiki/R%C3%A9seau_de_neurones_artificiels",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-llm",
+      "titre": "Grand modèle de langage",
+      "url": "https://fr.wikipedia.org/wiki/Grand_mod%C3%A8le_de_langage",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    }
+  ],
+  "notions": [
+    {
+      "id": "canard-prompt",
+      "titre": "Le canard en plastique et l'art du prompt",
+      "resume": "Expliquer son problème à voix haute, même à un canard, aide à trouver l'erreur ; avec une IA, la qualité de la réponse dépend de la clarté de la demande, le prompt.",
+      "page": "§ Principe",
+      "documentId": "wp-canard",
+      "schema": {
+        "type": "etapes",
+        "etapes": [
+          {
+            "titre": "Contexte",
+            "texte": "Dire qui on est et ce qu'on fait : « Je débute en C… »."
+          },
+          {
+            "titre": "Demande précise",
+            "texte": "« Explique-moi pourquoi ma boucle ne s'arrête pas. »"
+          },
+          {
+            "titre": "Format",
+            "texte": "« Donne-moi un indice, pas la solution. »"
+          },
+          {
+            "titre": "Vérifier",
+            "texte": "Relire et tester : l'IA peut se tromper."
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "La méthode du canard en plastique consiste à expliquer son code ligne par ligne à un objet ; en formulant le problème, on finit souvent par voir soi-même l'erreur.",
+          "documentId": "wp-canard",
+          "page": "§ Principe"
+        },
+        {
+          "texte": "L'ingénierie de prompt consiste à rédiger et structurer les instructions données à un modèle d'IA pour obtenir des réponses plus utiles et plus fiables.",
+          "documentId": "wp-prompt",
+          "page": "§ Introduction"
+        },
+        {
+          "texte": "Demander au modèle de raisonner étape par étape (chaîne de pensée) améliore souvent ses réponses aux problèmes qui demandent plusieurs étapes.",
+          "documentId": "wp-prompt",
+          "page": "§ Chaîne de pensée"
+        }
+      ],
+      "infographie": {
+        "titre": "Bien demander",
+        "points": [
+          {
+            "icone": "🦆",
+            "texte": "Expliquer à voix haute aide à comprendre."
+          },
+          {
+            "icone": "🎯",
+            "texte": "Un prompt précis = une réponse utile."
+          },
+          {
+            "icone": "🪜",
+            "texte": "Demander un raisonnement étape par étape."
+          },
+          {
+            "icone": "✅",
+            "texte": "Toujours vérifier la réponse."
+          }
+        ]
+      }
+    },
+    {
+      "id": "arbre-decision",
+      "titre": "Les arbres de décision",
+      "resume": "Un arbre de décision enchaîne des questions oui/non jusqu'à une action : c'est ainsi qu'on programme un joueur simple, par exemple au Pong.",
+      "page": "§ Exemple simple",
+      "documentId": "wp-arbre",
+      "schema": {
+        "type": "etapes",
+        "etapes": [
+          {
+            "titre": "Question 1",
+            "texte": "La balle va-t-elle vers ma raquette ?"
+          },
+          {
+            "titre": "Non",
+            "texte": "Ne rien faire."
+          },
+          {
+            "titre": "Oui : question 2",
+            "texte": "La balle est-elle plus haut que la raquette ?"
+          },
+          {
+            "titre": "Action",
+            "texte": "Oui : monter. Non : descendre."
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Un arbre de décision représente une suite de tests : chaque nœud pose une question, chaque branche est une réponse possible et chaque feuille est une décision.",
+          "documentId": "wp-arbre",
+          "page": "§ Exemple simple"
+        },
+        {
+          "texte": "Les arbres de décision peuvent aussi être appris automatiquement à partir d'exemples, pour classer de nouvelles données.",
+          "documentId": "wp-arbre",
+          "page": "§ Utilisation en apprentissage automatique"
+        }
+      ],
+      "infographie": {
+        "titre": "Décider question par question",
+        "points": [
+          {
+            "icone": "❓",
+            "texte": "Chaque nœud : une question."
+          },
+          {
+            "icone": "↔️",
+            "texte": "Chaque branche : une réponse."
+          },
+          {
+            "icone": "🍃",
+            "texte": "Chaque feuille : une action."
+          },
+          {
+            "icone": "🏓",
+            "texte": "Exemple : jouer au Pong."
+          }
+        ]
+      }
+    },
+    {
+      "id": "minimax",
+      "titre": "L'algorithme minimax",
+      "resume": "Pour un jeu comme le morpion, minimax essaie tous les coups possibles en supposant que l'adversaire joue au mieux, et choisit le coup qui garantit le meilleur résultat.",
+      "page": "§ Principe",
+      "documentId": "wp-minimax",
+      "schema": {
+        "type": "etapes",
+        "etapes": [
+          {
+            "titre": "Noter les fins de partie",
+            "texte": "Victoire de X = 1, nul = 0, victoire de O = −1."
+          },
+          {
+            "titre": "Explorer",
+            "texte": "Imaginer chaque coup, puis chaque réponse, jusqu'à la fin."
+          },
+          {
+            "titre": "Remonter",
+            "texte": "X prend le maximum, O prend le minimum."
+          },
+          {
+            "titre": "Jouer",
+            "texte": "Choisir le coup au meilleur score garanti."
+          }
+        ]
+      },
+      "differences": {
+        "titres": [
+          "Morpion",
+          "Échecs"
+        ],
+        "lignes": [
+          {
+            "critere": "Parties possibles",
+            "a": "Quelques centaines de milliers",
+            "b": "Plus que d'atomes dans l'univers"
+          },
+          {
+            "critere": "Minimax complet",
+            "a": "Possible",
+            "b": "Impossible"
+          },
+          {
+            "critere": "Solution",
+            "a": "Tout explorer",
+            "b": "Limiter la profondeur, élagage alpha-bêta"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Dans un jeu à deux joueurs, l'algorithme minimax suppose que chaque joueur choisit le meilleur coup pour lui : l'un cherche à maximiser le score, l'autre à le minimiser.",
+          "documentId": "wp-minimax",
+          "page": "§ Principe"
+        },
+        {
+          "texte": "L'élagage alpha-bêta évite d'explorer les branches qui ne peuvent pas changer la décision, ce qui accélère beaucoup la recherche.",
+          "documentId": "wp-minimax",
+          "page": "§ Élagage alpha-bêta"
+        }
+      ],
+      "infographie": {
+        "titre": "Prévoir les coups de l'adversaire",
+        "points": [
+          {
+            "icone": "❌",
+            "texte": "X cherche le maximum."
+          },
+          {
+            "icone": "⭕",
+            "texte": "O cherche le minimum."
+          },
+          {
+            "icone": "🌲",
+            "texte": "On explore l'arbre des coups."
+          },
+          {
+            "icone": "♟️",
+            "texte": "Trop de coups ? On limite la profondeur."
+          }
+        ]
+      }
+    },
+    {
+      "id": "apprentissage",
+      "titre": "L'apprentissage automatique",
+      "resume": "Au lieu d'écrire toutes les règles, on donne des exemples à la machine pour qu'elle apprenne seule ; par renforcement, elle apprend aussi par essais, récompenses et punitions.",
+      "page": "§ Principes",
+      "documentId": "wp-aa",
+      "schema": {
+        "type": "cycle",
+        "etapes": [
+          {
+            "titre": "Agir",
+            "texte": "L'agent essaie une action."
+          },
+          {
+            "titre": "Observer",
+            "texte": "L'environnement change."
+          },
+          {
+            "titre": "Récompense",
+            "texte": "+1 si c'est bien, −1 sinon."
+          },
+          {
+            "titre": "S'améliorer",
+            "texte": "L'agent privilégie les actions récompensées."
+          }
+        ]
+      },
+      "differences": {
+        "titres": [
+          "Apprentissage supervisé",
+          "Apprentissage par renforcement"
+        ],
+        "lignes": [
+          {
+            "critere": "Données",
+            "a": "Des exemples avec la bonne réponse",
+            "b": "Des récompenses après des essais"
+          },
+          {
+            "critere": "Exemple",
+            "a": "Reconnaître un chat sur une photo",
+            "b": "Apprendre à marcher, à jouer"
+          },
+          {
+            "critere": "Dilemme",
+            "a": "—",
+            "b": "Explorer du nouveau ou exploiter ce qui marche"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "L'apprentissage automatique permet à un programme d'améliorer ses performances à partir de données, sans être explicitement programmé pour chaque cas.",
+          "documentId": "wp-aa",
+          "page": "§ Principes"
+        },
+        {
+          "texte": "En apprentissage supervisé, le modèle apprend à partir d'exemples étiquetés, c'est-à-dire accompagnés de la bonne réponse.",
+          "documentId": "wp-aa",
+          "page": "§ Apprentissage supervisé"
+        },
+        {
+          "texte": "En apprentissage par renforcement, un agent agit dans un environnement et reçoit des récompenses ; il apprend une politique qui maximise ses gains.",
+          "documentId": "wp-renforcement",
+          "page": "§ Interface agent-environnement"
+        },
+        {
+          "texte": "L'agent doit trouver un équilibre entre exploiter ce qu'il sait déjà et explorer de nouvelles actions qui pourraient être meilleures.",
+          "documentId": "wp-renforcement",
+          "page": "§ Exploitation-exploration"
+        }
+      ],
+      "infographie": {
+        "titre": "Apprendre par l'exemple",
+        "points": [
+          {
+            "icone": "📚",
+            "texte": "Supervisé : des exemples corrigés."
+          },
+          {
+            "icone": "🎮",
+            "texte": "Renforcement : essais et récompenses."
+          },
+          {
+            "icone": "🔍",
+            "texte": "Explorer ou exploiter ?"
+          },
+          {
+            "icone": "📈",
+            "texte": "Plus de données, meilleurs résultats."
+          }
+        ]
+      }
+    },
+    {
+      "id": "neurones",
+      "titre": "Réseaux de neurones et apprentissage profond",
+      "resume": "Un réseau de neurones artificiels relie des unités de calcul en couches ; avec beaucoup de couches, on parle d'apprentissage profond.",
+      "page": "§ Structure du réseau",
+      "documentId": "wp-neurones",
+      "schema": {
+        "type": "etapes",
+        "etapes": [
+          {
+            "titre": "Entrées",
+            "texte": "Des nombres : pixels, mots…"
+          },
+          {
+            "titre": "Neurone",
+            "texte": "Somme des entrées multipliées par des poids, puis fonction d'activation."
+          },
+          {
+            "titre": "Couches cachées",
+            "texte": "Plusieurs couches : apprentissage profond."
+          },
+          {
+            "titre": "Sortie et correction",
+            "texte": "Comparer à la bonne réponse et ajuster les poids (rétropropagation)."
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Un réseau de neurones est organisé en couches : une couche d'entrée, une ou plusieurs couches cachées et une couche de sortie.",
+          "documentId": "wp-neurones",
+          "page": "§ Structure du réseau"
+        },
+        {
+          "texte": "Pendant l'apprentissage, l'erreur commise en sortie est propagée vers l'arrière pour ajuster les poids de chaque connexion.",
+          "documentId": "wp-neurones",
+          "page": "§ Rétropropagation"
+        },
+        {
+          "texte": "L'apprentissage profond utilise des réseaux de neurones comportant de nombreuses couches, capables d'apprendre des représentations de plus en plus abstraites des données.",
+          "documentId": "wp-profond",
+          "page": "§ Définition"
+        }
+      ],
+      "infographie": {
+        "titre": "Des neurones en couches",
+        "points": [
+          {
+            "icone": "🔢",
+            "texte": "Entrées : des nombres."
+          },
+          {
+            "icone": "⚖️",
+            "texte": "Chaque lien a un poids."
+          },
+          {
+            "icone": "🧱",
+            "texte": "Beaucoup de couches = profond."
+          },
+          {
+            "icone": "🔁",
+            "texte": "On corrige les poids à chaque erreur."
+          }
+        ]
+      }
+    },
+    {
+      "id": "llm",
+      "titre": "L'IA générative et les grands modèles de langage",
+      "resume": "Un grand modèle de langage, comme ceux derrière les assistants conversationnels, prédit le mot suivant à partir d'énormes quantités de texte ; il peut aussi inventer des réponses fausses.",
+      "page": "§ Architecture",
+      "documentId": "wp-llm",
+      "schema": {
+        "type": "cycle",
+        "etapes": [
+          {
+            "titre": "Découper",
+            "texte": "Le texte devient des jetons (tokens)."
+          },
+          {
+            "titre": "Comprendre le contexte",
+            "texte": "L'attention relie chaque mot aux autres (transformeur)."
+          },
+          {
+            "titre": "Prédire",
+            "texte": "Choisir le jeton suivant le plus probable."
+          },
+          {
+            "titre": "Recommencer",
+            "texte": "Ajouter ce jeton et prédire le suivant."
+          }
+        ]
+      },
+      "differences": {
+        "titres": [
+          "Ce qu'il fait bien",
+          "Ses limites"
+        ],
+        "lignes": [
+          {
+            "critere": "Texte",
+            "a": "Rédiger, résumer, traduire",
+            "b": "Peut « halluciner » des faits"
+          },
+          {
+            "critere": "Code",
+            "a": "Proposer et expliquer",
+            "b": "Peut se tromper : tester"
+          },
+          {
+            "critere": "Savoir",
+            "a": "Très large",
+            "b": "Biais des données d'entraînement"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Un grand modèle de langage est un réseau de neurones, généralement un transformeur, entraîné sur de très grandes quantités de texte pour prédire le jeton suivant.",
+          "documentId": "wp-llm",
+          "page": "§ Architecture"
+        },
+        {
+          "texte": "Les grands modèles de langage peuvent produire des affirmations fausses présentées avec assurance : on parle d'hallucinations.",
+          "documentId": "wp-llm",
+          "page": "§ Hallucination"
+        },
+        {
+          "texte": "L'IA générative produit de nouveaux contenus, textes, images, sons ou vidéos, à partir de ce qu'elle a appris.",
+          "documentId": "wp-iag",
+          "page": "§ Capacités"
+        }
+      ],
+      "infographie": {
+        "titre": "Comment parle une IA",
+        "points": [
+          {
+            "icone": "🔤",
+            "texte": "Le texte est découpé en jetons."
+          },
+          {
+            "icone": "🔮",
+            "texte": "Elle prédit le jeton suivant."
+          },
+          {
+            "icone": "🌀",
+            "texte": "Elle peut inventer : on vérifie."
+          },
+          {
+            "icone": "⚖️",
+            "texte": "Ses données ont des biais."
+          }
+        ]
+      }
+    }
+  ]
+}
