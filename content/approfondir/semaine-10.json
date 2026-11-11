@@ -1,0 +1,265 @@
+{
+  "semaine": 10,
+  "sujet": "La fin du cours et le projet final",
+  "resume": "Le bilan des dix semaines autour de l'abstraction, puis les outils pour réussir son projet final : un cahier des charges clair, une gestion de projet par petites étapes, Git pour l'historique du code et le logiciel libre pour apprendre des autres.",
+  "documents": [
+    {
+      "id": "wp-abstraction",
+      "titre": "Abstraction (informatique)",
+      "url": "https://fr.wikipedia.org/wiki/Abstraction_(informatique)",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-cahier",
+      "titre": "Cahier des charges",
+      "url": "https://fr.wikipedia.org/wiki/Cahier_des_charges",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-projet",
+      "titre": "Gestion de projet",
+      "url": "https://fr.wikipedia.org/wiki/Gestion_de_projet",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-git",
+      "titre": "Git",
+      "url": "https://fr.wikipedia.org/wiki/Git",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-libre",
+      "titre": "Logiciel libre",
+      "url": "https://fr.wikipedia.org/wiki/Logiciel_libre",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    }
+  ],
+  "notions": [
+    {
+      "id": "abstraction",
+      "titre": "L'abstraction, le fil de tout le cours",
+      "resume": "Abstraire, c'est cacher les détails pour ne garder que l'essentiel : des bits aux lettres, des lignes de code aux fonctions, du C à Python et au Web.",
+      "page": "§ Généralités",
+      "documentId": "wp-abstraction",
+      "schema": {
+        "type": "etapes",
+        "etapes": [
+          {
+            "titre": "Semaine 0",
+            "texte": "Les bits deviennent des nombres, des lettres, des couleurs."
+          },
+          {
+            "titre": "Semaines 1 à 5",
+            "texte": "Des instructions C regroupées en fonctions et en structures de données."
+          },
+          {
+            "titre": "Semaines 6 et 7",
+            "texte": "Python et SQL font en une ligne ce qui demandait des dizaines en C."
+          },
+          {
+            "titre": "Semaines 8 et 9",
+            "texte": "Des sites entiers avec HTML, CSS, JavaScript et Flask."
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "En informatique, l'abstraction consiste à masquer les détails d'un mécanisme pour ne montrer que ce qui est utile à son utilisation.",
+          "documentId": "wp-abstraction",
+          "page": "§ Généralités"
+        },
+        {
+          "texte": "Une fonction est une abstraction : on l'appelle par son nom sans avoir besoin de savoir comment elle est écrite.",
+          "documentId": "wp-abstraction",
+          "page": "§ Abstraction du contrôle"
+        }
+      ],
+      "infographie": {
+        "titre": "Dix semaines, une idée",
+        "points": [
+          {
+            "icone": "0️⃣",
+            "texte": "Des bits…"
+          },
+          {
+            "icone": "🧱",
+            "texte": "… aux fonctions et structures…"
+          },
+          {
+            "icone": "🐍",
+            "texte": "… à Python et SQL…"
+          },
+          {
+            "icone": "🌍",
+            "texte": "… jusqu'aux sites web."
+          }
+        ]
+      }
+    },
+    {
+      "id": "projet-final",
+      "titre": "Préparer son projet final",
+      "resume": "Un bon projet commence par un cahier des charges : ce que l'on veut construire, pour qui, avec quels objectifs, en plusieurs niveaux du minimum au plus ambitieux.",
+      "page": "§ Description",
+      "documentId": "wp-cahier",
+      "schema": {
+        "type": "etapes",
+        "etapes": [
+          {
+            "titre": "Idée",
+            "texte": "Quel problème résoudre, et pour qui ?"
+          },
+          {
+            "titre": "Cahier des charges",
+            "texte": "Les fonctionnalités, les technologies, ce qui compte comme réussi."
+          },
+          {
+            "titre": "Trois niveaux",
+            "texte": "Bon (le minimum), meilleur, idéal."
+          },
+          {
+            "titre": "Découper",
+            "texte": "Petites étapes, avec une date pour chacune."
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Un cahier des charges décrit ce que doit faire le produit attendu : ses fonctions, ses contraintes et les critères qui permettront de juger s'il est réussi.",
+          "documentId": "wp-cahier",
+          "page": "§ Description"
+        },
+        {
+          "texte": "La gestion de projet organise les tâches, le temps et les moyens pour atteindre un objectif précis dans un délai donné.",
+          "documentId": "wp-projet",
+          "page": "§ Principes généraux"
+        },
+        {
+          "texte": "On découpe le projet en tâches, on les ordonne et on suit leur avancement pour repérer les retards à temps.",
+          "documentId": "wp-projet",
+          "page": "§ Techniques de gestion de projet"
+        }
+      ],
+      "infographie": {
+        "titre": "Du rêve au projet",
+        "points": [
+          {
+            "icone": "💡",
+            "texte": "Une idée utile, pour quelqu'un."
+          },
+          {
+            "icone": "📋",
+            "texte": "Un cahier des charges clair."
+          },
+          {
+            "icone": "🥉",
+            "texte": "Viser le « bon », puis le « meilleur »."
+          },
+          {
+            "icone": "🗓️",
+            "texte": "Des petites étapes datées."
+          }
+        ]
+      }
+    },
+    {
+      "id": "git-libre",
+      "titre": "Git et le logiciel libre",
+      "resume": "Git garde l'historique de chaque version de votre code et permet de travailler à plusieurs ; le logiciel libre permet de lire, modifier et partager le code des autres.",
+      "page": "§ Fonctionnement",
+      "documentId": "wp-git",
+      "schema": {
+        "type": "cycle",
+        "etapes": [
+          {
+            "titre": "Modifier",
+            "texte": "Changer des fichiers du projet."
+          },
+          {
+            "titre": "Enregistrer",
+            "texte": "git add, puis git commit -m \"message\"."
+          },
+          {
+            "titre": "Partager",
+            "texte": "git push vers un dépôt en ligne."
+          },
+          {
+            "titre": "Récupérer",
+            "texte": "git pull : prendre le travail des autres."
+          }
+        ]
+      },
+      "differences": {
+        "titres": [
+          "Logiciel libre",
+          "Logiciel propriétaire"
+        ],
+        "lignes": [
+          {
+            "critere": "Code source",
+            "a": "Accessible à tous",
+            "b": "Gardé secret"
+          },
+          {
+            "critere": "Modifier",
+            "a": "Autorisé",
+            "b": "Interdit"
+          },
+          {
+            "critere": "Exemples",
+            "a": "Linux, Python, SQLite, Git",
+            "b": "Beaucoup de logiciels commerciaux"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Git enregistre l'état d'un projet sous forme de commits successifs : on peut revenir à une version précédente et suivre qui a changé quoi.",
+          "documentId": "wp-git",
+          "page": "§ Fonctionnement"
+        },
+        {
+          "texte": "Les commandes courantes sont git clone, git add, git commit, git push et git pull.",
+          "documentId": "wp-git",
+          "page": "§ Quelques commandes"
+        },
+        {
+          "texte": "Un logiciel libre donne à ses utilisateurs la liberté de l'utiliser, d'étudier son code, de le modifier et de le redistribuer.",
+          "documentId": "wp-libre",
+          "page": "§ Définition"
+        }
+      ],
+      "infographie": {
+        "titre": "Travailler comme les pros",
+        "points": [
+          {
+            "icone": "📸",
+            "texte": "commit : une photo du code."
+          },
+          {
+            "icone": "⏪",
+            "texte": "On peut revenir en arrière."
+          },
+          {
+            "icone": "🤝",
+            "texte": "push / pull : à plusieurs."
+          },
+          {
+            "icone": "🔓",
+            "texte": "Libre : lire, modifier, partager."
+          }
+        ]
+      }
+    }
+  ]
+}

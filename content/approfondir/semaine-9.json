@@ -283,7 +283,7 @@
             "texte": "Contrôleur : les routes."
           },
           {
-            "icone": "{{ }}",
+            "icone": "🧩",
             "texte": "Jinja insère les valeurs."
           }
         ]
