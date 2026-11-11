@@ -75,7 +75,7 @@ function schemaValide(s: any): Schema {
 
 /** Nettoie un contenu (fichier préparé ou réponse de Gemini). Renvoie null s'il est inutilisable. */
 export function validerContenu(brut: any): ContenuApprofondir | null {
-  const documents = liste(brut?.documents, 10, (d): DocumentSource | null => {
+  const documents = liste(brut?.documents, 12, (d): DocumentSource | null => {
     const url = txt(d?.url, 500);
     if (!txt(d?.id, 40) || !txt(d?.titre, 200)) return null;
     // Seuls les liens http(s) sont gardés (jamais « javascript: »).

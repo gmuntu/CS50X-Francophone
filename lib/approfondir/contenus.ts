@@ -3,8 +3,11 @@
 // et dans le paquet hors ligne du navigateur, sans appel à Internet.
 // Pour ajouter une semaine : créer le fichier (skill « preparer-approfondir »), puis l'importer ici.
 import { validerContenu, type ContenuApprofondir } from './types';
+import semaine0 from '@/content/approfondir/semaine-0.json';
 
-const FICHIERS: Record<number, unknown> = {};
+const FICHIERS: Record<number, unknown> = {
+  0: semaine0,
+};
 
 const cache = new Map<number, ContenuApprofondir | null>();
 

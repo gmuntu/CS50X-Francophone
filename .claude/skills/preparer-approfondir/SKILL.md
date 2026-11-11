@@ -15,7 +15,7 @@ Argument : un numéro de leçon (adresse /courses/cs50x/lessons/<N>), ou un grou
 - En tirer 5 à 8 notions clés à comprendre.
 
 ## 2. Chercher les documents
-- Garder au plus 10 documents, les plus pertinents pour ces notions, de préférence en français.
+- Garder au plus 10 documents (12 si le propriétaire en ajoute), les plus pertinents pour ces notions, de préférence en français.
 - **Licences acceptées** : CC BY, CC BY-SA, CC0, domaine public (vérifier la mention sur la page même du document).
 - Licence « NC » (pas d'usage commercial, ex. CS50 en CC BY-NC-SA) : la signaler à part, ne pas l'utiliser sans accord.
 - Écarter tout document sans licence claire. **Jamais de téléchargement YouTube.**
