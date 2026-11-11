@@ -1,0 +1,518 @@
+{
+  "semaine": 7,
+  "sujet": "SQL",
+  "resume": "Passer des fichiers CSV aux bases de données relationnelles : tables, opérations CRUD en SQL, clés primaires et étrangères, jointures et sous-requêtes, index pour aller vite, et protection contre l'injection SQL.",
+  "documents": [
+    {
+      "id": "wp-bdr",
+      "titre": "Base de données relationnelle",
+      "url": "https://fr.wikipedia.org/wiki/Base_de_donn%C3%A9es_relationnelle",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-sql",
+      "titre": "Structured Query Language (SQL)",
+      "url": "https://fr.wikipedia.org/wiki/Structured_Query_Language",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wb-sql",
+      "titre": "Programmation SQL (Wikilivres)",
+      "url": "https://fr.wikibooks.org/wiki/Programmation_SQL",
+      "auteur": "Contributeurs de Wikilivres",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-crud",
+      "titre": "CRUD",
+      "url": "https://fr.wikipedia.org/wiki/CRUD",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-cle-primaire",
+      "titre": "Clé primaire",
+      "url": "https://fr.wikipedia.org/wiki/Cl%C3%A9_primaire",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-cle-etrangere",
+      "titre": "Clé étrangère",
+      "url": "https://fr.wikipedia.org/wiki/Cl%C3%A9_%C3%A9trang%C3%A8re",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-jointure",
+      "titre": "Jointure (informatique)",
+      "url": "https://fr.wikipedia.org/wiki/Jointure_(informatique)",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-index",
+      "titre": "Index (base de données)",
+      "url": "https://fr.wikipedia.org/wiki/Index_(base_de_donn%C3%A9es)",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-injection",
+      "titre": "Injection SQL",
+      "url": "https://fr.wikipedia.org/wiki/Injection_SQL",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-sqlite",
+      "titre": "SQLite",
+      "url": "https://fr.wikipedia.org/wiki/SQLite",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    }
+  ],
+  "notions": [
+    {
+      "id": "fichier-plat-relationnel",
+      "titre": "Du fichier plat à la base relationnelle",
+      "resume": "Un fichier CSV est un simple tableau ; une base de données relationnelle range les données dans plusieurs tables reliées entre elles, qu'on interroge en SQL.",
+      "page": "§ Modèle relationnel",
+      "documentId": "wp-bdr",
+      "schema": {
+        "type": "comparaison",
+        "colonnes": [
+          {
+            "titre": "Fichier plat (CSV)",
+            "points": [
+              "Un seul tableau",
+              "Données répétées",
+              "Lu ligne par ligne en Python",
+              "Lent quand il grossit"
+            ]
+          },
+          {
+            "titre": "Base relationnelle",
+            "points": [
+              "Plusieurs tables reliées",
+              "Chaque information une seule fois",
+              "Interrogée en SQL",
+              "Rapide grâce aux index"
+            ]
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Dans le modèle relationnel, les données sont organisées en tables, appelées relations, composées de lignes et de colonnes.",
+          "documentId": "wp-bdr",
+          "page": "§ Modèle relationnel"
+        },
+        {
+          "texte": "SQLite est une base de données contenue dans un seul fichier, sans serveur séparé : c'est celle qu'utilise CS50 avec la commande sqlite3.",
+          "documentId": "wp-sqlite",
+          "page": "§ Base de données embarquée"
+        }
+      ],
+      "infographie": {
+        "titre": "Ranger les données",
+        "points": [
+          {
+            "icone": "📄",
+            "texte": "CSV : un seul grand tableau."
+          },
+          {
+            "icone": "🗃️",
+            "texte": "Base relationnelle : des tables reliées."
+          },
+          {
+            "icone": "💬",
+            "texte": "SQL : la langue pour les interroger."
+          },
+          {
+            "icone": "📦",
+            "texte": "SQLite : toute la base dans un fichier."
+          }
+        ]
+      }
+    },
+    {
+      "id": "crud-sql",
+      "titre": "CRUD et les commandes SQL",
+      "resume": "On fait quatre choses avec des données : les créer, les lire, les mettre à jour et les supprimer ; en SQL, ce sont INSERT, SELECT, UPDATE et DELETE.",
+      "page": "§ Application dans les bases de données",
+      "documentId": "wp-crud",
+      "schema": {
+        "type": "relations",
+        "liens": [
+          {
+            "de": "Create (créer)",
+            "vers": "INSERT INTO favoris (langage) VALUES ('Python');",
+            "label": "en SQL"
+          },
+          {
+            "de": "Read (lire)",
+            "vers": "SELECT langage FROM favoris;",
+            "label": "en SQL"
+          },
+          {
+            "de": "Update (modifier)",
+            "vers": "UPDATE favoris SET langage = 'C' WHERE id = 1;",
+            "label": "en SQL"
+          },
+          {
+            "de": "Delete (supprimer)",
+            "vers": "DELETE FROM favoris WHERE id = 1;",
+            "label": "en SQL"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "CRUD désigne les quatre opérations de base sur des données : créer, lire, mettre à jour et supprimer ; en SQL elles correspondent à INSERT, SELECT, UPDATE et DELETE.",
+          "documentId": "wp-crud",
+          "page": "§ Application dans les bases de données"
+        },
+        {
+          "texte": "Les instructions de manipulation de données permettent d'ajouter, de modifier, de supprimer et de rechercher des lignes dans les tables.",
+          "documentId": "wp-sql",
+          "page": "§ Langage de manipulation de données"
+        },
+        {
+          "texte": "SELECT peut filtrer avec WHERE, trier avec ORDER BY, regrouper avec GROUP BY et compter avec COUNT.",
+          "documentId": "wp-sql",
+          "page": "§ Manipulation de données"
+        }
+      ],
+      "infographie": {
+        "titre": "Les 4 gestes des données",
+        "points": [
+          {
+            "icone": "➕",
+            "texte": "INSERT : créer."
+          },
+          {
+            "icone": "👁️",
+            "texte": "SELECT : lire."
+          },
+          {
+            "icone": "✏️",
+            "texte": "UPDATE : modifier."
+          },
+          {
+            "icone": "🗑️",
+            "texte": "DELETE : supprimer (avec WHERE !)."
+          }
+        ]
+      }
+    },
+    {
+      "id": "cles",
+      "titre": "Clé primaire et clé étrangère",
+      "resume": "La clé primaire identifie chaque ligne de façon unique ; la clé étrangère est une colonne qui renvoie à la clé primaire d'une autre table.",
+      "page": "§ Exemple",
+      "documentId": "wp-cle-etrangere",
+      "schema": {
+        "type": "relations",
+        "liens": [
+          {
+            "de": "shows.id",
+            "vers": "identifie chaque série",
+            "label": "clé primaire"
+          },
+          {
+            "de": "ratings.show_id",
+            "vers": "shows.id",
+            "label": "clé étrangère → renvoie à"
+          },
+          {
+            "de": "stars.person_id",
+            "vers": "people.id",
+            "label": "clé étrangère → renvoie à"
+          }
+        ]
+      },
+      "differences": {
+        "titres": [
+          "Clé primaire",
+          "Clé étrangère"
+        ],
+        "lignes": [
+          {
+            "critere": "Rôle",
+            "a": "Identifier une ligne",
+            "b": "Relier à une autre table"
+          },
+          {
+            "critere": "Unique ?",
+            "a": "Oui, jamais deux fois la même",
+            "b": "Non, peut se répéter"
+          },
+          {
+            "critere": "Exemple",
+            "a": "shows.id",
+            "b": "ratings.show_id"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Une clé primaire est une colonne, ou un groupe de colonnes, dont la valeur identifie chaque ligne d'une table de manière unique.",
+          "documentId": "wp-cle-primaire",
+          "page": "§ Introduction"
+        },
+        {
+          "texte": "Une clé étrangère est une colonne d'une table qui fait référence à la clé primaire d'une autre table, ce qui relie les deux.",
+          "documentId": "wp-cle-etrangere",
+          "page": "§ Exemple"
+        }
+      ],
+      "infographie": {
+        "titre": "Relier les tables",
+        "points": [
+          {
+            "icone": "🔑",
+            "texte": "Clé primaire : le numéro unique d'une ligne."
+          },
+          {
+            "icone": "🔗",
+            "texte": "Clé étrangère : le renvoi vers une autre table."
+          },
+          {
+            "icone": "🚫",
+            "texte": "Pas de doublon de clé primaire."
+          },
+          {
+            "icone": "🕸️",
+            "texte": "Les clés forment les relations."
+          }
+        ]
+      }
+    },
+    {
+      "id": "jointures-sous-requetes",
+      "titre": "Jointures et sous-requêtes",
+      "resume": "Une jointure (JOIN) assemble les lignes de deux tables grâce à leurs clés ; une sous-requête place un SELECT à l'intérieur d'un autre.",
+      "page": "§ Jointures en SQL",
+      "documentId": "wp-jointure",
+      "schema": {
+        "type": "etapes",
+        "etapes": [
+          {
+            "titre": "Question",
+            "texte": "Quelles séries ont une note de 9 ou plus ?"
+          },
+          {
+            "titre": "Sous-requête",
+            "texte": "SELECT title FROM shows WHERE id IN (SELECT show_id FROM ratings WHERE rating >= 9);"
+          },
+          {
+            "titre": "Jointure",
+            "texte": "SELECT title, rating FROM shows JOIN ratings ON shows.id = ratings.show_id WHERE rating >= 9;"
+          },
+          {
+            "titre": "Résultat",
+            "texte": "Le titre et la note, côte à côte."
+          }
+        ]
+      },
+      "differences": {
+        "titres": [
+          "Sous-requête",
+          "Jointure (JOIN)"
+        ],
+        "lignes": [
+          {
+            "critere": "Principe",
+            "a": "Un SELECT dans un SELECT",
+            "b": "Coller deux tables par leurs clés"
+          },
+          {
+            "critere": "Colonnes du résultat",
+            "a": "D'une seule table",
+            "b": "Des deux tables"
+          },
+          {
+            "critere": "Lisibilité",
+            "a": "Pas à pas",
+            "b": "Une seule requête"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Une jointure combine les lignes de deux tables en associant celles qui vérifient une condition, le plus souvent l'égalité entre une clé étrangère et une clé primaire.",
+          "documentId": "wp-jointure",
+          "page": "§ Jointures en SQL"
+        },
+        {
+          "texte": "Une requête peut utiliser le résultat d'une autre requête, placée entre parenthèses, par exemple avec WHERE … IN (SELECT …).",
+          "documentId": "wp-sql",
+          "page": "§ Exemples de code"
+        }
+      ],
+      "infographie": {
+        "titre": "Croiser les tables",
+        "points": [
+          {
+            "icone": "🧩",
+            "texte": "JOIN … ON : coller deux tables."
+          },
+          {
+            "icone": "🔑",
+            "texte": "Par la clé étrangère = la clé primaire."
+          },
+          {
+            "icone": "🪆",
+            "texte": "Sous-requête : un SELECT dans un SELECT."
+          },
+          {
+            "icone": "📊",
+            "texte": "Résultat : une seule table."
+          }
+        ]
+      }
+    },
+    {
+      "id": "index",
+      "titre": "Les index",
+      "resume": "Un index est comme l'index d'un livre : il permet de retrouver vite des lignes sans lire toute la table, au prix d'un peu de place et d'écritures plus lentes.",
+      "page": "§ Principe",
+      "documentId": "wp-index",
+      "schema": {
+        "type": "etapes",
+        "etapes": [
+          {
+            "titre": "Sans index",
+            "texte": "La base lit toutes les lignes : recherche linéaire."
+          },
+          {
+            "titre": "Créer",
+            "texte": "CREATE INDEX title_index ON shows (title);"
+          },
+          {
+            "titre": "Avec index",
+            "texte": "Un arbre (B-tree) mène vite à la bonne ligne."
+          },
+          {
+            "titre": "Prix",
+            "texte": "Plus de mémoire, et chaque INSERT met l'index à jour."
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Un index est une structure de données qui permet de retrouver rapidement les lignes d'une table, comme l'index d'un livre renvoie aux bonnes pages.",
+          "documentId": "wp-index",
+          "page": "§ Principe"
+        },
+        {
+          "texte": "Les index sont souvent des arbres équilibrés (B-arbres), qui permettent une recherche en temps logarithmique.",
+          "documentId": "wp-index",
+          "page": "§ Technique"
+        },
+        {
+          "texte": "Chaque insertion, modification ou suppression doit aussi mettre à jour les index : trop d'index ralentit les écritures.",
+          "documentId": "wp-index",
+          "page": "§ Impacts sur les performances en modification"
+        }
+      ],
+      "infographie": {
+        "titre": "Chercher sans tout lire",
+        "points": [
+          {
+            "icone": "📖",
+            "texte": "Comme l'index d'un livre."
+          },
+          {
+            "icone": "🌳",
+            "texte": "Un arbre B-tree en coulisse."
+          },
+          {
+            "icone": "⚡",
+            "texte": "Recherches beaucoup plus rapides."
+          },
+          {
+            "icone": "🐌",
+            "texte": "Écritures un peu plus lentes."
+          }
+        ]
+      }
+    },
+    {
+      "id": "injection-sql",
+      "titre": "L'injection SQL",
+      "resume": "Si on colle tel quel ce que tape l'utilisateur dans une requête, il peut y glisser du SQL ; les requêtes avec des ? empêchent cette attaque.",
+      "page": "§ Exemple",
+      "documentId": "wp-injection",
+      "schema": {
+        "type": "comparaison",
+        "colonnes": [
+          {
+            "titre": "Dangereux",
+            "points": [
+              "f\"SELECT * FROM users WHERE nom = '{nom}'\"",
+              "L'utilisateur tape : ' OR '1'='1",
+              "La condition devient toujours vraie",
+              "Tous les comptes sont visibles"
+            ]
+          },
+          {
+            "titre": "Sûr",
+            "points": [
+              "db.execute(\"SELECT * FROM users WHERE nom = ?\", nom)",
+              "Le texte reste une simple valeur",
+              "Les apostrophes sont neutralisées",
+              "Le pirate ne trouve rien"
+            ]
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Une injection SQL consiste à insérer, dans une donnée envoyée par l'utilisateur, un morceau de SQL qui modifie le sens de la requête, par exemple pour contourner un mot de passe.",
+          "documentId": "wp-injection",
+          "page": "§ Exemple"
+        },
+        {
+          "texte": "On s'en protège avec des requêtes préparées (paramétrées) : la requête et les valeurs sont envoyées séparément, si bien que les valeurs ne sont jamais interprétées comme du SQL.",
+          "documentId": "wp-injection",
+          "page": "§ Comment éviter ces attaques"
+        }
+      ],
+      "infographie": {
+        "titre": "Ne jamais coller la saisie dans le SQL",
+        "points": [
+          {
+            "icone": "🕵️",
+            "texte": "Le pirate tape du SQL au lieu d'un nom."
+          },
+          {
+            "icone": "💥",
+            "texte": "Sans protection, la requête change de sens."
+          },
+          {
+            "icone": "❓",
+            "texte": "Toujours des ? dans la requête."
+          },
+          {
+            "icone": "🛡️",
+            "texte": "Les valeurs restent des valeurs."
+          }
+        ]
+      }
+    }
+  ]
+}

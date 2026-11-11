@@ -29,10 +29,10 @@ export interface EtatSync {
 
 const CLE = 'savoiria-auto-sync';
 export const EVT_SYNC = 'savoiria-auto-sync-change';
-export const PAGES_OUTILS = ['/hors-ligne', '/tuteur', '/agora', '/cs50x', '/dashboard', '/formations'];
+export const PAGES_OUTILS = ['/hors-ligne', '/tuteur', '/salle-etude', '/agora', '/cs50x', '/dashboard', '/formations'];
 // Enregistrement léger automatique (élève qui n'a pas choisi le hors ligne, ordinateur public possible) :
 // pas de pages personnelles (tableau de bord, Agora) ni de Socrate.
-const PAGES_OUTILS_LEGER = ['/hors-ligne', '/cs50x', '/formations'];
+const PAGES_OUTILS_LEGER = ['/hors-ligne', '/cs50x', '/salle-etude', '/formations'];
 const INTERVALLE_MS = 12 * 60 * 60 * 1000; // au plus toutes les 12 h
 const INTERVALLE_MOBILE_MS = 24 * 60 * 60 * 1000; // pages sur données mobiles : au plus une fois par jour
 const PAGE_A_JOUR_MS = 7 * 24 * 60 * 60 * 1000; // semaine aux quiz inchangés : rafraîchie au plus chaque semaine

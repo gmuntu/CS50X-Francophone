@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import { WifiOff, Wifi, RefreshCw, GraduationCap, Mic, BookOpen, HardDrive, Pause, Play, CheckCircle2, Clock } from 'lucide-react';
+import { WifiOff, Wifi, RefreshCw, GraduationCap, BookOpen, HardDrive, Pause, Play, CheckCircle2, Clock } from 'lucide-react';
 import { type SavedLesson } from '@/lib/offline';
 import { pendingCount, SYNC_EVENT } from '@/lib/sync-queue';
 import { socrateLocalDisponible } from '@/lib/socrate-local';
@@ -99,7 +99,7 @@ export default function HorsLignePage() {
         {/* Raccourcis (liens classiques : le service worker sert les pages enregistrées) */}
         <div className="grid grid-cols-3 gap-2">
           <a href={reprendre?.path ?? '/tuteur'} className="rounded-2xl border border-border bg-card p-3 text-center text-sm font-bold hover:border-primary/40"><GraduationCap className="mx-auto mb-1 w-5 h-5 text-primary" />Salle de cours</a>
-          <a href="/agora" className="rounded-2xl border border-border bg-card p-3 text-center text-sm font-bold hover:border-primary/40"><Mic className="mx-auto mb-1 w-5 h-5 text-primary" />Tuteur vocal</a>
+          <a href="/agora" className="rounded-2xl border border-border bg-card p-3 text-center text-sm font-bold hover:border-primary/40"><span className="mx-auto mb-1 block text-xl leading-5" aria-hidden>🙋🏿</span>Demande au prof</a>
           <a href="/formations" className="rounded-2xl border border-border bg-card p-3 text-center text-sm font-bold hover:border-primary/40"><BookOpen className="mx-auto mb-1 w-5 h-5 text-primary" />Mes formations</a>
         </div>
 

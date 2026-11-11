@@ -1,0 +1,477 @@
+{
+  "semaine": 8,
+  "sujet": "HTML, CSS et JavaScript",
+  "resume": "Comment fonctionne le Web : le voyage d'une page (URL, DNS, HTTP), HTML pour la structure, CSS pour l'apparence et JavaScript pour l'interactivité, grâce au DOM et aux événements.",
+  "documents": [
+    {
+      "id": "wp-html",
+      "titre": "Hypertext Markup Language (HTML)",
+      "url": "https://fr.wikipedia.org/wiki/Hypertext_Markup_Language",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wb-html",
+      "titre": "Le langage HTML (Wikilivres)",
+      "url": "https://fr.wikibooks.org/wiki/Le_langage_HTML",
+      "auteur": "Contributeurs de Wikilivres",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-css",
+      "titre": "Feuilles de style en cascade (CSS)",
+      "url": "https://fr.wikipedia.org/wiki/Feuilles_de_style_en_cascade",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-js",
+      "titre": "JavaScript",
+      "url": "https://fr.wikipedia.org/wiki/JavaScript",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wb-js",
+      "titre": "Programmation JavaScript (Wikilivres)",
+      "url": "https://fr.wikibooks.org/wiki/Programmation_JavaScript",
+      "auteur": "Contributeurs de Wikilivres",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-dom",
+      "titre": "Document Object Model (DOM)",
+      "url": "https://fr.wikipedia.org/wiki/Document_Object_Model",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-evenementielle",
+      "titre": "Programmation événementielle",
+      "url": "https://fr.wikipedia.org/wiki/Programmation_%C3%A9v%C3%A9nementielle",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-http",
+      "titre": "Hypertext Transfer Protocol (HTTP)",
+      "url": "https://fr.wikipedia.org/wiki/Hypertext_Transfer_Protocol",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-url",
+      "titre": "Uniform Resource Locator (URL)",
+      "url": "https://fr.wikipedia.org/wiki/Uniform_Resource_Locator",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-dns",
+      "titre": "Domain Name System (DNS)",
+      "url": "https://fr.wikipedia.org/wiki/Domain_Name_System",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    }
+  ],
+  "notions": [
+    {
+      "id": "internet-http",
+      "titre": "Comment une page arrive jusqu'à vous",
+      "resume": "Le navigateur traduit le nom du site en adresse IP grâce au DNS, puis demande la page au serveur avec le protocole HTTP, qui répond avec un code comme 200 ou 404.",
+      "page": "§ Méthodes",
+      "documentId": "wp-http",
+      "schema": {
+        "type": "etapes",
+        "etapes": [
+          {
+            "titre": "URL",
+            "texte": "https://savoiria.online/cours : protocole, domaine, chemin."
+          },
+          {
+            "titre": "DNS",
+            "texte": "Le nom savoiria.online devient une adresse IP."
+          },
+          {
+            "titre": "Requête HTTP",
+            "texte": "GET /cours HTTP/1.1 envoyé au serveur."
+          },
+          {
+            "titre": "Réponse",
+            "texte": "200 OK + la page HTML (ou 404 si elle n'existe pas)."
+          }
+        ]
+      },
+      "differences": {
+        "titres": [
+          "GET",
+          "POST"
+        ],
+        "lignes": [
+          {
+            "critere": "Usage",
+            "a": "Demander une page",
+            "b": "Envoyer des données (formulaire)"
+          },
+          {
+            "critere": "Données",
+            "a": "Visibles dans l'URL (?q=chat)",
+            "b": "Dans le corps de la requête"
+          },
+          {
+            "critere": "Exemple",
+            "a": "Une recherche",
+            "b": "Une connexion avec mot de passe"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Le DNS traduit les noms de domaine, faciles à retenir, en adresses IP utilisées par les ordinateurs pour se joindre.",
+          "documentId": "wp-dns",
+          "page": "§ Rôle du DNS"
+        },
+        {
+          "texte": "Une URL indique le protocole (https), le nom du serveur, puis le chemin de la ressource et d'éventuels paramètres après un point d'interrogation.",
+          "documentId": "wp-url",
+          "page": "§ Syntaxe"
+        },
+        {
+          "texte": "HTTP définit des méthodes : GET demande une ressource, POST envoie des données au serveur ; la réponse commence par un code d'état, comme 200 (succès) ou 404 (introuvable).",
+          "documentId": "wp-http",
+          "page": "§ Méthodes"
+        }
+      ],
+      "infographie": {
+        "titre": "Le voyage d'une page web",
+        "points": [
+          {
+            "icone": "🔤",
+            "texte": "URL : l'adresse de la page."
+          },
+          {
+            "icone": "📒",
+            "texte": "DNS : le nom devient une adresse IP."
+          },
+          {
+            "icone": "📨",
+            "texte": "HTTP : GET demande, POST envoie."
+          },
+          {
+            "icone": "🔢",
+            "texte": "200 = OK, 404 = introuvable."
+          }
+        ]
+      }
+    },
+    {
+      "id": "html",
+      "titre": "HTML : la structure de la page",
+      "resume": "HTML décrit le contenu d'une page avec des balises (titres, paragraphes, liens, images) qui s'emboîtent comme un arbre.",
+      "page": "§ Description de HTML",
+      "documentId": "wp-html",
+      "schema": {
+        "type": "relations",
+        "liens": [
+          {
+            "de": "<html>",
+            "vers": "<head> et <body>",
+            "label": "contient"
+          },
+          {
+            "de": "<head>",
+            "vers": "<title>",
+            "label": "contient"
+          },
+          {
+            "de": "<body>",
+            "vers": "<h1>, <p>, <a href=…>, <img src=…>",
+            "label": "contient"
+          },
+          {
+            "de": "Attribut",
+            "vers": "une précision sur la balise (href, src, alt)",
+            "label": "ajoute"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "HTML est un langage de balisage : il structure le contenu d'une page web à l'aide d'éléments délimités par des balises, qui peuvent porter des attributs.",
+          "documentId": "wp-html",
+          "page": "§ Description de HTML"
+        },
+        {
+          "texte": "Le livre présente les balises de base : structure du document, titres, paragraphes, listes, liens, images, tableaux et formulaires.",
+          "documentId": "wb-html",
+          "page": "§ Sommaire"
+        }
+      ],
+      "infographie": {
+        "titre": "Les balises",
+        "points": [
+          {
+            "icone": "🏷️",
+            "texte": "<balise> … </balise>."
+          },
+          {
+            "icone": "🌳",
+            "texte": "Elles s'emboîtent en arbre."
+          },
+          {
+            "icone": "🔗",
+            "texte": "<a href> : un lien."
+          },
+          {
+            "icone": "🖼️",
+            "texte": "<img src alt> : une image (alt décrit l'image)."
+          }
+        ]
+      }
+    },
+    {
+      "id": "css",
+      "titre": "CSS : l'apparence",
+      "resume": "CSS décrit comment afficher le HTML : couleurs, tailles, marges, polices, en visant des éléments avec des sélecteurs.",
+      "page": "§ Principes techniques et syntaxe de CSS",
+      "documentId": "wp-css",
+      "schema": {
+        "type": "etapes",
+        "etapes": [
+          {
+            "titre": "Sélecteur",
+            "texte": "Quoi ? p, .important, #entete."
+          },
+          {
+            "titre": "Propriété",
+            "texte": "Quoi changer ? color, font-size, margin."
+          },
+          {
+            "titre": "Valeur",
+            "texte": "Comment ? blue, 18px, 10px."
+          },
+          {
+            "titre": "Cascade",
+            "texte": "Si plusieurs règles se contredisent, la plus précise gagne."
+          }
+        ]
+      },
+      "differences": {
+        "titres": [
+          "HTML",
+          "CSS"
+        ],
+        "lignes": [
+          {
+            "critere": "Rôle",
+            "a": "Le contenu, la structure",
+            "b": "La présentation"
+          },
+          {
+            "critere": "Exemple",
+            "a": "<p>Bonjour</p>",
+            "b": "p { color: blue; }"
+          },
+          {
+            "critere": "Image",
+            "a": "Les murs de la maison",
+            "b": "La peinture et la décoration"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Une règle CSS associe un sélecteur, qui désigne les éléments visés, à des déclarations formées d'une propriété et d'une valeur.",
+          "documentId": "wp-css",
+          "page": "§ Principes techniques et syntaxe de CSS"
+        },
+        {
+          "texte": "CSS sépare la présentation du contenu : on peut changer toute l'apparence d'un site sans toucher à son HTML.",
+          "documentId": "wp-css",
+          "page": "§ Indépendance entre présentation et structure"
+        }
+      ],
+      "infographie": {
+        "titre": "Habiller la page",
+        "points": [
+          {
+            "icone": "🎯",
+            "texte": "Sélecteur : qui on vise."
+          },
+          {
+            "icone": "🎨",
+            "texte": "Propriété : ce qu'on change."
+          },
+          {
+            "icone": "📏",
+            "texte": "Valeur : de combien."
+          },
+          {
+            "icone": "🌊",
+            "texte": "Cascade : la règle la plus précise gagne."
+          }
+        ]
+      }
+    },
+    {
+      "id": "javascript-dom",
+      "titre": "JavaScript et le DOM",
+      "resume": "JavaScript est un langage exécuté dans le navigateur ; il lit et modifie la page à travers le DOM, l'arbre qui représente tous les éléments HTML.",
+      "page": "§ Description",
+      "documentId": "wp-dom",
+      "schema": {
+        "type": "etapes",
+        "etapes": [
+          {
+            "titre": "La page devient un arbre",
+            "texte": "document → html → body → h1, p…"
+          },
+          {
+            "titre": "Trouver un élément",
+            "texte": "document.querySelector('#nom')"
+          },
+          {
+            "titre": "Le lire ou le changer",
+            "texte": "element.innerHTML = 'Bonjour, Awa';"
+          },
+          {
+            "titre": "Résultat",
+            "texte": "La page change sans être rechargée."
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Le DOM représente un document HTML sous forme d'arbre d'objets ; un programme peut le parcourir et modifier son contenu, sa structure et son style.",
+          "documentId": "wp-dom",
+          "page": "§ Description"
+        },
+        {
+          "texte": "JavaScript est surtout utilisé dans les pages web, où il est exécuté par le navigateur pour les rendre interactives.",
+          "documentId": "wp-js",
+          "page": "§ Dans une page web"
+        },
+        {
+          "texte": "Le livre décrit la syntaxe de JavaScript (variables, fonctions, conditions, boucles) et son utilisation dans les pages web.",
+          "documentId": "wb-js",
+          "page": "§ Informations"
+        }
+      ],
+      "infographie": {
+        "titre": "Rendre la page vivante",
+        "points": [
+          {
+            "icone": "🌳",
+            "texte": "DOM : la page vue comme un arbre."
+          },
+          {
+            "icone": "🔎",
+            "texte": "querySelector : trouver un élément."
+          },
+          {
+            "icone": "✏️",
+            "texte": "innerHTML : changer son contenu."
+          },
+          {
+            "icone": "⚡",
+            "texte": "Sans recharger la page."
+          }
+        ]
+      }
+    },
+    {
+      "id": "evenements",
+      "titre": "Les événements",
+      "resume": "En programmation événementielle, le code attend qu'il se passe quelque chose (un clic, une touche) et réagit avec une fonction, un écouteur d'événement.",
+      "page": "§ Description",
+      "documentId": "wp-evenementielle",
+      "schema": {
+        "type": "cycle",
+        "etapes": [
+          {
+            "titre": "Écouter",
+            "texte": "bouton.addEventListener('click', saluer);"
+          },
+          {
+            "titre": "Attendre",
+            "texte": "Le navigateur surveille la page."
+          },
+          {
+            "titre": "Événement",
+            "texte": "L'utilisateur clique."
+          },
+          {
+            "titre": "Réagir",
+            "texte": "La fonction saluer s'exécute, puis on attend à nouveau."
+          }
+        ]
+      },
+      "differences": {
+        "titres": [
+          "Programme classique (C)",
+          "Programme événementiel (JS)"
+        ],
+        "lignes": [
+          {
+            "critere": "Déroulement",
+            "a": "De haut en bas",
+            "b": "Selon les actions de l'utilisateur"
+          },
+          {
+            "critere": "Attente",
+            "a": "get_int bloque",
+            "b": "Le programme écoute"
+          },
+          {
+            "critere": "Exemple",
+            "a": "Demander l'âge puis l'afficher",
+            "b": "Afficher l'âge au clic du bouton"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "En programmation événementielle, l'exécution est déterminée par des événements, comme une action de l'utilisateur, auxquels le programme répond par des gestionnaires.",
+          "documentId": "wp-evenementielle",
+          "page": "§ Description"
+        },
+        {
+          "texte": "Le DOM définit de nombreux événements : chargement de la page, clic et mouvements de souris, touches du clavier, envoi d'un formulaire.",
+          "documentId": "wp-dom",
+          "page": "§ Événements"
+        }
+      ],
+      "infographie": {
+        "titre": "Réagir aux actions",
+        "points": [
+          {
+            "icone": "👂",
+            "texte": "addEventListener : j'écoute."
+          },
+          {
+            "icone": "🖱️",
+            "texte": "click, keydown, submit…"
+          },
+          {
+            "icone": "⚙️",
+            "texte": "Une fonction réagit."
+          },
+          {
+            "icone": "🔁",
+            "texte": "Puis on écoute à nouveau."
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -5,7 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import SyntaxHighlighter from '@/components/code-bloc-lazy';
 import {
-  Mic, Send, Play, Square, Download, NotebookPen, ScrollText,
+  Mic, Send, Play, Square, Download, ScrollText,
   ChevronDown, ChevronUp, Volume2, Landmark, Lightbulb, Code2, Loader2,
 } from 'lucide-react';
 import type { CourseModuleConfig } from '@/config/course-modules';
@@ -14,6 +14,8 @@ import {
   detecterMode, demanderSocrateLocal, pcm16VersWav, noterQuestion,
   questionsEnAttente, viderQuestionsEnAttente, prechaufferTuteur, ORDINATEUR_LOCAL, type ModeSocrate,
 } from '@/lib/socrate-local';
+import Link from 'next/link';
+import { enregistrementVersPcm16 as toPcm16 } from '@/lib/audio-pcm';
 import { sanitizeForVoice } from '@/lib/voix-texte';
 
 type DayType = 'MONDAY' | 'WEDNESDAY' | 'FRIDAY';
@@ -440,33 +442,6 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
   // Enregistrement micro (repli quand le navigateur n'a pas de reconnaissance vocale intégrée)
   const recorderRef = useRef<MediaRecorder | null>(null);
 
-  // Convertit l'enregistrement (webm sur Android/Chrome, mp4 sur iPhone) en PCM 16 kHz mono,
-  // un format que Google comprend quel que soit le téléphone.
-  const toPcm16 = async (blob: Blob): Promise<string> => {
-    const AC: any = (window as any).AudioContext || (window as any).webkitAudioContext;
-    const ctx = new AC();
-    try {
-      const buf = await blob.arrayBuffer();
-      // Forme « rappel » : compatible avec les anciens Safari.
-      const decoded: AudioBuffer = await new Promise((res, rej) => ctx.decodeAudioData(buf, res, rej));
-      const rate = 16000;
-      const off = new OfflineAudioContext(1, Math.ceil(decoded.duration * rate), rate);
-      const src = off.createBufferSource();
-      src.buffer = decoded;
-      src.connect(off.destination);
-      src.start();
-      const out = (await off.startRendering()).getChannelData(0);
-      const bytes = new Uint8Array(out.length * 2);
-      const view = new DataView(bytes.buffer);
-      for (let i = 0; i < out.length; i++) view.setInt16(i * 2, Math.max(-1, Math.min(1, out[i])) * 0x7fff, true);
-      let binary = '';
-      for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-      return btoa(binary);
-    } finally {
-      ctx.close?.();
-    }
-  };
-
   const transcribeWithGoogle = async (blob: Blob) => {
     try {
       const audio = await toPcm16(blob);
@@ -833,26 +808,14 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
           )}
         </div>
 
-        {/* Notebook */}
-        {moduleConfig?.notebookUrl ? (
-          <a
-            href={moduleConfig.notebookUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => stopAllSpeech()}
-            className="w-full text-xs font-bold bg-card hover:bg-primary hover:text-primary-foreground text-foreground py-2.5 px-3 rounded-xl transition-all text-center flex items-center justify-center gap-2 border border-border/80 hover:border-primary shadow-soft-sm"
-          >
-            <NotebookPen className="w-4 h-4 text-primary" /> Ouvrir le Notebook de la Semaine
-          </a>
-        ) : (
-          <button
-            type="button"
-            onClick={() => { stopAllSpeech(); alert('Le notebook de cette semaine sera bientôt disponible.'); }}
-            className="w-full text-xs font-bold bg-card hover:bg-muted text-muted-foreground py-2.5 px-3 rounded-xl transition-all text-center flex items-center justify-center gap-2 border border-border/80 opacity-80"
-          >
-            <NotebookPen className="w-4 h-4" /> Ouvrir le Notebook de la Semaine
-          </button>
-        )}
+        {/* Salle d'étude de la semaine (tableau + cahier) */}
+        <Link
+          href={`/salle-etude?semaine=${moduleConfig?.id ?? 0}`}
+          onClick={() => stopAllSpeech()}
+          className="w-full text-xs font-bold bg-card hover:bg-primary hover:text-primary-foreground text-foreground py-2.5 px-3 rounded-xl transition-all text-center flex items-center justify-center gap-2 border border-border/80 hover:border-primary shadow-soft-sm"
+        >
+          📚 Aller à la Salle d’étude →
+        </Link>
 
         {/* Questions rapides */}
         <div className="flex flex-col gap-1.5 pt-2 border-t border-border/70">

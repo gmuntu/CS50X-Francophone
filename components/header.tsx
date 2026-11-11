@@ -29,12 +29,14 @@ export default function Header() {
   ];
 
   // Sous-menu propre à CS50x : visible seulement dans les pages de cette formation.
-  const inCs50 = ['/cs50x', '/courses', '/tuteur', '/agora'].some((p) => pathname === p || pathname?.startsWith(p + '/'));
+  const inCs50 = ['/cs50x', '/courses', '/tuteur', '/salle-etude', '/agora'].some((p) => pathname === p || pathname?.startsWith(p + '/'));
   const cs50Items = [
     { label: '📖 Le programme', href: '/cs50x' },
     { label: '🎓 Salle de cours', href: '/tuteur' },
+    // Adresse /agora conservée : les liens existants continuent de marcher.
+    { label: '🙋🏿 Demande au prof', href: '/agora' },
+    { label: '📚 Salle d’étude', href: '/salle-etude' },
     { label: '🧩 Problèmes', href: '/courses/cs50x/problemes' },
-    { label: '🎙️ Tuteur vocal', href: '/agora' },
   ];
 
   return (

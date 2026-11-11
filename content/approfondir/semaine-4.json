@@ -1,0 +1,639 @@
+{
+  "semaine": 4,
+  "sujet": "La mémoire",
+  "resume": "Ce qui se passe dans la mémoire de l'ordinateur : adresses en hexadécimal, pointeurs, chaînes vues comme des adresses, réservation avec malloc et libération avec free, pile et tas, fuites détectées par Valgrind, et fichiers.",
+  "documents": [
+    {
+      "id": "wp-hexa",
+      "titre": "Système hexadécimal",
+      "url": "https://fr.wikipedia.org/wiki/Syst%C3%A8me_hexad%C3%A9cimal",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-pointeur",
+      "titre": "Pointeur (programmation)",
+      "url": "https://fr.wikipedia.org/wiki/Pointeur_(programmation)",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wb-pointeurs",
+      "titre": "Programmation C : Pointeurs (Wikilivres)",
+      "url": "https://fr.wikibooks.org/wiki/Programmation_C/Pointeurs",
+      "auteur": "Contributeurs de Wikilivres",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wb-memoire",
+      "titre": "Programmation C : Gestion de la mémoire (Wikilivres)",
+      "url": "https://fr.wikibooks.org/wiki/Programmation_C/Gestion_de_la_m%C3%A9moire",
+      "auteur": "Contributeurs de Wikilivres",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-malloc",
+      "titre": "Malloc",
+      "url": "https://fr.wikipedia.org/wiki/Malloc",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-pile",
+      "titre": "Pile d'exécution",
+      "url": "https://fr.wikipedia.org/wiki/Pile_d%27ex%C3%A9cution",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-tas",
+      "titre": "Tas (allocation dynamique)",
+      "url": "https://fr.wikipedia.org/wiki/Tas_(allocation_dynamique)",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-fuite",
+      "titre": "Fuite de mémoire",
+      "url": "https://fr.wikipedia.org/wiki/Fuite_de_m%C3%A9moire",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-valgrind",
+      "titre": "Valgrind",
+      "url": "https://fr.wikipedia.org/wiki/Valgrind",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wb-es",
+      "titre": "Programmation C : Entrées/sorties (Wikilivres)",
+      "url": "https://fr.wikibooks.org/wiki/Programmation_C/Entr%C3%A9es/sorties",
+      "auteur": "Contributeurs de Wikilivres",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    }
+  ],
+  "notions": [
+    {
+      "id": "hexadecimal",
+      "titre": "L'hexadécimal et les adresses",
+      "resume": "L'hexadécimal compte en base 16 (0 à 9 puis A à F) : un chiffre hexadécimal remplace 4 bits, ce qui rend les adresses mémoire plus courtes à lire.",
+      "page": "§ Écriture des entiers",
+      "documentId": "wp-hexa",
+      "schema": {
+        "type": "etapes",
+        "etapes": [
+          {
+            "titre": "Base 16",
+            "texte": "Chiffres 0 1 2 … 9 A B C D E F."
+          },
+          {
+            "titre": "4 bits = 1 chiffre",
+            "texte": "1111 en binaire = F."
+          },
+          {
+            "titre": "1 octet = 2 chiffres",
+            "texte": "11111111 = FF = 255."
+          },
+          {
+            "titre": "Préfixe 0x",
+            "texte": "Une adresse s'écrit 0x7ffc… pour dire « hexadécimal »."
+          }
+        ]
+      },
+      "differences": {
+        "titres": [
+          "Décimal",
+          "Hexadécimal"
+        ],
+        "lignes": [
+          {
+            "critere": "Chiffres",
+            "a": "0 à 9",
+            "b": "0 à 9 puis A à F"
+          },
+          {
+            "critere": "255",
+            "a": "255",
+            "b": "FF"
+          },
+          {
+            "critere": "Usage",
+            "a": "La vie courante",
+            "b": "Adresses mémoire, couleurs (#FF0000)"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Le système hexadécimal utilise seize symboles : les chiffres de 0 à 9 et les lettres A à F, qui valent de 10 à 15.",
+          "documentId": "wp-hexa",
+          "page": "§ Écriture des entiers"
+        },
+        {
+          "texte": "Chaque chiffre hexadécimal correspond exactement à quatre bits : c'est une façon compacte d'écrire du binaire, très utilisée en informatique.",
+          "documentId": "wp-hexa",
+          "page": "§ Utilisation"
+        },
+        {
+          "texte": "En HTML, une couleur s'écrit avec trois octets en hexadécimal : #FF0000 donne du rouge.",
+          "documentId": "wp-hexa",
+          "page": "§ Codage des couleurs"
+        }
+      ],
+      "infographie": {
+        "titre": "Compter jusqu'à F",
+        "points": [
+          {
+            "icone": "🔢",
+            "texte": "0…9 puis A=10 … F=15."
+          },
+          {
+            "icone": "🧱",
+            "texte": "1 chiffre hexa = 4 bits."
+          },
+          {
+            "icone": "📍",
+            "texte": "Adresses : 0x1A2B…"
+          },
+          {
+            "icone": "🎨",
+            "texte": "Couleurs web : #RRVVBB."
+          }
+        ]
+      }
+    },
+    {
+      "id": "pointeurs",
+      "titre": "Les pointeurs, & et *",
+      "resume": "Un pointeur est une variable qui contient l'adresse d'une autre variable : & donne l'adresse, * va chercher la valeur à cette adresse.",
+      "page": "Pointeurs, § Usage et déclaration",
+      "documentId": "wb-pointeurs",
+      "schema": {
+        "type": "relations",
+        "liens": [
+          {
+            "de": "int n = 50;",
+            "vers": "une case contenant 50",
+            "label": "crée"
+          },
+          {
+            "de": "&n",
+            "vers": "l'adresse de n (0x123…)",
+            "label": "donne"
+          },
+          {
+            "de": "int *p = &n;",
+            "vers": "p contient l'adresse de n",
+            "label": "range"
+          },
+          {
+            "de": "*p",
+            "vers": "50",
+            "label": "va chercher"
+          }
+        ]
+      },
+      "differences": {
+        "titres": [
+          "&  (adresse de)",
+          "*  (déréférencement)"
+        ],
+        "lignes": [
+          {
+            "critere": "Question posée",
+            "a": "Où est rangée la variable ?",
+            "b": "Qu'y a-t-il à cette adresse ?"
+          },
+          {
+            "critere": "Exemple",
+            "a": "&n → 0x7ffc…",
+            "b": "*p → 50"
+          },
+          {
+            "critere": "Image",
+            "a": "Le numéro de la boîte aux lettres",
+            "b": "Le courrier dans la boîte"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Un pointeur est une variable dont la valeur est l'adresse d'une autre variable ; on le déclare avec une étoile : int *p.",
+          "documentId": "wb-pointeurs",
+          "page": "§ Usage et déclaration"
+        },
+        {
+          "texte": "L'opérateur * appliqué à un pointeur donne accès à la valeur stockée à l'adresse qu'il contient : c'est le déréférencement.",
+          "documentId": "wb-pointeurs",
+          "page": "§ Déréférencement"
+        },
+        {
+          "texte": "Les pointeurs permettent de passer une donnée à une fonction sans la copier et de manipuler des zones de mémoire réservées pendant l'exécution.",
+          "documentId": "wp-pointeur",
+          "page": "§ Utilité"
+        }
+      ],
+      "infographie": {
+        "titre": "Une adresse dans une variable",
+        "points": [
+          {
+            "icone": "🏠",
+            "texte": "Chaque variable a une adresse."
+          },
+          {
+            "icone": "📮",
+            "texte": "&n : l'adresse de n."
+          },
+          {
+            "icone": "👉",
+            "texte": "int *p : p pointe vers un int."
+          },
+          {
+            "icone": "📬",
+            "texte": "*p : la valeur pointée."
+          }
+        ]
+      }
+    },
+    {
+      "id": "chaines-pointeurs",
+      "titre": "Une chaîne, c'est un pointeur",
+      "resume": "En C, le type string de CS50 est en réalité char * : l'adresse du premier caractère, la suite étant lue jusqu'au '\\0'.",
+      "page": "Pointeurs, § L'arithmétique des pointeurs",
+      "documentId": "wb-pointeurs",
+      "schema": {
+        "type": "etapes",
+        "etapes": [
+          {
+            "titre": "char *s = \"HI!\";",
+            "texte": "s contient l'adresse du 'H'."
+          },
+          {
+            "titre": "*s",
+            "texte": "vaut 'H'."
+          },
+          {
+            "titre": "*(s + 1)",
+            "texte": "vaut 'I' : on avance d'une case."
+          },
+          {
+            "titre": "s == t ?",
+            "texte": "Compare les adresses, pas le texte : utiliser strcmp."
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Ajouter 1 à un pointeur le fait avancer d'un élément du type pointé : p + 1 désigne la case suivante.",
+          "documentId": "wb-pointeurs",
+          "page": "§ Arithmétique de base"
+        },
+        {
+          "texte": "Pour qu'une fonction modifie une variable de l'appelant, comme dans swap, on lui passe l'adresse de cette variable.",
+          "documentId": "wb-pointeurs",
+          "page": "§ Utilisation des pointeurs pour passer des paramètres par adresse"
+        }
+      ],
+      "infographie": {
+        "titre": "Ce que cache string",
+        "points": [
+          {
+            "icone": "🔤",
+            "texte": "string = char *."
+          },
+          {
+            "icone": "📍",
+            "texte": "s = adresse du premier caractère."
+          },
+          {
+            "icone": "➕",
+            "texte": "s + 1 = caractère suivant."
+          },
+          {
+            "icone": "⚠️",
+            "texte": "Comparer deux textes : strcmp, pas ==."
+          }
+        ]
+      }
+    },
+    {
+      "id": "malloc-free",
+      "titre": "malloc et free",
+      "resume": "malloc réserve de la mémoire pendant l'exécution et renvoie son adresse ; free la rend quand on n'en a plus besoin.",
+      "page": "Gestion de la mémoire, § malloc: allocation de mémoire",
+      "documentId": "wb-memoire",
+      "schema": {
+        "type": "etapes",
+        "etapes": [
+          {
+            "titre": "Réserver",
+            "texte": "char *t = malloc(4); demande 4 octets."
+          },
+          {
+            "titre": "Vérifier",
+            "texte": "Si t vaut NULL, il n'y a plus de mémoire : arrêter."
+          },
+          {
+            "titre": "Utiliser",
+            "texte": "Copier, écrire, lire dans t."
+          },
+          {
+            "titre": "Libérer",
+            "texte": "free(t); rend la mémoire."
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "malloc alloue un bloc du nombre d'octets demandé et renvoie un pointeur vers son début, ou NULL si l'allocation échoue.",
+          "documentId": "wb-memoire",
+          "page": "§ malloc: allocation de mémoire"
+        },
+        {
+          "texte": "free libère un bloc précédemment alloué ; il ne faut plus l'utiliser ensuite, ni le libérer deux fois.",
+          "documentId": "wb-memoire",
+          "page": "§ free: libération de mémoire"
+        },
+        {
+          "texte": "malloc sert quand la taille des données n'est connue qu'à l'exécution, ou quand elles doivent survivre à la fonction qui les crée.",
+          "documentId": "wp-malloc",
+          "page": "§ Motivation"
+        }
+      ],
+      "infographie": {
+        "titre": "Emprunter puis rendre",
+        "points": [
+          {
+            "icone": "🙋",
+            "texte": "malloc : je réserve."
+          },
+          {
+            "icone": "🔍",
+            "texte": "NULL ? Plus de place."
+          },
+          {
+            "icone": "✍️",
+            "texte": "J'utilise la mémoire."
+          },
+          {
+            "icone": "↩️",
+            "texte": "free : je rends."
+          }
+        ]
+      }
+    },
+    {
+      "id": "pile-tas",
+      "titre": "La pile et le tas",
+      "resume": "La pile garde automatiquement les variables des fonctions en cours ; le tas contient la mémoire réservée par malloc, à libérer soi-même.",
+      "page": "§ Introduction",
+      "documentId": "wp-pile",
+      "schema": {
+        "type": "comparaison",
+        "colonnes": [
+          {
+            "titre": "Pile (stack)",
+            "points": [
+              "Variables locales, paramètres",
+              "Gérée automatiquement",
+              "Libérée à la fin de la fonction",
+              "Débordement : stack overflow"
+            ]
+          },
+          {
+            "titre": "Tas (heap)",
+            "points": [
+              "Mémoire de malloc",
+              "Gérée par le programmeur",
+              "Libérée par free",
+              "Oubli : fuite de mémoire"
+            ]
+          }
+        ]
+      },
+      "differences": {
+        "titres": [
+          "Pile",
+          "Tas"
+        ],
+        "lignes": [
+          {
+            "critere": "Qui libère ?",
+            "a": "Automatique",
+            "b": "Le programmeur (free)"
+          },
+          {
+            "critere": "Durée de vie",
+            "a": "Le temps de la fonction",
+            "b": "Jusqu'au free"
+          },
+          {
+            "critere": "Erreur typique",
+            "a": "Récursion sans fin → stack overflow",
+            "b": "Oublier free → fuite"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "La pile d'exécution enregistre les informations des fonctions en cours : à chaque appel, un cadre est empilé ; il est dépilé quand la fonction se termine.",
+          "documentId": "wp-pile",
+          "page": "§ Introduction"
+        },
+        {
+          "texte": "Le tas est la zone de mémoire dans laquelle le programme réserve dynamiquement des blocs pendant son exécution, par exemple avec malloc.",
+          "documentId": "wp-tas",
+          "page": "§ Introduction"
+        }
+      ],
+      "infographie": {
+        "titre": "Deux zones de mémoire",
+        "points": [
+          {
+            "icone": "🥞",
+            "texte": "Pile : une assiette par appel de fonction."
+          },
+          {
+            "icone": "🧹",
+            "texte": "Pile : rangée toute seule."
+          },
+          {
+            "icone": "📦",
+            "texte": "Tas : malloc y réserve."
+          },
+          {
+            "icone": "🗑️",
+            "texte": "Tas : free pour ranger."
+          }
+        ]
+      }
+    },
+    {
+      "id": "valgrind-fuites",
+      "titre": "Fuites de mémoire et Valgrind",
+      "resume": "Une fuite de mémoire, c'est de la mémoire réservée jamais libérée ; Valgrind exécute le programme et signale fuites et accès interdits.",
+      "page": "§ Présentation",
+      "documentId": "wp-fuite",
+      "schema": {
+        "type": "cycle",
+        "etapes": [
+          {
+            "titre": "Lancer",
+            "texte": "valgrind ./programme"
+          },
+          {
+            "titre": "Lire le rapport",
+            "texte": "« definitely lost », « invalid write »…"
+          },
+          {
+            "titre": "Corriger",
+            "texte": "Ajouter le free manquant, corriger l'indice."
+          },
+          {
+            "titre": "Relancer",
+            "texte": "Jusqu'à « All heap blocks were freed »."
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Une fuite de mémoire se produit quand un programme réserve de la mémoire et ne la libère pas : elle reste occupée et inutilisable.",
+          "documentId": "wp-fuite",
+          "page": "§ Présentation"
+        },
+        {
+          "texte": "Un programme qui fuit consomme de plus en plus de mémoire, ce qui peut ralentir puis bloquer l'ordinateur.",
+          "documentId": "wp-fuite",
+          "page": "§ Conséquences"
+        },
+        {
+          "texte": "Valgrind exécute le programme dans un environnement contrôlé et détecte les fuites de mémoire et les lectures ou écritures dans des zones non autorisées.",
+          "documentId": "wp-valgrind",
+          "page": "§ Débogueur"
+        },
+        {
+          "texte": "Un pointeur non initialisé contient une valeur au hasard (garbage value) : s'en servir peut écrire n'importe où en mémoire.",
+          "documentId": "wb-memoire",
+          "page": "§ Défaut d'initialisation d'un pointeur"
+        }
+      ],
+      "infographie": {
+        "titre": "Chasser les fuites",
+        "points": [
+          {
+            "icone": "💧",
+            "texte": "Fuite : malloc sans free."
+          },
+          {
+            "icone": "🩺",
+            "texte": "valgrind ./programme."
+          },
+          {
+            "icone": "🔧",
+            "texte": "Ajouter les free manquants."
+          },
+          {
+            "icone": "✅",
+            "texte": "« All heap blocks were freed »."
+          }
+        ]
+      }
+    },
+    {
+      "id": "fichiers",
+      "titre": "Lire et écrire des fichiers",
+      "resume": "fopen ouvre un fichier et renvoie un FILE * ; on lit ou écrit avec fread, fwrite ou fprintf, puis on ferme avec fclose.",
+      "page": "Entrées/sorties, § Ouverture",
+      "documentId": "wb-es",
+      "schema": {
+        "type": "etapes",
+        "etapes": [
+          {
+            "titre": "Ouvrir",
+            "texte": "FILE *f = fopen(\"notes.csv\", \"a\");"
+          },
+          {
+            "titre": "Vérifier",
+            "texte": "Si f vaut NULL, l'ouverture a échoué."
+          },
+          {
+            "titre": "Écrire ou lire",
+            "texte": "fprintf(f, …) ; fread(…, f)."
+          },
+          {
+            "titre": "Fermer",
+            "texte": "fclose(f);"
+          }
+        ]
+      },
+      "differences": {
+        "titres": [
+          "\"r\"",
+          "\"w\" / \"a\""
+        ],
+        "lignes": [
+          {
+            "critere": "Sens",
+            "a": "Lecture",
+            "b": "Écriture"
+          },
+          {
+            "critere": "Fichier absent",
+            "a": "fopen renvoie NULL",
+            "b": "Il est créé"
+          },
+          {
+            "critere": "Contenu existant",
+            "a": "Gardé",
+            "b": "\"w\" l'efface, \"a\" ajoute à la fin"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "fopen ouvre un fichier selon un mode (\"r\" lecture, \"w\" écriture, \"a\" ajout) et renvoie un pointeur de type FILE *, ou NULL en cas d'échec.",
+          "documentId": "wb-es",
+          "page": "§ Ouverture"
+        },
+        {
+          "texte": "fclose ferme le fichier et vide les tampons : les données écrites sont alors réellement enregistrées.",
+          "documentId": "wb-es",
+          "page": "§ Fermeture"
+        }
+      ],
+      "infographie": {
+        "titre": "Un fichier en 4 gestes",
+        "points": [
+          {
+            "icone": "📂",
+            "texte": "fopen : ouvrir."
+          },
+          {
+            "icone": "🔍",
+            "texte": "NULL ? Problème."
+          },
+          {
+            "icone": "✍️",
+            "texte": "fprintf / fread / fwrite."
+          },
+          {
+            "icone": "🔒",
+            "texte": "fclose : fermer."
+          }
+        ]
+      }
+    }
+  ]
+}

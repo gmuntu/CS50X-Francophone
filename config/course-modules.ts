@@ -13,7 +13,6 @@ export interface CourseModuleConfig {
   videoUrlFr?: string;
   /** Podcast de la semaine (MP3 dans public/podcasts). Aucun pour l'instant : les anciens fichiers étaient vides. */
   podcastUrl?: string;
-  notebookUrl?: string;
   difficulty: 'Débutant' | 'Intermédiaire' | 'Avancé';
   topics: string[];
   imageUrl: string;
@@ -27,7 +26,6 @@ export const CS50_MODULES: CourseModuleConfig[] = [
     description: "Introduction au cours CS50 : pensée computationnelle, binaire, algorithmes et programmation visuelle avec Scratch.",
     videoUrl: 'https://www.youtube.com/embed/UuIEbpQms8o',
     videoUrlFr: 'https://www.youtube.com/embed/AsNlqXLJC3E',
-    notebookUrl: 'https://notebooklm.google.com/notebook/65407ca2-0219-4a61-9fa7-27d7da2ed113',
     difficulty: 'Débutant',
     topics: ['Binaire', 'Scratch', 'Algorithmes'],
     imageUrl: 'https://cdn.abacus.ai/images/4c6ab7f0-b37e-4691-96a7-bc8fa0be1bed.png',
@@ -39,7 +37,6 @@ export const CS50_MODULES: CourseModuleConfig[] = [
     description: "Transition vers le langage C, syntaxe de base, types de données, conditions et compilation.",
     videoUrl: 'https://www.youtube.com/embed/SlqjA04_dpk',
     videoUrlFr: 'https://www.youtube.com/embed/NsH8PY_WoT8',
-    notebookUrl: 'https://notebooklm.google.com/notebook/3f36e2f0-5a38-43c5-91a0-76b368627019',
     difficulty: 'Débutant',
     topics: ['Langage C', 'Compilation', 'Variables'],
     imageUrl: 'https://i.ytimg.com/vi/rjYN_eW-u6A/maxresdefault.jpg',
@@ -51,7 +48,6 @@ export const CS50_MODULES: CourseModuleConfig[] = [
     description: "Exploration des tableaux, mémoire, chaînes de caractères et débogage en C.",
     videoUrl: 'https://www.youtube.com/embed/h5Gc1n8ZuU8',
     videoUrlFr: 'https://www.youtube.com/embed/Ts_r8AK19QU',
-    notebookUrl: 'https://notebooklm.google.com/notebook/4be4999a-6fce-4c17-93d3-b66d0f9f98eb',
     difficulty: 'Intermédiaire',
     topics: ['Tableaux', 'Chaînes', 'Débogage'],
     imageUrl: 'https://ik.imagekit.io/pieces/images/blog/an-overview-of-arrays-as-data-structures-in-java/hero.jpeg?tr=w-1520,f-auto',
@@ -63,7 +59,6 @@ export const CS50_MODULES: CourseModuleConfig[] = [
     description: "Complexité algorithmique, recherche linéaire et binaire, tris et récursion.",
     videoUrl: 'https://www.youtube.com/embed/6Svu_ae5ebk',
     videoUrlFr: 'https://www.youtube.com/embed/Z26bcyDI4-U',
-    notebookUrl: 'https://notebooklm.google.com/notebook/087eec10-568f-476e-93a1-7784e53c7a55',
     difficulty: 'Intermédiaire',
     topics: ['Big-O', 'Tri', 'Récursion'],
     imageUrl: 'https://i.ytimg.com/vi/0jcYxfDp0v0/maxresdefault.jpg',
@@ -75,7 +70,6 @@ export const CS50_MODULES: CourseModuleConfig[] = [
     description: "Pointeurs, allocation dynamique, gestion de la mémoire et manipulation de fichiers.",
     videoUrl: 'https://www.youtube.com/embed/db0H0U13YsA',
     videoUrlFr: 'https://www.youtube.com/embed/svmsj_bjSYA',
-    notebookUrl: 'https://notebooklm.google.com/notebook/89d2916a-c08c-4da0-93bd-ffae8a1ebecd',
     difficulty: 'Avancé',
     topics: ['Pointeurs', 'malloc', 'Valgrind'],
     imageUrl: 'https://ilnumerics.net/media/VS_dark_debug_AVx4_3D_red.png',
@@ -87,7 +81,6 @@ export const CS50_MODULES: CourseModuleConfig[] = [
     description: "Listes chaînées, arbres binaires, tables de hachage et Tries.",
     videoUrl: 'https://www.youtube.com/embed/PmAI76OGE_E',
     videoUrlFr: 'https://www.youtube.com/embed/lfolfGtrK2A',
-    notebookUrl: 'https://notebooklm.google.com/notebook/f8826302-5ef7-4970-b979-7d87a2196e22',
     difficulty: 'Avancé',
     topics: ['Listes', 'Hash Tables', 'Tries'],
     imageUrl: 'https://i.ytimg.com/vi/J2fol8eWo64/maxresdefault.jpg',
@@ -99,7 +92,6 @@ export const CS50_MODULES: CourseModuleConfig[] = [
     description: "Transition vers Python, typage dynamique, structures natives et projet ADN.",
     videoUrl: 'https://www.youtube.com/embed/Rl0ludWTLxs',
     videoUrlFr: 'https://www.youtube.com/embed/fGBJsvNTkVw',
-    notebookUrl: 'https://notebooklm.google.com/notebook/0af54950-3af4-45ac-bf76-b8f44613c079',
     difficulty: 'Intermédiaire',
     topics: ['Python', 'Listes', 'Dictionnaires'],
     imageUrl: 'https://cdn.pixabay.com/photo/2020/01/22/12/33/python-4785225_1280.jpg',
@@ -111,7 +103,6 @@ export const CS50_MODULES: CourseModuleConfig[] = [
     description: "Bases de données relationnelles, requêtes SQL, jointures et sécurité.",
     videoUrl: 'https://www.youtube.com/embed/oqRU2So6Z2Y',
     videoUrlFr: 'https://www.youtube.com/embed/2soubRuIBxA',
-    notebookUrl: 'https://notebooklm.google.com/notebook/69cb4cda-a672-43f3-ba88-901968509476',
     difficulty: 'Intermédiaire',
     topics: ['SQL', 'Jointures', 'Index'],
     imageUrl: 'https://tableplus.com/assets/images/sequel-pro-dark-theme/table-data.png',
@@ -135,7 +126,6 @@ export const CS50_MODULES: CourseModuleConfig[] = [
     description: "Conception de pages web interactives, DOM et développement front-end.",
     videoUrl: 'https://www.youtube.com/embed/yYst7puZXjw',
     videoUrlFr: 'https://www.youtube.com/embed/LcxuRVBNRn8',
-    notebookUrl: 'https://notebooklm.google.com/notebook/68cdde5b-64e2-4d9e-a261-ccb816ef6041',
     difficulty: 'Intermédiaire',
     topics: ['HTML', 'CSS', 'JavaScript'],
     imageUrl: 'https://i.ytimg.com/vi/coVtdZRoAFc/maxresdefault.jpg',
@@ -147,7 +137,6 @@ export const CS50_MODULES: CourseModuleConfig[] = [
     description: "Développement back-end avec Flask, routes, sessions et authentification.",
     videoUrl: 'https://www.youtube.com/embed/am7POvSZ4GE',
     videoUrlFr: 'https://www.youtube.com/embed/dFDuy7QFFuA',
-    notebookUrl: 'https://notebooklm.google.com/notebook/fab775cc-c5d4-4df4-bf2e-8608d8216585',
     difficulty: 'Avancé',
     topics: ['Flask', 'Sessions', 'Jinja2'],
     imageUrl: 'https://i.ytimg.com/vi/Aa-F6zqLmig/maxresdefault.jpg',
@@ -169,7 +158,6 @@ export const CS50_MODULES: CourseModuleConfig[] = [
     title: 'Bonus : Cybersécurité',
     slug: 'bonus-cybersecurite',
     description: "Leçon bonus, hors programme officiel CS50x : sécurité informatique, cryptographie, HTTPS et bonnes pratiques.",
-    notebookUrl: 'https://notebooklm.google.com/notebook/c694a329-339d-4aa0-b1e4-5ad5788fccd4',
     // Conférence officielle « CS50x 2024 - Cybersecurity » (anglais) et sa version française Moon2⁺Studio.
     videoUrl: 'https://www.youtube.com/embed/EKof-cJiTG8',
     videoUrlFr: 'https://www.youtube.com/embed/1wB_pR81S8w',

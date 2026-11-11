@@ -1,0 +1,200 @@
+{
+  "semaine": 0,
+  "sujet": "Introduction à l'informatique et Scratch",
+  "resume": "Comment un ordinateur représente l'information avec des 0 et des 1, ce qu'est un algorithme et pourquoi certains sont plus rapides que d'autres, puis la programmation visuelle par blocs avec Scratch.",
+  "documents": [
+    { "id": "wp-pensee", "titre": "Pensée computationnelle", "url": "https://fr.wikipedia.org/wiki/Pens%C3%A9e_computationnelle", "auteur": "Contributeurs de Wikipédia", "licence": "CC BY-SA 4.0", "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr" },
+    { "id": "wp-binaire", "titre": "Système binaire", "url": "https://fr.wikipedia.org/wiki/Syst%C3%A8me_binaire", "auteur": "Contributeurs de Wikipédia", "licence": "CC BY-SA 4.0", "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr" },
+    { "id": "wp-bit", "titre": "Bit", "url": "https://fr.wikipedia.org/wiki/Bit", "auteur": "Contributeurs de Wikipédia", "licence": "CC BY-SA 4.0", "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr" },
+    { "id": "wp-octet", "titre": "Octet", "url": "https://fr.wikipedia.org/wiki/Octet", "auteur": "Contributeurs de Wikipédia", "licence": "CC BY-SA 4.0", "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr" },
+    { "id": "wp-ascii", "titre": "American Standard Code for Information Interchange (ASCII)", "url": "https://fr.wikipedia.org/wiki/American_Standard_Code_for_Information_Interchange", "auteur": "Contributeurs de Wikipédia", "licence": "CC BY-SA 4.0", "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr" },
+    { "id": "wp-algorithme", "titre": "Algorithme", "url": "https://fr.wikipedia.org/wiki/Algorithme", "auteur": "Contributeurs de Wikipédia", "licence": "CC BY-SA 4.0", "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr" },
+    { "id": "wp-dichotomie", "titre": "Recherche dichotomique", "url": "https://fr.wikipedia.org/wiki/Recherche_dichotomique", "auteur": "Contributeurs de Wikipédia", "licence": "CC BY-SA 4.0", "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr" },
+    { "id": "wp-scratch", "titre": "Scratch (langage)", "url": "https://fr.wikipedia.org/wiki/Scratch_(langage)", "auteur": "Contributeurs de Wikipédia", "licence": "CC BY-SA 4.0", "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr" },
+    { "id": "wiki-scratch", "titre": "Wiki Scratch en français", "url": "https://fr.scratch-wiki.info/wiki/Accueil", "auteur": "Contributeurs du Wiki Scratch", "licence": "CC BY-SA 4.0", "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr" }
+  ],
+  "notions": [
+    {
+      "id": "pensee-computationnelle",
+      "titre": "La pensée computationnelle",
+      "resume": "C'est l'art de découper un problème pour que sa solution puisse être suivie pas à pas par un humain ou une machine.",
+      "page": "§ Description",
+      "documentId": "wp-pensee",
+      "schema": { "type": "etapes", "etapes": [
+        { "titre": "Entrée", "texte": "Les informations dont on part (le problème)." },
+        { "titre": "Algorithme", "texte": "La suite d'étapes précises qui transforme l'entrée." },
+        { "titre": "Sortie", "texte": "Le résultat obtenu (la solution)." }
+      ] },
+      "passages": [
+        { "texte": "La pensée computationnelle consiste à formuler un problème et sa solution de façon qu'ils puissent être traités efficacement par un agent de traitement de l'information, humain ou machine.", "documentId": "wp-pensee", "page": "§ Description" },
+        { "texte": "On y retrouve plusieurs habiletés : décomposer un problème, reconnaître des motifs, faire abstraction des détails inutiles et concevoir un algorithme.", "documentId": "wp-pensee", "page": "§ Attributs" }
+      ],
+      "infographie": { "titre": "Penser comme un informaticien", "points": [
+        { "icone": "🧩", "texte": "Décomposer : couper un gros problème en petits morceaux." },
+        { "icone": "🔁", "texte": "Repérer les motifs qui se répètent." },
+        { "icone": "🎯", "texte": "Abstraire : garder seulement l'essentiel." },
+        { "icone": "📋", "texte": "Écrire l'algorithme, étape par étape." }
+      ] }
+    },
+    {
+      "id": "bit",
+      "titre": "Le bit",
+      "resume": "Le bit est la plus petite information possible : il vaut 0 ou 1, comme un interrupteur éteint ou allumé.",
+      "page": "§ Unité d'information",
+      "documentId": "wp-bit",
+      "schema": { "type": "comparaison", "colonnes": [
+        { "titre": "0", "points": ["Interrupteur éteint", "Pas de courant", "Faux / non"] },
+        { "titre": "1", "points": ["Interrupteur allumé", "Courant qui passe", "Vrai / oui"] }
+      ] },
+      "passages": [
+        { "texte": "Le mot « bit » vient de l'anglais binary digit, « chiffre binaire ». C'est l'unité la plus simple de quantité d'information : deux états seulement, notés 0 et 1.", "documentId": "wp-bit", "page": "§ Unité d'information" },
+        { "texte": "Avec n bits, on peut former 2 puissance n combinaisons différentes : 2 bits donnent 4 combinaisons, 3 bits en donnent 8.", "documentId": "wp-bit", "page": "§ Ensembles ordonnés de bits" }
+      ],
+      "infographie": { "titre": "Un bit, deux états", "points": [
+        { "icone": "💡", "texte": "Une ampoule : éteinte = 0, allumée = 1." },
+        { "icone": "⚡", "texte": "Dans l'ordinateur : courant ou pas de courant." },
+        { "icone": "✖️", "texte": "Chaque bit ajouté double le nombre de possibilités." }
+      ] }
+    },
+    {
+      "id": "binaire",
+      "titre": "Compter en binaire",
+      "resume": "En binaire on compte avec deux chiffres seulement, et chaque position vaut le double de celle de droite : 1, 2, 4, 8, 16…",
+      "page": "§ Définition",
+      "documentId": "wp-binaire",
+      "schema": { "type": "etapes", "etapes": [
+        { "titre": "Écrire les poids", "texte": "De droite à gauche : 1, 2, 4, 8, 16, 32, 64, 128." },
+        { "titre": "Placer les chiffres", "texte": "Exemple : 0 0 0 0 0 1 0 1." },
+        { "titre": "Additionner les poids des 1", "texte": "4 + 1 = 5 : donc 101 en binaire vaut 5." }
+      ] },
+      "differences": {
+        "titres": ["Décimal (base 10)", "Binaire (base 2)"],
+        "lignes": [
+          { "critere": "Chiffres utilisés", "a": "0 à 9", "b": "0 et 1" },
+          { "critere": "Valeur des positions", "a": "1, 10, 100, 1000…", "b": "1, 2, 4, 8, 16…" },
+          { "critere": "Le nombre 5", "a": "5", "b": "101" },
+          { "critere": "Qui l'utilise ?", "a": "Les humains", "b": "Les ordinateurs" }
+        ]
+      },
+      "passages": [
+        { "texte": "Le système binaire est un système de numération en base 2 : il n'utilise que deux symboles, 0 et 1. Chaque position représente une puissance de 2.", "documentId": "wp-binaire", "page": "§ Définition" },
+        { "texte": "En comptant 0, 1, 10, 11, 100, 101… on retrouve les nombres 0, 1, 2, 3, 4, 5 : dès qu'une position est « pleine », on passe à la suivante, comme de 9 à 10 en décimal.", "documentId": "wp-binaire", "page": "§ Énumération des premiers nombres" }
+      ],
+      "infographie": { "titre": "Lire un nombre binaire", "points": [
+        { "icone": "➡️", "texte": "Poids de droite à gauche : 1, 2, 4, 8…" },
+        { "icone": "✅", "texte": "On additionne les poids là où il y a un 1." },
+        { "icone": "🔢", "texte": "1101 = 8 + 4 + 1 = 13." }
+      ] }
+    },
+    {
+      "id": "octet-ascii",
+      "titre": "L'octet et le code ASCII",
+      "resume": "Un octet regroupe 8 bits, soit 256 valeurs possibles, et le code ASCII associe un nombre à chaque lettre : « A » vaut 65.",
+      "page": "§ Propriétés de représentation binaire",
+      "documentId": "wp-octet",
+      "schema": { "type": "relations", "liens": [
+        { "de": "8 bits", "vers": "1 octet", "label": "forment" },
+        { "de": "1 octet", "vers": "256 valeurs (0 à 255)", "label": "peut coder" },
+        { "de": "Code ASCII", "vers": "Une lettre", "label": "associe un nombre à" },
+        { "de": "65", "vers": "« A »", "label": "en ASCII" }
+      ] },
+      "differences": {
+        "titres": ["Bit", "Octet"],
+        "lignes": [
+          { "critere": "Taille", "a": "1 chiffre binaire", "b": "8 bits" },
+          { "critere": "Valeurs possibles", "a": "2", "b": "256" },
+          { "critere": "Symbole", "a": "b (bit)", "b": "o (en anglais B, byte)" }
+        ]
+      },
+      "passages": [
+        { "texte": "Un octet est un ensemble de 8 bits. Il peut prendre 2 puissance 8, soit 256 valeurs différentes, de 0 à 255.", "documentId": "wp-octet", "page": "§ Propriétés de représentation binaire" },
+        { "texte": "ASCII est une norme de codage des caractères : chaque lettre, chiffre ou signe reçoit un numéro. Elle définit 128 caractères, codés sur 7 bits.", "documentId": "wp-ascii", "page": "§ Principes" },
+        { "texte": "Dans la table ASCII, les lettres majuscules commencent à 65 (A, B, C…) et les minuscules à 97 (a, b, c…).", "documentId": "wp-ascii", "page": "§ Table des 128 caractères ASCII" }
+      ],
+      "infographie": { "titre": "Du bit à la lettre", "points": [
+        { "icone": "🔟", "texte": "8 bits = 1 octet." },
+        { "icone": "🎨", "texte": "1 octet = un nombre de 0 à 255." },
+        { "icone": "🔤", "texte": "ASCII : 72, 73 = « HI »." },
+        { "icone": "💾", "texte": "Kilo-octet, méga-octet : des milliers, des millions d'octets." }
+      ] }
+    },
+    {
+      "id": "algorithme",
+      "titre": "L'algorithme",
+      "resume": "Un algorithme est une suite finie d'instructions précises qui résout un problème, comme une recette de cuisine.",
+      "page": "§ Définition générale",
+      "documentId": "wp-algorithme",
+      "schema": { "type": "etapes", "etapes": [
+        { "titre": "Fini", "texte": "Il s'arrête après un nombre limité d'étapes." },
+        { "titre": "Précis", "texte": "Chaque instruction est claire, sans ambiguïté." },
+        { "titre": "Avec une entrée", "texte": "Il part de données." },
+        { "titre": "Avec une sortie", "texte": "Il donne un résultat." }
+      ] },
+      "passages": [
+        { "texte": "Un algorithme est une suite finie et non ambiguë d'instructions permettant de résoudre un problème ou d'obtenir un résultat.", "documentId": "wp-algorithme", "page": "§ Définition générale" },
+        { "texte": "Les algorithmes ne sont pas réservés aux ordinateurs : une recette de cuisine, un itinéraire ou une notice de montage en sont des exemples quotidiens.", "documentId": "wp-algorithme", "page": "§ Algorithmes dans la vie quotidienne" }
+      ],
+      "infographie": { "titre": "Un algorithme, c'est…", "points": [
+        { "icone": "🍲", "texte": "Comme une recette : ingrédients, étapes, plat final." },
+        { "icone": "📏", "texte": "Des instructions précises, sans ambiguïté." },
+        { "icone": "🏁", "texte": "Toujours une fin." }
+      ] }
+    },
+    {
+      "id": "recherche-dichotomique",
+      "titre": "La recherche dichotomique",
+      "resume": "Pour chercher dans une liste triée, on regarde au milieu et on élimine à chaque fois la moitié qui ne peut pas contenir la réponse.",
+      "page": "§ Principe",
+      "documentId": "wp-dichotomie",
+      "schema": { "type": "cycle", "etapes": [
+        { "titre": "Ouvrir au milieu", "texte": "Regarder l'élément du milieu de la liste triée." },
+        { "titre": "Comparer", "texte": "Est-ce l'élément cherché ? Si oui, c'est fini." },
+        { "titre": "Garder une moitié", "texte": "Trop petit : à droite. Trop grand : à gauche." },
+        { "titre": "Recommencer", "texte": "Avec la moitié restante, jusqu'à trouver ou épuiser la liste." }
+      ] },
+      "differences": {
+        "titres": ["Recherche séquentielle", "Recherche dichotomique"],
+        "lignes": [
+          { "critere": "Méthode", "a": "Une page après l'autre", "b": "On coupe en deux à chaque fois" },
+          { "critere": "Liste triée ?", "a": "Pas nécessaire", "b": "Obligatoire" },
+          { "critere": "1 000 pages", "a": "Jusqu'à 1 000 essais", "b": "Environ 10 essais" },
+          { "critere": "Vitesse", "a": "Linéaire (lente)", "b": "Logarithmique (rapide)" }
+        ]
+      },
+      "passages": [
+        { "texte": "On cherche un mot dans un dictionnaire en l'ouvrant au milieu : selon l'ordre alphabétique, on sait si le mot est avant ou après, et on recommence dans la bonne moitié.", "documentId": "wp-dichotomie", "page": "§ Exemple introductif" },
+        { "texte": "Comme l'espace de recherche est divisé par deux à chaque étape, le nombre d'étapes croît comme le logarithme de la taille de la liste.", "documentId": "wp-dichotomie", "page": "§ Complexité et performances" }
+      ],
+      "infographie": { "titre": "Couper en deux, encore et encore", "points": [
+        { "icone": "📖", "texte": "Ouvrir l'annuaire au milieu." },
+        { "icone": "✂️", "texte": "Jeter la moitié inutile." },
+        { "icone": "🔁", "texte": "Recommencer avec ce qui reste." },
+        { "icone": "⚡", "texte": "4 milliards de noms : environ 32 étapes seulement." }
+      ] }
+    },
+    {
+      "id": "scratch",
+      "titre": "Programmer avec Scratch",
+      "resume": "Scratch est un langage visuel du MIT où l'on assemble des blocs comme des pièces de puzzle pour faire agir des personnages.",
+      "page": "§ Présentation",
+      "documentId": "wp-scratch",
+      "schema": { "type": "relations", "liens": [
+        { "de": "Événement", "vers": "Le programme démarre", "label": "« quand le drapeau vert est cliqué »" },
+        { "de": "Boucle", "vers": "Répéter des blocs", "label": "« répéter 10 fois »" },
+        { "de": "Condition", "vers": "Choisir un chemin", "label": "« si … alors »" },
+        { "de": "Variable", "vers": "Retenir une valeur", "label": "« score »" }
+      ] },
+      "passages": [
+        { "texte": "Scratch est un langage de programmation visuel créé par le MIT Media Lab : les instructions sont des blocs colorés qui s'emboîtent, ce qui évite les erreurs de syntaxe.", "documentId": "wp-scratch", "page": "§ Présentation" },
+        { "texte": "Scratch est très utilisé à l'école pour découvrir les boucles, les conditions et les variables avant de passer à un langage écrit.", "documentId": "wp-scratch", "page": "§ Utilisation dans l'enseignement" },
+        { "texte": "Le wiki Scratch en français décrit chaque catégorie de blocs (mouvement, apparence, événements, contrôle, variables) avec des exemples.", "documentId": "wiki-scratch", "page": "§ Accueil" }
+      ],
+      "infographie": { "titre": "Les briques de Scratch", "points": [
+        { "icone": "🚩", "texte": "Événements : quand démarrer." },
+        { "icone": "🔁", "texte": "Boucles : répéter." },
+        { "icone": "❓", "texte": "Conditions : si… alors… sinon." },
+        { "icone": "📦", "texte": "Variables : retenir une valeur." }
+      ] }
+    }
+  ]
+}

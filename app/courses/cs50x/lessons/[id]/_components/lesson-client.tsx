@@ -11,7 +11,6 @@ import { CS50_PROBLEM_WEEKS } from '@/config/cs50-problems';
 import InteractiveQuizModal from '@/components/interactive-quiz-modal';
 import CourseAssistant from '@/components/course-assistant';
 import OfflineLessonButton from '@/components/pwa/offline-lesson-button';
-import NotebookCard from '@/components/notebook-card';
 import IdentityReminder from '@/components/identity/identity-reminder';
 import FinalProject from '@/components/formations/ia/final-project';
 import WeekPackButton from '@/components/pwa/week-pack-button';
@@ -99,7 +98,12 @@ export default function LessonClient({ moduleConfig, lesson, userId }: Props) {
           <p className="text-sm sm:text-base text-muted-foreground max-w-3xl leading-relaxed">{moduleConfig?.description}</p>
         </motion.div>
 
-        <div className="mb-8"><NotebookCard url={moduleConfig?.notebookUrl} /></div>
+        <div className="mb-8">
+          <Link href={`/salle-etude?semaine=${moduleConfig.id}`}
+            className="inline-flex items-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm sm:text-base font-extrabold text-primary-foreground shadow-sm hover:bg-primary/90">
+            📚 Aller à la Salle d’étude →
+          </Link>
+        </div>
 
         {/* Semaine 10 : projet final CS50x + défense orale avec Socrate */}
         {moduleConfig?.id === 10 && <div className="mb-8"><FinalProject course="cs50x" /></div>}

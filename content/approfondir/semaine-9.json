@@ -1,0 +1,450 @@
+{
+  "semaine": 9,
+  "sujet": "Flask",
+  "resume": "Construire un site dynamique en Python avec Flask : routes, formulaires GET et POST, gabarits Jinja dans une organisation modèle-vue-contrôleur, cookies et sessions pour reconnaître les utilisateurs, et protection contre le cross-site scripting.",
+  "documents": [
+    {
+      "id": "wp-flask",
+      "titre": "Flask (framework)",
+      "url": "https://fr.wikipedia.org/wiki/Flask_(framework)",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-jinja",
+      "titre": "Jinja (moteur de template)",
+      "url": "https://fr.wikipedia.org/wiki/Jinja_(moteur_de_template)",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-formulaire",
+      "titre": "Formulaire HTML",
+      "url": "https://fr.wikipedia.org/wiki/Formulaire_HTML",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-http",
+      "titre": "Hypertext Transfer Protocol (HTTP) : méthodes et codes",
+      "url": "https://fr.wikipedia.org/wiki/Hypertext_Transfer_Protocol",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-cookie",
+      "titre": "Cookie (informatique)",
+      "url": "https://fr.wikipedia.org/wiki/Cookie_(informatique)",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-session",
+      "titre": "Session (informatique)",
+      "url": "https://fr.wikipedia.org/wiki/Session_(informatique)",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-mvc",
+      "titre": "Modèle-vue-contrôleur",
+      "url": "https://fr.wikipedia.org/wiki/Mod%C3%A8le-vue-contr%C3%B4leur",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-xss",
+      "titre": "Cross-site scripting",
+      "url": "https://fr.wikipedia.org/wiki/Cross-site_scripting",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    }
+  ],
+  "notions": [
+    {
+      "id": "flask-routes",
+      "titre": "Flask et les routes",
+      "resume": "Flask est un petit framework Python pour créer un site : chaque route relie une adresse (comme /salut) à une fonction qui renvoie la page.",
+      "page": "§ Exemple",
+      "documentId": "wp-flask",
+      "schema": {
+        "type": "etapes",
+        "etapes": [
+          {
+            "titre": "Créer l'application",
+            "texte": "app = Flask(__name__)"
+          },
+          {
+            "titre": "Déclarer une route",
+            "texte": "@app.route(\"/\") au-dessus d'une fonction."
+          },
+          {
+            "titre": "Renvoyer la page",
+            "texte": "return render_template(\"index.html\")"
+          },
+          {
+            "titre": "Lancer",
+            "texte": "flask run, puis ouvrir l'adresse dans le navigateur."
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Flask est un micro-framework web écrit en Python : il fournit l'essentiel (routes, requêtes, gabarits) et laisse ajouter le reste avec des extensions.",
+          "documentId": "wp-flask",
+          "page": "§ Fonctionnalités"
+        },
+        {
+          "texte": "Dans une application Flask, un décorateur @app.route associe une adresse à la fonction Python qui produit la réponse.",
+          "documentId": "wp-flask",
+          "page": "§ Exemple"
+        }
+      ],
+      "infographie": {
+        "titre": "Un site en Python",
+        "points": [
+          {
+            "icone": "🧪",
+            "texte": "app = Flask(__name__)."
+          },
+          {
+            "icone": "🛣️",
+            "texte": "@app.route : une adresse → une fonction."
+          },
+          {
+            "icone": "📄",
+            "texte": "render_template : la page HTML."
+          },
+          {
+            "icone": "▶️",
+            "texte": "flask run : le site tourne."
+          }
+        ]
+      }
+    },
+    {
+      "id": "get-post",
+      "titre": "Formulaires, GET et POST",
+      "resume": "Un formulaire envoie ce que tape l'utilisateur au serveur : avec GET les données passent dans l'adresse, avec POST elles sont cachées dans la requête.",
+      "page": "§ Soumission",
+      "documentId": "wp-formulaire",
+      "schema": {
+        "type": "etapes",
+        "etapes": [
+          {
+            "titre": "Formulaire",
+            "texte": "<form action=\"/salut\" method=\"post\"><input name=\"nom\">"
+          },
+          {
+            "titre": "Envoi",
+            "texte": "Le navigateur envoie nom=Awa au serveur."
+          },
+          {
+            "titre": "Lecture dans Flask",
+            "texte": "request.form.get(\"nom\") (POST) ou request.args.get(\"nom\") (GET)."
+          },
+          {
+            "titre": "Réponse",
+            "texte": "La page « Bonjour, Awa »."
+          }
+        ]
+      },
+      "differences": {
+        "titres": [
+          "GET",
+          "POST"
+        ],
+        "lignes": [
+          {
+            "critere": "Où sont les données",
+            "a": "Dans l'URL : /salut?nom=Awa",
+            "b": "Dans le corps de la requête"
+          },
+          {
+            "critere": "Dans Flask",
+            "a": "request.args",
+            "b": "request.form"
+          },
+          {
+            "critere": "À utiliser pour",
+            "a": "Une recherche, un lien partageable",
+            "b": "Un mot de passe, une inscription"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "À l'envoi, le navigateur transmet les champs du formulaire à l'adresse indiquée par action, avec la méthode GET ou POST.",
+          "documentId": "wp-formulaire",
+          "page": "§ Soumission"
+        },
+        {
+          "texte": "Avec GET, les paramètres sont ajoutés à l'URL ; avec POST, ils sont envoyés dans le corps de la requête et n'apparaissent pas dans l'adresse.",
+          "documentId": "wp-http",
+          "page": "§ Méthodes"
+        }
+      ],
+      "infographie": {
+        "titre": "Envoyer des données",
+        "points": [
+          {
+            "icone": "📝",
+            "texte": "<form> + <input name>."
+          },
+          {
+            "icone": "🔗",
+            "texte": "GET : dans l'URL."
+          },
+          {
+            "icone": "📦",
+            "texte": "POST : caché dans la requête."
+          },
+          {
+            "icone": "🔐",
+            "texte": "Mot de passe ? Toujours POST."
+          }
+        ]
+      }
+    },
+    {
+      "id": "jinja-mvc",
+      "titre": "Gabarits Jinja et modèle MVC",
+      "resume": "Jinja remplit une page HTML avec des valeurs venues de Python ; on sépare ainsi les données (modèle), les pages (vues) et la logique (contrôleur).",
+      "page": "§ Fonctionnalités",
+      "documentId": "wp-jinja",
+      "schema": {
+        "type": "relations",
+        "liens": [
+          {
+            "de": "Modèle",
+            "vers": "la base de données (SQL)",
+            "label": "= les données"
+          },
+          {
+            "de": "Vue",
+            "vers": "les gabarits HTML Jinja",
+            "label": "= l'affichage"
+          },
+          {
+            "de": "Contrôleur",
+            "vers": "app.py et ses routes",
+            "label": "= la logique"
+          },
+          {
+            "de": "{{ nom }}",
+            "vers": "la valeur de nom envoyée par Python",
+            "label": "Jinja affiche"
+          },
+          {
+            "de": "{% for %} … {% endfor %}",
+            "vers": "une ligne HTML par élément",
+            "label": "Jinja répète"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Jinja est un moteur de gabarits pour Python : il insère des variables dans des modèles de pages et permet boucles, conditions et héritage entre gabarits.",
+          "documentId": "wp-jinja",
+          "page": "§ Fonctionnalités"
+        },
+        {
+          "texte": "Le modèle-vue-contrôleur sépare une application en trois parties : le modèle contient les données, la vue les affiche et le contrôleur traite les actions de l'utilisateur.",
+          "documentId": "wp-mvc",
+          "page": "§ Description"
+        },
+        {
+          "texte": "Dans une application web, le contrôleur reçoit la requête, interroge le modèle puis choisit la vue qui produit la page.",
+          "documentId": "wp-mvc",
+          "page": "§ Dans les applications web"
+        }
+      ],
+      "infographie": {
+        "titre": "Chacun son rôle",
+        "points": [
+          {
+            "icone": "🗄️",
+            "texte": "Modèle : les données."
+          },
+          {
+            "icone": "🖼️",
+            "texte": "Vue : la page HTML."
+          },
+          {
+            "icone": "🧠",
+            "texte": "Contrôleur : les routes."
+          },
+          {
+            "icone": "🧩",
+            "texte": "Jinja insère les valeurs."
+          }
+        ]
+      }
+    },
+    {
+      "id": "cookies-sessions",
+      "titre": "Cookies et sessions",
+      "resume": "HTTP oublie tout entre deux pages ; un cookie, petit texte gardé par le navigateur, permet au serveur de reconnaître l'utilisateur et de lui garder une session, comme un panier ou une connexion.",
+      "page": "§ Gestion des sessions",
+      "documentId": "wp-cookie",
+      "schema": {
+        "type": "cycle",
+        "etapes": [
+          {
+            "titre": "Connexion",
+            "texte": "Le serveur crée une session et envoie un cookie (Set-Cookie)."
+          },
+          {
+            "titre": "Rangement",
+            "texte": "Le navigateur garde le cookie."
+          },
+          {
+            "titre": "Page suivante",
+            "texte": "Le navigateur renvoie le cookie avec chaque requête."
+          },
+          {
+            "titre": "Reconnaissance",
+            "texte": "Le serveur retrouve la session : session[\"user_id\"]."
+          }
+        ]
+      },
+      "differences": {
+        "titres": [
+          "Cookie",
+          "Session"
+        ],
+        "lignes": [
+          {
+            "critere": "Où",
+            "a": "Dans le navigateur",
+            "b": "Sur le serveur"
+          },
+          {
+            "critere": "Contenu",
+            "a": "Un petit texte (souvent un identifiant)",
+            "b": "Les informations de l'utilisateur"
+          },
+          {
+            "critere": "Exemple Flask",
+            "a": "Envoyé automatiquement",
+            "b": "session[\"user_id\"] = 1"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Les cookies servent notamment à maintenir une session : ils permettent au serveur de reconnaître un utilisateur d'une page à l'autre, par exemple pour garder sa connexion ou son panier.",
+          "documentId": "wp-cookie",
+          "page": "§ Gestion des sessions"
+        },
+        {
+          "texte": "Un cookie a un nom, une valeur, une date d'expiration et des attributs de sécurité, comme Secure ou HttpOnly.",
+          "documentId": "wp-cookie",
+          "page": "§ Attributs d'un cookie"
+        },
+        {
+          "texte": "Une session est une période d'échanges entre un utilisateur et un serveur, du début à la fin de la connexion, pendant laquelle ses informations sont conservées.",
+          "documentId": "wp-session",
+          "page": "§ Déroulement d'une session"
+        }
+      ],
+      "infographie": {
+        "titre": "Se souvenir de vous",
+        "points": [
+          {
+            "icone": "🍪",
+            "texte": "Cookie : gardé par le navigateur."
+          },
+          {
+            "icone": "🔁",
+            "texte": "Renvoyé à chaque page."
+          },
+          {
+            "icone": "🗂️",
+            "texte": "Session : vos données sur le serveur."
+          },
+          {
+            "icone": "🚪",
+            "texte": "Déconnexion : session.clear()."
+          }
+        ]
+      }
+    },
+    {
+      "id": "xss",
+      "titre": "Sécurité : le cross-site scripting",
+      "resume": "Si un site affiche tel quel ce qu'un utilisateur a tapé, un pirate peut y glisser du JavaScript ; Jinja protège en transformant les caractères spéciaux.",
+      "page": "§ Protection contre les XSS",
+      "documentId": "wp-xss",
+      "schema": {
+        "type": "comparaison",
+        "colonnes": [
+          {
+            "titre": "Dangereux",
+            "points": [
+              "Le pirate tape : <script>…</script>",
+              "Le site l'affiche sans filtre",
+              "Le script s'exécute chez les autres visiteurs",
+              "Il peut voler leurs cookies"
+            ]
+          },
+          {
+            "titre": "Protégé",
+            "points": [
+              "Jinja échappe {{ texte }}",
+              "< devient &lt;",
+              "Le script s'affiche comme du texte",
+              "Il ne s'exécute pas"
+            ]
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Le cross-site scripting (XSS) consiste à injecter du code, le plus souvent du JavaScript, dans une page qui sera affichée à d'autres utilisateurs.",
+          "documentId": "wp-xss",
+          "page": "§ Définition"
+        },
+        {
+          "texte": "Un script injecté peut voler des cookies de session, modifier la page ou rediriger vers un faux site.",
+          "documentId": "wp-xss",
+          "page": "§ Risques"
+        },
+        {
+          "texte": "Pour s'en protéger, il faut échapper les caractères spéciaux du HTML dans toutes les données venues de l'utilisateur avant de les afficher.",
+          "documentId": "wp-xss",
+          "page": "§ Protection contre les XSS"
+        }
+      ],
+      "infographie": {
+        "titre": "Ne pas exécuter le texte des autres",
+        "points": [
+          {
+            "icone": "🕵️",
+            "texte": "Le pirate tape du code."
+          },
+          {
+            "icone": "💥",
+            "texte": "Sans filtre, il s'exécute."
+          },
+          {
+            "icone": "🛡️",
+            "texte": "Jinja échappe < et >."
+          },
+          {
+            "icone": "🚫",
+            "texte": "Jamais | safe sur une saisie."
+          }
+        ]
+      }
+    }
+  ]
+}

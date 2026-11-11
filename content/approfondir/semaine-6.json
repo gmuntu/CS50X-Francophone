@@ -1,0 +1,594 @@
+{
+  "semaine": 6,
+  "sujet": "Python",
+  "resume": "Passer du C à Python : un langage interprété au typage dynamique, qui gère la mémoire tout seul, avec des listes et des dictionnaires prêts à l'emploi, des exceptions pour les erreurs et des bibliothèques comme csv.",
+  "documents": [
+    {
+      "id": "wp-python",
+      "titre": "Python (langage)",
+      "url": "https://fr.wikipedia.org/wiki/Python_(langage)",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wb-python",
+      "titre": "Programmation Python (Wikilivres)",
+      "url": "https://fr.wikibooks.org/wiki/Programmation_Python",
+      "auteur": "Contributeurs de Wikilivres",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-interprete",
+      "titre": "Interprète (informatique)",
+      "url": "https://fr.wikipedia.org/wiki/Interpr%C3%A8te_(informatique)",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-typage",
+      "titre": "Typage dynamique",
+      "url": "https://fr.wikipedia.org/wiki/Typage_dynamique",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-ramasse",
+      "titre": "Ramasse-miettes (informatique)",
+      "url": "https://fr.wikipedia.org/wiki/Ramasse-miettes_(informatique)",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-liste",
+      "titre": "Liste (informatique)",
+      "url": "https://fr.wikipedia.org/wiki/Liste_(informatique)",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-associatif",
+      "titre": "Tableau associatif",
+      "url": "https://fr.wikipedia.org/wiki/Tableau_associatif",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-exceptions",
+      "titre": "Système de gestion d'exceptions",
+      "url": "https://fr.wikipedia.org/wiki/Syst%C3%A8me_de_gestion_d%27exceptions",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-bibliotheque",
+      "titre": "Bibliothèque logicielle",
+      "url": "https://fr.wikipedia.org/wiki/Biblioth%C3%A8que_logicielle",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-csv",
+      "titre": "Comma-separated values (CSV)",
+      "url": "https://fr.wikipedia.org/wiki/Comma-separated_values",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    }
+  ],
+  "notions": [
+    {
+      "id": "interprete",
+      "titre": "Un langage interprété",
+      "resume": "Python n'est pas compilé à l'avance comme le C : un programme, l'interprète, lit le code et l'exécute directement.",
+      "page": "§ Principe",
+      "documentId": "wp-interprete",
+      "schema": {
+        "type": "comparaison",
+        "colonnes": [
+          {
+            "titre": "C (compilé)",
+            "points": [
+              "make hello",
+              "puis ./hello",
+              "Rapide à l'exécution",
+              "Une étape de plus"
+            ]
+          },
+          {
+            "titre": "Python (interprété)",
+            "points": [
+              "python hello.py",
+              "Exécuté tout de suite",
+              "Plus lent à l'exécution",
+              "Plus rapide à écrire"
+            ]
+          }
+        ]
+      },
+      "differences": {
+        "titres": [
+          "C",
+          "Python"
+        ],
+        "lignes": [
+          {
+            "critere": "Afficher",
+            "a": "printf(\"hello, world\\n\");",
+            "b": "print(\"hello, world\")"
+          },
+          {
+            "critere": "Fin d'instruction",
+            "a": "Point-virgule",
+            "b": "Fin de ligne"
+          },
+          {
+            "critere": "Blocs",
+            "a": "Accolades { }",
+            "b": "Indentation (espaces)"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Un interprète analyse et exécute les instructions d'un programme au fur et à mesure, sans produire au préalable un fichier exécutable.",
+          "documentId": "wp-interprete",
+          "page": "§ Principe"
+        },
+        {
+          "texte": "En pratique, Python traduit d'abord le code en bytecode, une forme intermédiaire, que sa machine virtuelle exécute ensuite.",
+          "documentId": "wp-interprete",
+          "page": "§ Les interprètes de bytecode"
+        },
+        {
+          "texte": "Python utilise l'indentation pour délimiter les blocs, ce qui rend le code lisible et oblige à le présenter proprement.",
+          "documentId": "wp-python",
+          "page": "§ Syntaxe"
+        }
+      ],
+      "infographie": {
+        "titre": "Python en un coup d'œil",
+        "points": [
+          {
+            "icone": "▶️",
+            "texte": "python hello.py : ça tourne tout de suite."
+          },
+          {
+            "icone": "➖",
+            "texte": "Pas de point-virgule."
+          },
+          {
+            "icone": "↹",
+            "texte": "L'indentation fait les blocs."
+          },
+          {
+            "icone": "⏱️",
+            "texte": "Plus lent que le C, mais plus court à écrire."
+          }
+        ]
+      }
+    },
+    {
+      "id": "typage-dynamique",
+      "titre": "Le typage dynamique",
+      "resume": "En Python, on n'écrit pas le type d'une variable : il est déterminé pendant l'exécution, d'après la valeur qu'elle contient.",
+      "page": "§ Typage dynamique",
+      "documentId": "wp-typage",
+      "schema": {
+        "type": "etapes",
+        "etapes": [
+          {
+            "titre": "x = 50",
+            "texte": "x contient un entier (int)."
+          },
+          {
+            "titre": "x = \"bonjour\"",
+            "texte": "La même variable contient maintenant un texte (str)."
+          },
+          {
+            "titre": "type(x)",
+            "texte": "Python dit quel est le type actuel."
+          },
+          {
+            "titre": "Attention",
+            "texte": "\"1\" + 1 provoque une erreur : convertir avec int(\"1\")."
+          }
+        ]
+      },
+      "differences": {
+        "titres": [
+          "Typage statique (C)",
+          "Typage dynamique (Python)"
+        ],
+        "lignes": [
+          {
+            "critere": "Déclaration",
+            "a": "int x = 50;",
+            "b": "x = 50"
+          },
+          {
+            "critere": "Vérification",
+            "a": "À la compilation",
+            "b": "À l'exécution"
+          },
+          {
+            "critere": "Changer de type",
+            "a": "Impossible",
+            "b": "Possible"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Avec le typage dynamique, le type est associé à la valeur et non à la variable : il est vérifié au moment de l'exécution.",
+          "documentId": "wp-typage",
+          "page": "§ Typage dynamique"
+        },
+        {
+          "texte": "Le typage dynamique rend le code plus court et souple, mais certaines erreurs de type n'apparaissent qu'au moment où la ligne est exécutée.",
+          "documentId": "wp-typage",
+          "page": "§ Implications du typage dynamique"
+        }
+      ],
+      "infographie": {
+        "titre": "Pas besoin de dire le type",
+        "points": [
+          {
+            "icone": "🏷️",
+            "texte": "Le type suit la valeur."
+          },
+          {
+            "icone": "🔄",
+            "texte": "Une variable peut changer de type."
+          },
+          {
+            "icone": "🔍",
+            "texte": "type(x) pour vérifier."
+          },
+          {
+            "icone": "⚠️",
+            "texte": "Erreurs vues seulement à l'exécution."
+          }
+        ]
+      }
+    },
+    {
+      "id": "ramasse-miettes",
+      "titre": "Le ramasse-miettes",
+      "resume": "Python libère tout seul la mémoire des objets qu'on n'utilise plus : plus besoin de malloc ni de free.",
+      "page": "§ Définition et fonctionnement",
+      "documentId": "wp-ramasse",
+      "schema": {
+        "type": "cycle",
+        "etapes": [
+          {
+            "titre": "Créer",
+            "texte": "Un objet est créé en mémoire."
+          },
+          {
+            "titre": "Utiliser",
+            "texte": "Des variables y font référence."
+          },
+          {
+            "titre": "Oublier",
+            "texte": "Plus aucune variable ne le désigne."
+          },
+          {
+            "titre": "Récupérer",
+            "texte": "Le ramasse-miettes libère sa mémoire."
+          }
+        ]
+      },
+      "differences": {
+        "titres": [
+          "C",
+          "Python"
+        ],
+        "lignes": [
+          {
+            "critere": "Réserver",
+            "a": "malloc",
+            "b": "Automatique"
+          },
+          {
+            "critere": "Libérer",
+            "a": "free (à ne pas oublier)",
+            "b": "Ramasse-miettes"
+          },
+          {
+            "critere": "Risque",
+            "a": "Fuites, erreurs de mémoire",
+            "b": "Un peu plus lent, moins de contrôle"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Un ramasse-miettes récupère automatiquement la mémoire occupée par les objets qui ne sont plus accessibles par le programme.",
+          "documentId": "wp-ramasse",
+          "page": "§ Définition et fonctionnement"
+        },
+        {
+          "texte": "Le comptage de références, utilisé notamment par Python, garde pour chaque objet le nombre de références : à zéro, l'objet peut être libéré.",
+          "documentId": "wp-ramasse",
+          "page": "§ Comptage de références"
+        },
+        {
+          "texte": "Le ramasse-miettes évite de nombreuses erreurs de gestion de la mémoire, au prix d'un coût en temps de calcul.",
+          "documentId": "wp-ramasse",
+          "page": "§ Avantages et inconvénients"
+        }
+      ],
+      "infographie": {
+        "titre": "La mémoire se range toute seule",
+        "points": [
+          {
+            "icone": "🧹",
+            "texte": "Python libère la mémoire inutile."
+          },
+          {
+            "icone": "🔢",
+            "texte": "Il compte les références."
+          },
+          {
+            "icone": "🚫",
+            "texte": "Pas de malloc, pas de free."
+          },
+          {
+            "icone": "⚖️",
+            "texte": "Plus sûr, un peu plus lent."
+          }
+        ]
+      }
+    },
+    {
+      "id": "listes-dictionnaires",
+      "titre": "Listes et dictionnaires",
+      "resume": "Une liste range des valeurs dans l'ordre, par numéro ; un dictionnaire associe des clés à des valeurs, comme un vrai dictionnaire associe mots et définitions.",
+      "page": "§ Python",
+      "documentId": "wp-associatif",
+      "schema": {
+        "type": "comparaison",
+        "colonnes": [
+          {
+            "titre": "Liste",
+            "points": [
+              "notes = [72, 73, 33]",
+              "notes[0] vaut 72",
+              "notes.append(50)",
+              "len(notes)"
+            ]
+          },
+          {
+            "titre": "Dictionnaire",
+            "points": [
+              "tel = {\"Awa\": \"+221…\"}",
+              "tel[\"Awa\"] donne le numéro",
+              "tel[\"Moussa\"] = \"+225…\"",
+              "if \"Awa\" in tel:"
+            ]
+          }
+        ]
+      },
+      "differences": {
+        "titres": [
+          "Liste",
+          "Dictionnaire"
+        ],
+        "lignes": [
+          {
+            "critere": "Accès",
+            "a": "Par position (0, 1, 2…)",
+            "b": "Par clé (\"Awa\")"
+          },
+          {
+            "critere": "Ordre",
+            "a": "Celui d'ajout",
+            "b": "Celui d'ajout (Python récent)"
+          },
+          {
+            "critere": "En C, ressemble à",
+            "a": "Un tableau qui grandit",
+            "b": "Une table de hachage"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Une liste est une suite ordonnée d'éléments sur laquelle on peut ajouter, retirer, lire ou modifier un élément à une position donnée.",
+          "documentId": "wp-liste",
+          "page": "§ Primitives"
+        },
+        {
+          "texte": "Un tableau associatif associe à chaque clé une valeur, comme un annuaire associe un nom à un numéro de téléphone.",
+          "documentId": "wp-associatif",
+          "page": "§ Exemples"
+        },
+        {
+          "texte": "En Python, les tableaux associatifs s'appellent des dictionnaires et s'écrivent entre accolades : {clé: valeur}.",
+          "documentId": "wp-associatif",
+          "page": "§ Python"
+        }
+      ],
+      "infographie": {
+        "titre": "Deux structures prêtes à l'emploi",
+        "points": [
+          {
+            "icone": "📋",
+            "texte": "Liste : [ ] , par numéro."
+          },
+          {
+            "icone": "📖",
+            "texte": "Dictionnaire : { } , par clé."
+          },
+          {
+            "icone": "➕",
+            "texte": "append, ou tel[clé] = valeur."
+          },
+          {
+            "icone": "🔎",
+            "texte": "in : est-ce dedans ?"
+          }
+        ]
+      }
+    },
+    {
+      "id": "exceptions",
+      "titre": "Les exceptions : try et except",
+      "resume": "Quand une erreur survient, Python lève une exception ; avec try et except, on l'attrape et on réagit au lieu de planter.",
+      "page": "§ Python",
+      "documentId": "wp-exceptions",
+      "schema": {
+        "type": "etapes",
+        "etapes": [
+          {
+            "titre": "try:",
+            "texte": "x = int(input(\"x : \"))"
+          },
+          {
+            "titre": "Erreur ?",
+            "texte": "L'utilisateur tape « chat » : ValueError."
+          },
+          {
+            "titre": "except ValueError:",
+            "texte": "print(\"Ce n'est pas un nombre\")"
+          },
+          {
+            "titre": "Suite",
+            "texte": "Le programme continue au lieu de s'arrêter."
+          }
+        ]
+      },
+      "differences": {
+        "titres": [
+          "C",
+          "Python"
+        ],
+        "lignes": [
+          {
+            "critere": "Signaler une erreur",
+            "a": "Valeur de retour (NULL, 1…)",
+            "b": "Lever une exception"
+          },
+          {
+            "critere": "La traiter",
+            "a": "if (p == NULL)",
+            "b": "try / except"
+          },
+          {
+            "critere": "Oubli",
+            "a": "L'erreur passe inaperçue",
+            "b": "Le programme s'arrête avec un message"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Un système de gestion d'exceptions sépare le code normal du code qui traite les erreurs : l'erreur est signalée, puis traitée par un gestionnaire.",
+          "documentId": "wp-exceptions",
+          "page": "§ Principes généraux"
+        },
+        {
+          "texte": "En Python, le code à risque est placé dans un bloc try ; les blocs except indiquent quoi faire pour chaque type d'erreur.",
+          "documentId": "wp-exceptions",
+          "page": "§ Python"
+        }
+      ],
+      "infographie": {
+        "titre": "Attraper les erreurs",
+        "points": [
+          {
+            "icone": "🧪",
+            "texte": "try : j'essaie."
+          },
+          {
+            "icone": "💥",
+            "texte": "Erreur : une exception est levée."
+          },
+          {
+            "icone": "🧤",
+            "texte": "except : je l'attrape."
+          },
+          {
+            "icone": "➡️",
+            "texte": "Le programme continue."
+          }
+        ]
+      }
+    },
+    {
+      "id": "bibliotheques-csv",
+      "titre": "Bibliothèques et fichiers CSV",
+      "resume": "Une bibliothèque apporte du code déjà écrit (import csv) ; un fichier CSV range un tableau en texte, une ligne par ligne et des virgules entre les colonnes.",
+      "page": "§ Exemple",
+      "documentId": "wp-csv",
+      "schema": {
+        "type": "etapes",
+        "etapes": [
+          {
+            "titre": "import csv",
+            "texte": "Charger la bibliothèque."
+          },
+          {
+            "titre": "Ouvrir",
+            "texte": "with open(\"favoris.csv\") as f:"
+          },
+          {
+            "titre": "Lire",
+            "texte": "for ligne in csv.DictReader(f):"
+          },
+          {
+            "titre": "Utiliser",
+            "texte": "ligne[\"langage\"] donne la colonne « langage »."
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Une bibliothèque logicielle est une collection de fonctions déjà écrites et prêtes à l'emploi, que les programmes peuvent réutiliser.",
+          "documentId": "wp-bibliotheque",
+          "page": "§ Utilisation"
+        },
+        {
+          "texte": "Un fichier CSV est un fichier texte représentant un tableau : chaque ligne est une rangée, et les valeurs sont séparées par des virgules.",
+          "documentId": "wp-csv",
+          "page": "§ Exemple"
+        },
+        {
+          "texte": "En français, la virgule servant aux nombres décimaux, les tableurs utilisent souvent le point-virgule comme séparateur.",
+          "documentId": "wp-csv",
+          "page": "§ Variantes françaises"
+        }
+      ],
+      "infographie": {
+        "titre": "Réutiliser et lire des tableaux",
+        "points": [
+          {
+            "icone": "📚",
+            "texte": "import : réutiliser du code."
+          },
+          {
+            "icone": "📄",
+            "texte": "CSV : un tableau en texte."
+          },
+          {
+            "icone": "➗",
+            "texte": "Virgules entre les colonnes."
+          },
+          {
+            "icone": "🔁",
+            "texte": "csv.DictReader : une ligne à la fois."
+          }
+        ]
+      }
+    }
+  ]
+}

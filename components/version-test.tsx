@@ -10,7 +10,7 @@ import { LEGAL } from '@/lib/legal';
 const DISPONIBLE: [string, string][] = [
   ['Le cours CS50x en français', ', de la Semaine 0 à la Semaine 10, avec la Semaine 7½ sur l’intelligence artificielle. Chaque semaine propose une vidéo en français, un résumé, le podcast du jour et des quiz.'],
   ['Les problèmes officiels de CS50', ', expliqués en français pas à pas.'],
-  ['Le tuteur', ', à l’écrit (« Questions au tuteur ») et à voix haute (« Tuteur vocal »). Il vous guide par des questions plutôt que de vous donner la réponse.'],
+  ['Le tuteur', ', à l’écrit (« Questions au tuteur ») et à voix haute (« Demande au prof »). Il vous guide par des questions plutôt que de vous donner la réponse.'],
   ['La formation « L’essentiel de l’IA »', '.'],
   ['Le mode hors ligne sur votre téléphone ou votre ordinateur.', ' Après votre connexion, les pages du cours et les quiz sont enregistrés sur votre appareil. Sans Internet, vous pouvez relire vos cours et faire les quiz ; vos résultats sont envoyés dès que vous retrouvez Internet. Pour emporter aussi les podcasts, utilisez le bouton de téléchargement de la semaine.'],
 ];

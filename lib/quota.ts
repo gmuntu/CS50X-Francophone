@@ -21,7 +21,7 @@ const jour = () => new Date().toISOString().slice(0, 10);
 const heure = () => new Date().toISOString().slice(0, 13);
 
 // Limites quotidiennes par élève (le staff n'est pas limité).
-export const LIMITES_IA = { tutor: 150, speech: 400, stt: 200, live: 30, defense: 10 } as const;
+export const LIMITES_IA = { tutor: 150, speech: 400, stt: 200, live: 30, defense: 10, approfondir: 20 } as const;
 
 export async function quotaIA(user: { id?: string; role?: string } | undefined, type: keyof typeof LIMITES_IA): Promise<Response | null> {
   if (process.env.SAVOIRIA_LOCAL === '1') return null; // IA locale : gratuite, pas de quota

@@ -1,0 +1,524 @@
+{
+  "semaine": 12,
+  "sujet": "Cybersécurité",
+  "resume": "Protéger l'information : les trois piliers confidentialité, intégrité et disponibilité, de bons mots de passe avec double authentification contre l'hameçonnage, le hachage des mots de passe, le chiffrement symétrique et asymétrique, et HTTPS contre l'attaque de l'homme du milieu.",
+  "documents": [
+    {
+      "id": "wp-secinfo",
+      "titre": "Sécurité de l'information",
+      "url": "https://fr.wikipedia.org/wiki/S%C3%A9curit%C3%A9_de_l%27information",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-mdp",
+      "titre": "Mot de passe",
+      "url": "https://fr.wikipedia.org/wiki/Mot_de_passe",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-2fa",
+      "titre": "Double authentification",
+      "url": "https://fr.wikipedia.org/wiki/Double_authentification",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-hameconnage",
+      "titre": "Hameçonnage",
+      "url": "https://fr.wikipedia.org/wiki/Hame%C3%A7onnage",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-sym",
+      "titre": "Cryptographie symétrique",
+      "url": "https://fr.wikipedia.org/wiki/Cryptographie_sym%C3%A9trique",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-asym",
+      "titre": "Cryptographie asymétrique",
+      "url": "https://fr.wikipedia.org/wiki/Cryptographie_asym%C3%A9trique",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-hash",
+      "titre": "Fonction de hachage cryptographique",
+      "url": "https://fr.wikipedia.org/wiki/Fonction_de_hachage_cryptographique",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-https",
+      "titre": "Hypertext Transfer Protocol Secure (HTTPS)",
+      "url": "https://fr.wikipedia.org/wiki/Hypertext_Transfer_Protocol_Secure",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-tls",
+      "titre": "Transport Layer Security (TLS)",
+      "url": "https://fr.wikipedia.org/wiki/Transport_Layer_Security",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-mitm",
+      "titre": "Attaque de l'homme du milieu",
+      "url": "https://fr.wikipedia.org/wiki/Attaque_de_l%27homme_du_milieu",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    }
+  ],
+  "notions": [
+    {
+      "id": "cia",
+      "titre": "Confidentialité, intégrité, disponibilité",
+      "resume": "Sécuriser une information, c'est garantir trois choses : seuls les bonnes personnes la lisent, personne ne la modifie en cachette, et elle reste accessible quand on en a besoin.",
+      "page": "§ Critères de sensibilité",
+      "documentId": "wp-secinfo",
+      "schema": {
+        "type": "comparaison",
+        "colonnes": [
+          {
+            "titre": "Confidentialité",
+            "points": [
+              "Seuls les ayants droit lisent",
+              "Outil : chiffrement",
+              "Attaque : vol de données"
+            ]
+          },
+          {
+            "titre": "Intégrité",
+            "points": [
+              "Rien n'est modifié en cachette",
+              "Outil : hachage, signature",
+              "Attaque : falsification"
+            ]
+          },
+          {
+            "titre": "Disponibilité",
+            "points": [
+              "Accessible quand il faut",
+              "Outil : sauvegardes",
+              "Attaque : saturation du site"
+            ]
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "La sécurité de l'information repose sur trois critères principaux : la confidentialité, l'intégrité et la disponibilité des données.",
+          "documentId": "wp-secinfo",
+          "page": "§ Critères de sensibilité"
+        },
+        {
+          "texte": "Les menaces vont du piratage de logiciels au vol de matériel, en passant par l'exploitation des données dérobées.",
+          "documentId": "wp-secinfo",
+          "page": "§ Risques et menaces"
+        }
+      ],
+      "infographie": {
+        "titre": "Les 3 piliers",
+        "points": [
+          {
+            "icone": "🔒",
+            "texte": "Confidentialité : qui peut lire ?"
+          },
+          {
+            "icone": "✅",
+            "texte": "Intégrité : est-ce bien l'original ?"
+          },
+          {
+            "icone": "🟢",
+            "texte": "Disponibilité : est-ce accessible ?"
+          },
+          {
+            "icone": "⚖️",
+            "texte": "Une faille sur un seul pilier suffit."
+          }
+        ]
+      }
+    },
+    {
+      "id": "mots-de-passe",
+      "titre": "Mots de passe, double authentification et hameçonnage",
+      "resume": "Un mot de passe long et unique résiste aux attaques ; la double authentification ajoute une deuxième preuve, et l'hameçonnage cherche à vous faire donner vos codes sur un faux site.",
+      "page": "§ Critères de robustesse",
+      "documentId": "wp-mdp",
+      "schema": {
+        "type": "etapes",
+        "etapes": [
+          {
+            "titre": "Long et unique",
+            "texte": "Une phrase de passe, différente pour chaque site."
+          },
+          {
+            "titre": "Gestionnaire",
+            "texte": "Un gestionnaire de mots de passe les retient pour vous."
+          },
+          {
+            "titre": "Deuxième facteur",
+            "texte": "Un code reçu sur le téléphone ou une clé physique."
+          },
+          {
+            "titre": "Méfiance",
+            "texte": "Vérifier l'adresse du site avant de taper ses codes."
+          }
+        ]
+      },
+      "differences": {
+        "titres": [
+          "Mot de passe seul",
+          "Double authentification"
+        ],
+        "lignes": [
+          {
+            "critere": "Ce qu'il faut",
+            "a": "Quelque chose que je sais",
+            "b": "Ce que je sais + ce que j'ai (téléphone)"
+          },
+          {
+            "critere": "Mot de passe volé",
+            "a": "Le compte est perdu",
+            "b": "Le pirate est encore bloqué"
+          },
+          {
+            "critere": "Exemple",
+            "a": "Code de 4 chiffres",
+            "b": "Mot de passe + code SMS"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Plus un mot de passe est long et varié, plus il faut d'essais pour le deviner ; la longueur compte davantage que la complexité.",
+          "documentId": "wp-mdp",
+          "page": "§ Critères de robustesse"
+        },
+        {
+          "texte": "La double authentification demande deux preuves de natures différentes, par exemple quelque chose que l'on connaît et quelque chose que l'on possède.",
+          "documentId": "wp-2fa",
+          "page": "§ Concept"
+        },
+        {
+          "texte": "Pour éviter l'hameçonnage, il faut vérifier soigneusement le nom de domaine du site, se méfier des liens reçus par message et taper soi-même l'adresse.",
+          "documentId": "wp-hameconnage",
+          "page": "§ Méthodes de prévention"
+        }
+      ],
+      "infographie": {
+        "titre": "Protéger ses comptes",
+        "points": [
+          {
+            "icone": "📏",
+            "texte": "Long plutôt que compliqué."
+          },
+          {
+            "icone": "🔁",
+            "texte": "Jamais le même partout."
+          },
+          {
+            "icone": "📱",
+            "texte": "Activer la double authentification."
+          },
+          {
+            "icone": "🎣",
+            "texte": "Lien suspect ? Ne pas cliquer."
+          }
+        ]
+      }
+    },
+    {
+      "id": "hachage",
+      "titre": "Le hachage des mots de passe",
+      "resume": "Un site sérieux ne garde pas votre mot de passe mais son empreinte (hash) : un calcul à sens unique, impossible à inverser, qui donne toujours le même résultat pour le même mot de passe.",
+      "page": "§ Vérification de mot de passe",
+      "documentId": "wp-hash",
+      "schema": {
+        "type": "etapes",
+        "etapes": [
+          {
+            "titre": "Inscription",
+            "texte": "Le site calcule hash(mot de passe) et garde seulement l'empreinte."
+          },
+          {
+            "titre": "Connexion",
+            "texte": "Il recalcule l'empreinte de ce que vous tapez."
+          },
+          {
+            "titre": "Comparaison",
+            "texte": "Même empreinte : c'est le bon mot de passe."
+          },
+          {
+            "titre": "Fuite",
+            "texte": "Les pirates n'obtiennent que des empreintes, inutilisables directement."
+          }
+        ]
+      },
+      "differences": {
+        "titres": [
+          "Chiffrement",
+          "Hachage"
+        ],
+        "lignes": [
+          {
+            "critere": "Sens",
+            "a": "Réversible avec la clé",
+            "b": "À sens unique"
+          },
+          {
+            "critere": "But",
+            "a": "Cacher puis relire",
+            "b": "Vérifier sans garder l'original"
+          },
+          {
+            "critere": "Exemple",
+            "a": "Un message secret",
+            "b": "Un mot de passe stocké"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Une fonction de hachage cryptographique doit rendre impossible en pratique de retrouver l'entrée à partir de l'empreinte, ou de trouver deux entrées qui ont la même empreinte.",
+          "documentId": "wp-hash",
+          "page": "§ Propriétés"
+        },
+        {
+          "texte": "Les systèmes stockent l'empreinte des mots de passe plutôt que les mots de passe eux-mêmes ; on y ajoute un sel, une valeur aléatoire, pour que deux mots de passe identiques aient des empreintes différentes.",
+          "documentId": "wp-hash",
+          "page": "§ Vérification de mot de passe"
+        },
+        {
+          "texte": "Comparer l'empreinte d'un fichier téléchargé à celle publiée par son auteur permet de vérifier qu'il n'a pas été modifié.",
+          "documentId": "wp-hash",
+          "page": "§ Vérification de l'intégrité des fichiers ou des messages"
+        }
+      ],
+      "infographie": {
+        "titre": "Une empreinte, pas le secret",
+        "points": [
+          {
+            "icone": "👣",
+            "texte": "hash : une empreinte unique."
+          },
+          {
+            "icone": "➡️",
+            "texte": "À sens unique : impossible à inverser."
+          },
+          {
+            "icone": "🧂",
+            "texte": "Le sel rend chaque empreinte différente."
+          },
+          {
+            "icone": "🛡️",
+            "texte": "Une fuite ne révèle pas les mots de passe."
+          }
+        ]
+      }
+    },
+    {
+      "id": "chiffrement",
+      "titre": "Chiffrement symétrique et asymétrique",
+      "resume": "En chiffrement symétrique, la même clé sert à fermer et à ouvrir ; en asymétrique, une clé publique ferme et seule la clé privée ouvre.",
+      "page": "§ Principe général",
+      "documentId": "wp-asym",
+      "schema": {
+        "type": "etapes",
+        "etapes": [
+          {
+            "titre": "Awa publie sa clé publique",
+            "texte": "Tout le monde peut la voir, comme un cadenas ouvert."
+          },
+          {
+            "titre": "Moussa chiffre",
+            "texte": "Il ferme son message avec la clé publique d'Awa."
+          },
+          {
+            "titre": "Le message voyage",
+            "texte": "Même intercepté, il est illisible."
+          },
+          {
+            "titre": "Awa déchiffre",
+            "texte": "Avec sa clé privée, qu'elle seule possède."
+          }
+        ]
+      },
+      "differences": {
+        "titres": [
+          "Symétrique",
+          "Asymétrique"
+        ],
+        "lignes": [
+          {
+            "critere": "Clés",
+            "a": "Une seule, partagée",
+            "b": "Une paire : publique + privée"
+          },
+          {
+            "critere": "Vitesse",
+            "a": "Très rapide",
+            "b": "Plus lent"
+          },
+          {
+            "critere": "Problème",
+            "a": "Comment s'échanger la clé ?",
+            "b": "Résout l'échange des clés"
+          },
+          {
+            "critere": "Exemple",
+            "a": "AES, César",
+            "b": "RSA"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "En cryptographie symétrique, la même clé chiffre et déchiffre : sa sécurité dépend entièrement du secret de cette clé partagée.",
+          "documentId": "wp-sym",
+          "page": "§ Clé et sécurité"
+        },
+        {
+          "texte": "La cryptographie asymétrique utilise deux clés liées : la clé publique, que l'on peut diffuser, et la clé privée, gardée secrète ; ce que l'une chiffre, seule l'autre peut le déchiffrer.",
+          "documentId": "wp-asym",
+          "page": "§ Principe général"
+        },
+        {
+          "texte": "On compare souvent la clé publique à un cadenas ouvert que l'on distribue : chacun peut le fermer, mais seul le propriétaire de la clé peut l'ouvrir.",
+          "documentId": "wp-asym",
+          "page": "§ Analogies"
+        }
+      ],
+      "infographie": {
+        "titre": "Fermer et ouvrir",
+        "points": [
+          {
+            "icone": "🔑",
+            "texte": "Symétrique : une seule clé partagée."
+          },
+          {
+            "icone": "🔓",
+            "texte": "Asymétrique : un cadenas public…"
+          },
+          {
+            "icone": "🗝️",
+            "texte": "… et une clé privée secrète."
+          },
+          {
+            "icone": "⚡",
+            "texte": "En pratique, on combine les deux."
+          }
+        ]
+      }
+    },
+    {
+      "id": "https-mitm",
+      "titre": "HTTPS et l'attaque de l'homme du milieu",
+      "resume": "HTTPS chiffre les échanges entre le navigateur et le site grâce à TLS et vérifie l'identité du site avec un certificat, ce qui empêche un intrus au milieu de lire ou modifier les données.",
+      "page": "§ Principe de fonctionnement",
+      "documentId": "wp-https",
+      "schema": {
+        "type": "etapes",
+        "etapes": [
+          {
+            "titre": "Connexion",
+            "texte": "Le navigateur contacte https://savoiria.online."
+          },
+          {
+            "titre": "Certificat",
+            "texte": "Le site prouve son identité avec un certificat signé par une autorité."
+          },
+          {
+            "titre": "Clé de session",
+            "texte": "TLS échange une clé grâce au chiffrement asymétrique."
+          },
+          {
+            "titre": "Échanges chiffrés",
+            "texte": "La suite est chiffrée en symétrique : l'intrus ne voit rien."
+          }
+        ]
+      },
+      "differences": {
+        "titres": [
+          "HTTP",
+          "HTTPS"
+        ],
+        "lignes": [
+          {
+            "critere": "Données",
+            "a": "En clair",
+            "b": "Chiffrées (TLS)"
+          },
+          {
+            "critere": "Identité du site",
+            "a": "Non vérifiée",
+            "b": "Certificat vérifié"
+          },
+          {
+            "critere": "Homme du milieu",
+            "a": "Peut lire et modifier",
+            "b": "Bloqué"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "HTTPS est HTTP transporté dans une connexion chiffrée par TLS : il garantit la confidentialité et l'intégrité des données échangées et l'authenticité du site.",
+          "documentId": "wp-https",
+          "page": "§ Principe de fonctionnement"
+        },
+        {
+          "texte": "Le serveur présente un certificat numérique, signé par une autorité de certification, que le navigateur vérifie avant d'établir la connexion.",
+          "documentId": "wp-tls",
+          "page": "§ Authentification par certificat numérique"
+        },
+        {
+          "texte": "Dans une attaque de l'homme du milieu, un intrus se place entre deux interlocuteurs et se fait passer pour chacun auprès de l'autre, pour lire ou modifier leurs messages.",
+          "documentId": "wp-mitm",
+          "page": "§ L'attaque de l'homme du milieu"
+        },
+        {
+          "texte": "Pour s'en protéger, il faut authentifier les interlocuteurs, par exemple grâce à des certificats, avant d'échanger des clés.",
+          "documentId": "wp-mitm",
+          "page": "§ Solutions"
+        }
+      ],
+      "infographie": {
+        "titre": "Le cadenas du navigateur",
+        "points": [
+          {
+            "icone": "🔐",
+            "texte": "HTTPS = HTTP + chiffrement TLS."
+          },
+          {
+            "icone": "📜",
+            "texte": "Certificat : la carte d'identité du site."
+          },
+          {
+            "icone": "🕵️",
+            "texte": "L'intrus au milieu ne voit que du charabia."
+          },
+          {
+            "icone": "⚠️",
+            "texte": "Alerte de certificat ? Ne pas continuer."
+          }
+        ]
+      }
+    }
+  ]
+}
