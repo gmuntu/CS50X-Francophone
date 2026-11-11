@@ -12,6 +12,7 @@ import semaine5 from '@/content/approfondir/semaine-5.json';
 import semaine6 from '@/content/approfondir/semaine-6.json';
 import semaine7 from '@/content/approfondir/semaine-7.json';
 import semaine11 from '@/content/approfondir/semaine-11.json';
+import semaine8 from '@/content/approfondir/semaine-8.json';
 
 const FICHIERS: Record<number, unknown> = {
   0: semaine0,
@@ -23,6 +24,7 @@ const FICHIERS: Record<number, unknown> = {
   6: semaine6,
   7: semaine7,
   11: semaine11,
+  8: semaine8,
 };
 
 const cache = new Map<number, ContenuApprofondir | null>();
