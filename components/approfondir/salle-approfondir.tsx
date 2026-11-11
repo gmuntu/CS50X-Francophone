@@ -1,16 +1,25 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { FileUp, ClipboardPaste, BookOpen, Sparkles, HelpCircle, RefreshCw, Lightbulb, Send, Mic, GraduationCap } from 'lucide-react';
+import { BookOpen, ChevronLeft, ChevronRight, FileUp, Image as ImageIcon, Loader2, RotateCcw, Send } from 'lucide-react';
 import { contexteTuteur, type ContenuApprofondir, type Notion } from '@/lib/approfondir/types';
+import { LIBELLE_TYPE, texteNotion, vueTableau } from '@/lib/approfondir/tableau';
 import { ORDINATEUR_LOCAL } from '@/lib/socrate-local';
-import SchemaTableau from './schema-tableau';
+import SchemaTableau, { AMBRE, BLEU, CRAIE, ENCRE } from './schema-tableau';
 import Infographie from './infographie';
-import TuteurVocal, { type ModeVocal } from './tuteur-vocal';
+import BarreTuteur from './tuteur-vocal';
 
-const PDF_MAX = 4 * 1024 * 1024;
+const PAS_MS = 1600; // le schéma se construit tout seul, une étape toutes les 1,6 s
+const FICHIER_MAX = 4 * 1024 * 1024;
+const NOTES_MIN = 200;
+const QUESTIONS = ["Je n'ai pas compris cette partie", 'Explique autrement', 'Donne un exemple de la vie de tous les jours'];
+const CONSIGNES: Record<string, (t: string) => string> = {
+  [QUESTIONS[0]]: (t) => `Je n'ai pas compris la notion « ${t} ». Réexplique-la très simplement, étape par étape.`,
+  [QUESTIONS[1]]: (t) => `Explique la notion « ${t} » autrement, avec une image ou une comparaison différente.`,
+  [QUESTIONS[2]]: (t) => `Donne un exemple de la vie de tous les jours, en Afrique francophone si possible, pour la notion « ${t} ».`,
+};
 
-/** En ligne = Internet disponible ET pas sur un ordinateur d'école (qui utilise Gemma, Whisper et la voix locale). */
+/** Tuteur vocal en direct : Internet disponible ET pas sur un ordinateur d'école (qui utilise Gemma, Whisper, voix locale). */
 function useEnLigne() {
   const [enLigne, setEnLigne] = useState(true);
   useEffect(() => {
@@ -24,7 +33,7 @@ function useEnLigne() {
 }
 
 /**
- * « Envoyer un PDF » / « Coller mes notes » : possible dès qu'il y a Internet, y compris sur un ordinateur
+ * « Envoyer un PDF » / « Coller vos notes » : possible dès qu'il y a Internet, y compris sur un ordinateur
  * d'école (il relaie vers le site en ligne). Demandé au serveur, revérifié à chaque changement de connexion.
  */
 function useAnalyseDisponible() {
@@ -74,70 +83,72 @@ async function demanderTuteur(corps: object, surTexte: (t: string) => void) {
 }
 
 /**
- * « Salle d’étude · Approfondir le sujet » : un tableau (la notion) et un cahier (les notions et les questions).
- * Une nouvelle vue du même tuteur que l’assistant de cours, affichée dans la page « Salle d’étude ».
+ * « Salle d'étude · Approfondir le sujet » : le tableau (la notion, son schéma, le tuteur) et le cahier d'étude
+ * (sujet, notions, différences côte à côte, questions). Une nouvelle vue du même tuteur que l'assistant de cours.
  */
-export default function SalleApprofondir({ moduleId, prepare }: { moduleId: number; prepare: ContenuApprofondir | null }) {
+export default function SalleApprofondir({ moduleId, prepare, libelleSemaine }: { moduleId: number; prepare: ContenuApprofondir | null; libelleSemaine?: string }) {
   const enLigne = useEnLigne();
   const analyseDispo = useAnalyseDisponible();
   const [contenu, setContenu] = useState<ContenuApprofondir | null>(prepare);
-  const [notionId, setNotionId] = useState<string | undefined>(prepare?.notions[0]?.id);
-  const [panneau, setPanneau] = useState<'ferme' | 'pdf' | 'notes'>('ferme');
+  const [panneau, setPanneau] = useState(!prepare);
+  const [index, setIndex] = useState(0);
+  const [visible, setVisible] = useState(1);
+  const [actif, setActif] = useState(0);
+  const [lecture, setLecture] = useState(true);
+  const [infographie, setInfographie] = useState(false);
   const [notes, setNotes] = useState('');
-  const [analyse, setAnalyse] = useState<{ enCours: boolean; erreur?: string }>({ enCours: false });
-  const [infoOuverte, setInfoOuverte] = useState(false);
-  const [vocal, setVocal] = useState<ModeVocal | null>(null);
+  const [analyse, setAnalyse] = useState<{ nom?: string; erreur?: string }>({});
   const [echanges, setEchanges] = useState<Echange[]>([]);
   const [question, setQuestion] = useState('');
   const [attente, setAttente] = useState(false);
   const fichierRef = useRef<HTMLInputElement>(null);
-  const tableauRef = useRef<HTMLDivElement>(null);
-  // Les réponses du tuteur défilent DANS le cahier : la page ne bouge pas, le tableau reste visible.
   const reponsesRef = useRef<HTMLDivElement>(null);
-  const suivreReponse = () => requestAnimationFrame(() => {
-    const z = reponsesRef.current;
-    if (z) z.scrollTop = z.scrollHeight;
-  });
 
-  const notion: Notion | undefined = useMemo(() => contenu?.notions.find((n) => n.id === notionId) ?? contenu?.notions[0], [contenu, notionId]);
+  const notion: Notion | null = contenu ? contenu.notions[Math.min(index, contenu.notions.length - 1)] ?? null : null;
+  const vue = useMemo(() => (notion ? vueTableau(notion) : null), [notion]);
+  const nbEtapes = vue?.etapes.length ?? 0;
   const doc = contenu?.documents.find((d) => d.id === notion?.documentId) ?? contenu?.documents[0];
-  const contexte = contenu ? contexteTuteur(contenu, notion) : '';
-  const contexteCourt = notion ? `${notion.titre} : ${notion.resume} ${(notion.schema.etapes ?? []).map((e) => e.titre).join(', ')}`.slice(0, 700) : '';
+  const nomSource = contenu?.semaine !== undefined ? `Cours préparé · ${libelleSemaine ?? `Semaine ${contenu.semaine}`}` : doc?.titre ?? 'Mon document';
+  const contexte = contenu ? contexteTuteur(contenu, notion ?? undefined) : '';
+  const contexteCourt = notion ? `${notion.titre} : ${notion.resume} ${vue?.etapes.map((e) => e.label).filter(Boolean).join(', ') ?? ''}`.slice(0, 700) : '';
+  const comparaisons = (contenu?.notions ?? []).filter((n) => n.differences);
 
-  const choisirNotion = (id: string) => {
-    setNotionId(id);
-    setEchanges([]);
-    setVocal(null);
-    tableauRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  };
+  // Le schéma se construit tout seul, étape par étape.
+  useEffect(() => {
+    if (!lecture || !notion || visible >= nbEtapes) return;
+    const t = setTimeout(() => { setActif(visible); setVisible(visible + 1); }, PAS_MS);
+    return () => clearTimeout(t);
+  }, [lecture, notion, nbEtapes, visible]);
 
-  const charger = (c: ContenuApprofondir) => { setContenu(c); setNotionId(c.notions[0]?.id); setEchanges([]); setVocal(null); setPanneau('ferme'); };
+  const repartir = () => { setVisible(1); setActif(0); setLecture(true); };
+  const choisirNotion = (i: number) => { setIndex(i); setPanneau(false); setEchanges([]); repartir(); };
+  const allerA = (n: number) => { const s = Math.max(1, Math.min(nbEtapes, n)); setLecture(false); setVisible(s); setActif(s - 1); };
+  const charger = (c: ContenuApprofondir) => { setContenu(c); setPanneau(false); setAnalyse({}); choisirNotion(0); };
 
-  const analyser = async (form: FormData) => {
-    setAnalyse({ enCours: true });
+  const analyser = async (form: FormData, nom: string) => {
+    setAnalyse({ nom });
     try {
       const r = await fetch('/api/approfondir/analyser', { method: 'POST', body: form });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d?.error || "L'analyse n'a pas abouti.");
       charger(d as ContenuApprofondir);
-      setAnalyse({ enCours: false });
     } catch (e: any) {
-      setAnalyse({ enCours: false, erreur: e?.message || "L'analyse n'a pas abouti." });
+      setAnalyse({ erreur: e?.message || "L'analyse n'a pas abouti." });
     }
   };
-
-  const envoyerPdf = (f?: File) => {
+  const envoyerFichier = (f?: File) => {
     if (!f) return;
-    if (f.size > PDF_MAX) { setAnalyse({ enCours: false, erreur: 'Le PDF dépasse 4 Mo.' }); return; }
+    if (f.size > FICHIER_MAX) { setAnalyse({ erreur: 'Le fichier dépasse 4 Mo.' }); return; }
     const form = new FormData();
-    form.append('pdf', f);
-    analyser(form);
+    form.append('fichier', f);
+    void analyser(form, f.name);
   };
 
-  const poser = async (texte: string, libelle = texte, mode?: 'expliquer') => {
-    if (!texte.trim() || attente || !notion) return;
+  // Les réponses écrites défilent DANS le cahier : la page ne bouge pas, le tableau reste visible.
+  const suivreReponse = () => requestAnimationFrame(() => { const z = reponsesRef.current; if (z) z.scrollTop = z.scrollHeight; });
+  const poser = async (libelle: string, texte = libelle) => {
+    if (!texte.trim() || attente || !notion || !contenu) return;
     setAttente(true);
-    setQuestion('');
     setEchanges((e) => [...e, { question: libelle, reponse: '' }]);
     suivreReponse();
     try {
@@ -145,7 +156,7 @@ export default function SalleApprofondir({ moduleId, prepare }: { moduleId: numb
         {
           moduleId,
           // Cours préparé : le serveur relit lui-même le contexte ; document de l'élève : on l'envoie.
-          approfondir: contenu?.semaine !== undefined ? { semaine: contenu.semaine, notionId: notion.id, mode } : { contexte, mode },
+          approfondir: contenu.semaine !== undefined ? { semaine: contenu.semaine, notionId: notion.id } : { contexte },
           messages: [{ role: 'user', content: texte }],
         },
         (rep) => { setEchanges((e) => [...e.slice(0, -1), { question: libelle, reponse: rep }]); suivreReponse(); },
@@ -157,177 +168,230 @@ export default function SalleApprofondir({ moduleId, prepare }: { moduleId: numb
     }
   };
 
-  const BOUTONS = notion ? [
-    { icone: HelpCircle, libelle: "Je n'ai pas compris cette partie", texte: `Je n'ai pas compris la notion « ${notion.titre} ». Réexplique-la très simplement, étape par étape.` },
-    { icone: RefreshCw, libelle: 'Explique autrement', texte: `Explique la notion « ${notion.titre} » autrement, avec une image ou une comparaison différente.` },
-    { icone: Lightbulb, libelle: 'Donne un exemple de la vie de tous les jours', texte: `Donne un exemple de la vie de tous les jours, en Afrique francophone si possible, pour la notion « ${notion.titre} ».` },
-  ] : [];
-
   const indispo = analyseDispo !== true;
-  const btnPanneau = 'inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50';
+  const enCours = !!analyse.nom && !analyse.erreur;
+  const etapeActive = vue?.etapes[Math.min(actif, nbEtapes - 1)];
 
   return (
-    <section aria-labelledby="titre-approfondir" className="rounded-3xl border border-border bg-card p-4 sm:p-6 shadow-soft-sm">
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 id="titre-approfondir" className="sr-only">Approfondir le sujet</h2>
-          {contenu && <p className="text-base text-muted-foreground">Sujet : <strong className="text-foreground">{contenu.sujet}</strong></p>}
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
+      {/* ─── Le tableau ─── */}
+      <section className="classe-tableau flex min-h-[640px] min-w-0 flex-col p-5 sm:p-7" aria-labelledby="titre-salle">
+        <div className="mb-4 flex flex-wrap items-center gap-3">
+          <h1 id="titre-salle" className="font-craie text-4xl leading-none" style={{ color: CRAIE }}>📚 Salle d’étude</h1>
+          <span className="truncate text-sm text-white/60">· Approfondir le sujet{contenu ? ` · ${nomSource}` : ''}</span>
+          <button type="button" onClick={() => setPanneau((o) => !o || !contenu)} className="ml-auto flex items-center gap-2 rounded-full border border-white/40 px-4 py-1.5 text-sm font-semibold text-white hover:bg-white/10">
+            <BookOpen className="h-4 w-4" />
+            {panneau && contenu ? 'Revenir au tableau' : 'Commencer ou changer de document'}
+          </button>
         </div>
-        {!enLigne && <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-900 dark:bg-amber-900/40 dark:text-amber-100">{analyseDispo ? 'Tuteur sur cet ordinateur' : 'Mode sans Internet'}</span>}
-      </header>
 
-      {/* Commencer ou changer de document */}
-      <details className="mt-4 rounded-2xl border border-border bg-muted/40 p-3" open={!contenu}>
-        <summary className="cursor-pointer text-sm font-bold text-foreground">Commencer ou changer de document</summary>
-        <div className="mt-3 space-y-3">
-          {prepare && prepare.documents.length > 0 && (
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Documents de la semaine</p>
-              <button type="button" onClick={() => charger(prepare)} className={`${btnPanneau} mt-1 border-primary/30 bg-card text-primary hover:bg-primary/10`}>
-                <BookOpen className="h-4 w-4" /> Le cours préparé ({prepare.notions.length} notions)
-              </button>
-              <ul className="mt-2 space-y-0.5 text-xs text-muted-foreground">
-                {prepare.documents.map((d) => (
-                  <li key={d.id}>
-                    {d.url ? <a href={d.url} target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">{d.titre}</a> : d.titre}
-                    {d.auteur && ` — ${d.auteur}`}{d.licence && ` · ${d.licence}`}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          <div className="flex flex-wrap gap-2">
-            <button type="button" disabled={indispo || analyse.enCours} onClick={() => fichierRef.current?.click()}
-              className={`${btnPanneau} border-border bg-card hover:bg-muted`}><FileUp className="h-4 w-4" /> Envoyer un PDF</button>
-            <button type="button" disabled={indispo || analyse.enCours} onClick={() => setPanneau(panneau === 'notes' ? 'ferme' : 'notes')}
-              className={`${btnPanneau} border-border bg-card hover:bg-muted`}><ClipboardPaste className="h-4 w-4" /> Coller mes notes</button>
-            <input ref={fichierRef} type="file" accept="application/pdf" className="hidden" onChange={(e) => { envoyerPdf(e.target.files?.[0]); e.target.value = ''; }} />
-          </div>
-          {indispo && <p className="text-xs font-semibold text-muted-foreground">{analyseDispo === null ? 'Vérification de la connexion…' : 'Disponible avec Internet'}</p>}
-          {!indispo && panneau === 'notes' && (
-            <div>
-              <label htmlFor="mes-notes" className="sr-only">Coller mes notes</label>
-              <textarea id="mes-notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={5} maxLength={60000}
-                placeholder="Collez ici vos notes de cours (quelques paragraphes au moins)…"
-                className="w-full rounded-xl border border-input bg-background p-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
-              <button type="button" disabled={notes.trim().length < 40 || analyse.enCours}
-                onClick={() => { const f = new FormData(); f.append('notes', notes); analyser(f); }}
-                className="mt-2 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground hover:bg-primary/90 disabled:opacity-50">Découper en notions</button>
-            </div>
-          )}
-          {!indispo && <p className="text-[11px] text-muted-foreground">PDF de 4 Mo au plus. Votre document n'est pas enregistré : il disparaît quand vous fermez la page.</p>}
-          {analyse.enCours && <p className="text-sm font-semibold text-primary" role="status">Analyse du document en cours… (jusqu'à une minute)</p>}
-          {analyse.erreur && <p className="text-sm text-destructive" role="alert">{analyse.erreur}</p>}
-        </div>
-      </details>
+        {panneau || !contenu || !notion || !vue ? (
+          <div className="flex-1">
+            <h2 className="font-craie text-3xl" style={{ color: BLEU }}>Commencer ou changer de document</h2>
+            <p className="mb-5 text-sm text-white/75">Choisissez le cours de la semaine, envoyez un PDF ou collez vos notes : la salle d’étude se construit autour de votre document.</p>
 
-      {!contenu ? (
-        <p className="mt-6 rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-          {analyseDispo ? 'Le cours préparé de cette semaine arrive bientôt. En attendant, envoyez un PDF ou collez vos notes.' : 'Le cours préparé de cette semaine arrive bientôt.'}
-        </p>
-      ) : notion && (
-        <div className="mt-5 grid gap-5 2xl:grid-cols-5 2xl:items-start">
-          {/* Le tableau */}
-          <div ref={tableauRef} className="2xl:col-span-3 2xl:sticky 2xl:top-24 scroll-mt-24 rounded-3xl border-4 border-blue-900/60 bg-blue-950 p-5 text-white shadow-lg dark:border-blue-800/60">
-            <p className="text-[11px] font-bold uppercase tracking-wide text-sky-200">Au tableau{notion.page ? ` · ${notion.page}` : ''}</p>
-            <h3 className="mt-1 font-craie text-3xl font-bold leading-tight">{notion.titre}</h3>
-            <p className="mt-2 text-base text-white/90">{notion.resume}</p>
-            <div className="mt-4"><SchemaTableau key={notion.id} schema={notion.schema} /></div>
-            <button type="button" onClick={() => setInfoOuverte(true)}
-              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-sky-300 px-4 py-2.5 text-sm font-extrabold text-blue-950 hover:bg-sky-200">
-              <Sparkles className="h-4 w-4" /> Créer une infographie
-            </button>
-            {doc && <p className="mt-3 text-[11px] text-white/60">Source : {doc.titre}{doc.auteur ? ` — ${doc.auteur}` : ''}{doc.licence ? ` · ${doc.licence}` : ''}</p>}
-          </div>
-
-          {/* Le cahier */}
-          <div className="2xl:col-span-2 rounded-3xl border border-border bg-card p-5 shadow-soft-sm"
-            style={{ backgroundImage: 'repeating-linear-gradient(to bottom, transparent 0, transparent 31px, hsl(var(--primary) / 0.12) 31px, hsl(var(--primary) / 0.12) 32px)' }}>
-            <p className="text-[11px] font-bold uppercase tracking-wide text-primary">Mon cahier</p>
-            <p className="font-extrabold text-foreground">{contenu.sujet}</p>
-            <ol className="mt-2 space-y-1">
-              {contenu.notions.map((n, i) => (
-                <li key={n.id}>
-                  <button type="button" onClick={() => choisirNotion(n.id)} aria-current={n.id === notion.id}
-                    className={`w-full rounded-lg px-2 py-1.5 text-left text-sm transition ${n.id === notion.id ? 'bg-primary text-primary-foreground font-bold' : 'text-foreground hover:bg-primary/10'}`}>
-                    {i + 1}. {n.titre}{n.page && <span className={`ml-1 text-[11px] ${n.id === notion.id ? 'opacity-80' : 'text-muted-foreground'}`}>({n.page})</span>}
+            {enCours ? (
+              <div className="flex items-center gap-3 rounded-xl border border-white/25 bg-white/5 p-5 text-white" role="status">
+                <Loader2 className="h-6 w-6 animate-spin" style={{ color: BLEU }} />
+                <div>
+                  <p className="font-semibold">Lecture de « {analyse.nom} », page par page…</p>
+                  <p className="text-sm text-white/70">Le document est découpé en notions. Cela prend environ une minute.</p>
+                </div>
+              </div>
+            ) : (
+              <div className="grid gap-5 xl:grid-cols-2">
+                <div className="space-y-5">
+                  <div>
+                    <h3 className="mb-2 text-xs font-bold uppercase tracking-widest text-white/60">Documents de la semaine</h3>
+                    {prepare ? (
+                      <>
+                        <button type="button" onClick={() => charger(prepare)} className="w-full rounded-xl border border-white/25 bg-white/5 p-3 text-left hover:bg-white/10">
+                          <span className="text-2xl">📚</span>
+                          <span className="mt-1 block font-craie text-2xl leading-none" style={{ color: BLEU }}>{libelleSemaine ?? 'Cours de la semaine'}</span>
+                          <span className="mt-1 block text-xs leading-snug text-white/70">{prepare.sujet} · {prepare.notions.length} notions</span>
+                        </button>
+                        <ul className="mt-2 space-y-0.5 text-xs text-white/60">
+                          {prepare.documents.map((d) => (
+                            <li key={d.id}>
+                              {d.url ? <a href={d.url} target="_blank" rel="noopener noreferrer" className="underline hover:text-white">{d.titre}</a> : d.titre}
+                              {d.licence && ` · ${d.licence}`}
+                            </li>
+                          ))}
+                        </ul>
+                      </>
+                    ) : (
+                      <p className="text-sm text-white/70">Le cours préparé de cette semaine arrive bientôt.</p>
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="mb-2 text-xs font-bold uppercase tracking-widest text-white/60">Votre document</h3>
+                    <input ref={fichierRef} type="file" hidden accept=".pdf,.docx,.pptx,.txt,.md,application/pdf" onChange={(e) => { envoyerFichier(e.target.files?.[0]); e.target.value = ''; }} />
+                    <button type="button" disabled={indispo} onClick={() => fichierRef.current?.click()} className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 font-bold hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50" style={{ background: BLEU, color: ENCRE }}>
+                      <FileUp className="h-5 w-5" /> Envoyer un PDF
+                    </button>
+                    <p className="mt-1 text-xs text-white/55">
+                      {indispo ? (analyseDispo === null ? 'Vérification de la connexion…' : 'Disponible avec Internet') : 'PDF, Word, PowerPoint ou texte. 4 Mo et 50 pages au plus.'}
+                    </p>
+                  </div>
+                </div>
+                <div>
+                  <h3 className="mb-2 text-xs font-bold uppercase tracking-widest text-white/60">Ou collez vos notes</h3>
+                  <label htmlFor="mes-notes" className="sr-only">Coller vos notes</label>
+                  <textarea id="mes-notes" value={notes} onChange={(e) => setNotes(e.target.value)} disabled={indispo} maxLength={60000}
+                    placeholder={analyseDispo === false ? 'Disponible avec Internet' : 'Collez ici le texte de votre cours ou vos notes…'}
+                    className="h-56 w-full resize-y rounded-xl border border-white/25 bg-black/20 p-3 text-sm text-white placeholder:text-white/40 focus:outline-none disabled:opacity-50" />
+                  <button type="button" disabled={indispo || notes.trim().length < NOTES_MIN} onClick={() => { const f = new FormData(); f.append('notes', notes); void analyser(f, 'Mes notes'); }}
+                    className="mt-2 rounded-full px-5 py-2 text-sm font-bold hover:brightness-105 disabled:opacity-40" style={{ background: AMBRE, color: ENCRE }}>
+                    Étudier ces notes
                   </button>
-                </li>
-              ))}
-            </ol>
-
-            {notion.differences && (
-              <div className="mt-4">
-                <p className="text-sm font-extrabold text-foreground">Les différences, côte à côte</p>
-                <div className="mt-1 overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead><tr className="text-primary"><th className="py-1 pr-2"></th><th className="py-1 pr-2">{notion.differences.titres[0]}</th><th className="py-1">{notion.differences.titres[1]}</th></tr></thead>
-                    <tbody>
-                      {notion.differences.lignes.map((l, i) => (
-                        <tr key={i} className="border-t border-border/60 align-top"><th className="py-1 pr-2 font-semibold">{l.critere}</th><td className="py-1 pr-2">{l.a}</td><td className="py-1">{l.b}</td></tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  {!indispo && notes.trim().length > 0 && notes.trim().length < NOTES_MIN && <span className="ml-3 text-xs text-white/55">Encore un peu de texte ({NOTES_MIN} caractères au minimum).</span>}
+                  <p className="mt-2 text-xs text-white/45">Votre document n’est pas enregistré : il disparaît quand vous fermez la page.</p>
                 </div>
               </div>
             )}
+            {analyse.erreur && <p className="mt-4 rounded-lg border p-3 text-sm text-[#ffe4b5]" style={{ borderColor: AMBRE, background: 'rgba(251,191,36,0.1)' }} role="alert">{analyse.erreur}</p>}
+          </div>
+        ) : (
+          <>
+            <div className="mb-2 flex flex-wrap items-start gap-3">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: AMBRE }}>
+                  Notion {index + 1} sur {contenu.notions.length} · {LIBELLE_TYPE[vue.type]}{notion.page ? ` · ${notion.page}` : ''}
+                </p>
+                <h2 className="font-craie text-5xl leading-[1.05]" style={{ color: BLEU }}>{notion.titre}</h2>
+                <p className="mt-1 max-w-3xl text-lg leading-snug text-white">{notion.resume}</p>
+              </div>
+              <button type="button" onClick={() => setInfographie(true)} className="flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold hover:brightness-105" style={{ background: BLEU, color: ENCRE }}>
+                <ImageIcon className="h-4 w-4" /> Créer une infographie
+              </button>
+            </div>
 
-            {notion.passages && notion.passages.length > 0 && (
-              <details className="mt-4">
-                <summary className="cursor-pointer text-sm font-bold text-foreground">Ce que dit le document</summary>
-                <ul className="mt-1 space-y-2 text-xs text-muted-foreground">
-                  {notion.passages.map((p, i) => <li key={i}>« {p.texte} » <span className="font-semibold">({p.page})</span></li>)}
-                </ul>
-              </details>
+            <div className="flex flex-1 items-center py-2">
+              <SchemaTableau key={`${moduleId}-${contenu.semaine ?? 'doc'}-${notion.id}`} vue={vue} titre={notion.titre} visible={visible} actif={actif}
+                onChoisir={(i) => { setLecture(false); setActif(i); }} />
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 border-t border-white/15 pt-3">
+              <div className="flex items-center gap-1">
+                <button type="button" aria-label="Étape précédente" disabled={visible <= 1} onClick={() => allerA(visible - 1)} className="rounded-full border border-white/35 p-1.5 text-white hover:bg-white/10 disabled:opacity-30">
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <span className="w-14 text-center text-sm tabular-nums text-white/80">{Math.min(visible, nbEtapes)} / {nbEtapes}</span>
+                <button type="button" aria-label="Étape suivante" disabled={visible >= nbEtapes} onClick={() => allerA(visible + 1)} className="rounded-full border border-white/35 p-1.5 text-white hover:bg-white/10 disabled:opacity-30">
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+                <button type="button" aria-label="Rejouer le schéma" onClick={repartir} className="ml-1 rounded-full border border-white/35 p-1.5 text-white hover:bg-white/10">
+                  <RotateCcw className="h-4 w-4" />
+                </button>
+              </div>
+              {etapeActive && (
+                <p key={actif} className="classe-apparait min-w-0 flex-1 text-sm leading-snug text-white">
+                  <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full text-xs font-extrabold" style={{ background: AMBRE, color: ENCRE }}>{actif + 1}</span>
+                  {etapeActive.label && <strong style={{ color: BLEU }}>{etapeActive.label}</strong>}
+                  {etapeActive.label ? ` — ${etapeActive.detail}` : etapeActive.detail}
+                </p>
+              )}
+            </div>
+
+            <BarreTuteur contexte={contexte} contexteCourt={contexteCourt} notionTexte={texteNotion(notion)} titreNotion={notion.titre} moduleId={moduleId} enLigne={enLigne} />
+          </>
+        )}
+      </section>
+
+      {/* ─── Le cahier d'étude ─── */}
+      <aside className="classe-cahier self-start py-5 pl-11 pr-5 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+        <h2 className="font-craie text-3xl leading-none text-[#1e3a8a]">Cahier d’étude</h2>
+        {!contenu ? (
+          <p className="mt-4 text-sm leading-7 text-[#4a483f]">Votre cahier se remplira ici : le sujet du document, ses notions fondamentales, les différences côte à côte et des questions toutes prêtes pour le tuteur.</p>
+        ) : (
+          <>
+            <section className="mt-4">
+              <h3 className="text-[11px] font-bold uppercase tracking-widest text-[#1d4ed8]">Sujet principal</h3>
+              <p className="text-lg font-bold leading-7">{contenu.sujet}</p>
+              <p className="text-sm leading-7 text-[#4a483f]">{contenu.resume}</p>
+            </section>
+
+            <section className="mt-5">
+              <h3 className="text-[11px] font-bold uppercase tracking-widest text-[#1d4ed8]">Notions fondamentales</h3>
+              <ol className="mt-1">
+                {contenu.notions.map((n, i) => {
+                  const courante = i === index && !panneau;
+                  return (
+                    <li key={n.id}>
+                      <button type="button" onClick={() => choisirNotion(i)} aria-current={courante}
+                        className={`flex w-full items-baseline gap-2 rounded px-1.5 text-left leading-7 ${courante ? 'bg-[#bfdbfe] font-bold' : 'hover:bg-[#bfdbfe]/50'}`}>
+                        <span className="w-5 shrink-0 text-right text-sm font-bold text-[#1e3a8a]">{i + 1}.</span>
+                        <span className="min-w-0 flex-1 text-[15px]">{n.titre}</span>
+                        {n.page && <span className="shrink-0 text-xs text-[#6b6857]">{/^\d+$/.test(n.page) ? `p. ${n.page}` : n.page}</span>}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ol>
+            </section>
+
+            {comparaisons.length > 0 && (
+              <section className="mt-5">
+                <h3 className="text-[11px] font-bold uppercase tracking-widest text-[#1d4ed8]">Les différences, côte à côte</h3>
+                {comparaisons.map((n) => (
+                  <table key={n.id} className="mt-2 w-full border-collapse text-[13px] leading-5">
+                    <caption className="pb-1 text-left text-sm font-bold">{n.titre}</caption>
+                    <thead>
+                      <tr>
+                        <th className="w-1/4" />
+                        <th className="border-b-2 border-[#3b82f6] px-1.5 py-1 text-left">{n.differences!.titres[0]}</th>
+                        <th className="border-b-2 border-[#f59e0b] px-1.5 py-1 text-left">{n.differences!.titres[1]}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {n.differences!.lignes.map((l, j) => (
+                        <tr key={j} className="border-b border-[#2b2a26]/10 align-top">
+                          <td className="py-1 pr-1.5 font-semibold text-[#1e3a8a]">{l.critere}</td>
+                          <td className="bg-[#93c5fd]/25 px-1.5 py-1">{l.a}</td>
+                          <td className="bg-[#fbbf24]/20 px-1.5 py-1">{l.b}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ))}
+              </section>
             )}
 
-            <div className="mt-4 flex flex-col gap-2">
-              {BOUTONS.map((b) => (
-                <button key={b.libelle} type="button" disabled={attente} onClick={() => poser(b.texte, b.libelle)}
-                  className="inline-flex items-center gap-2 rounded-xl border border-primary/25 bg-card px-3 py-2 text-left text-sm font-semibold text-foreground hover:bg-primary/10 disabled:opacity-60">
-                  <b.icone className="h-4 w-4 shrink-0 text-primary" /> {b.libelle}
-                </button>
-              ))}
-            </div>
-            <form className="mt-2 flex gap-2" onSubmit={(e) => { e.preventDefault(); poser(question); }}>
-              <label htmlFor="question-libre" className="sr-only">Votre question sur cette notion</label>
-              <input id="question-libre" value={question} onChange={(e) => setQuestion(e.target.value)} maxLength={1000}
-                placeholder="Votre question sur cette notion…" className="min-w-0 flex-1 rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
-              <button type="submit" disabled={attente || !question.trim()} aria-label="Envoyer la question"
-                className="rounded-xl bg-primary px-3 text-primary-foreground hover:bg-primary/90 disabled:opacity-50"><Send className="h-4 w-4" /></button>
-            </form>
-
-            {echanges.length > 0 && (
-              <div ref={reponsesRef} className="mt-3 max-h-[45vh] space-y-3 overflow-y-auto overscroll-contain rounded-xl pr-1 [overflow-anchor:none]" aria-live="polite">
-                {echanges.map((e, i) => (
-                  <div key={i} className="rounded-xl bg-muted/60 p-3 text-sm">
-                    <p className="font-bold text-primary">{e.question}</p>
-                    <p className="mt-1 whitespace-pre-wrap text-foreground">{e.reponse || 'Le tuteur réfléchit…'}</p>
-                  </div>
+            <section className="mt-5">
+              <h3 className="text-[11px] font-bold uppercase tracking-widest text-[#1d4ed8]">Demander au tuteur</h3>
+              <div className="mt-2 space-y-1.5">
+                {QUESTIONS.map((q) => (
+                  <button key={q} type="button" disabled={panneau || attente} onClick={() => notion && void poser(q, CONSIGNES[q](notion.titre))}
+                    className="block w-full rounded-lg border border-[#1e3a8a]/30 bg-white/60 px-3 py-2 text-left text-sm font-medium hover:border-[#1e3a8a] hover:bg-white disabled:opacity-50">
+                    « {q} »
+                  </button>
                 ))}
               </div>
-            )}
+              <form className="mt-2 flex gap-2" onSubmit={(e) => { e.preventDefault(); void poser(question); setQuestion(''); }}>
+                <input value={question} onChange={(e) => setQuestion(e.target.value)} disabled={panneau} maxLength={1000} placeholder="Écrivez votre question…" aria-label="Votre question"
+                  className="min-w-0 flex-1 rounded-lg border border-[#1e3a8a]/30 bg-white px-3 py-2 text-sm text-[#2b2a26] placeholder:text-[#8a8776] focus:border-[#1e3a8a] focus:outline-none" />
+                <button type="submit" disabled={panneau || attente || !question.trim()} aria-label="Envoyer la question" className="rounded-lg bg-[#1e3a8a] px-3 text-white hover:brightness-110 disabled:opacity-40">
+                  <Send className="h-4 w-4" />
+                </button>
+              </form>
+              {echanges.length > 0 ? (
+                <div ref={reponsesRef} className="mt-3 max-h-[45vh] space-y-2 overflow-y-auto overscroll-contain pr-1 [overflow-anchor:none]" aria-live="polite">
+                  {echanges.map((e, i) => (
+                    <div key={i} className="rounded-lg border border-[#1e3a8a]/20 bg-white/70 p-2.5 text-sm leading-6">
+                      <p className="font-bold text-[#1e3a8a]">« {e.question} »</p>
+                      <p className="mt-1 whitespace-pre-wrap text-[#2b2a26]">{e.reponse || 'Le tuteur réfléchit…'}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-1 text-xs leading-5 text-[#6b6857]">Le tuteur répond ici, à propos de la notion affichée au tableau.</p>
+              )}
+            </section>
+          </>
+        )}
+      </aside>
 
-            <div className="mt-4 grid grid-cols-1 gap-2 border-t border-border pt-4 sm:grid-cols-2">
-              <button type="button" onClick={() => setVocal('parler')} className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-3 py-2.5 text-sm font-bold text-primary-foreground hover:bg-primary/90">
-                <Mic className="h-4 w-4" /> Parler au tuteur
-              </button>
-              <button type="button" onClick={() => setVocal('expliquer')} className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-primary px-3 py-2.5 text-sm font-bold text-primary hover:bg-primary/10">
-                <GraduationCap className="h-4 w-4" /> À vous d'expliquer
-              </button>
-            </div>
-          </div>
-
-          {vocal && (
-            <div className="2xl:col-span-5">
-              <TuteurVocal key={`${vocal}-${notion.id}-${enLigne}`} mode={vocal} contexte={contexte} contexteCourt={contexteCourt} moduleId={moduleId}
-                enLigne={enLigne} titreNotion={notion.titre} onFermer={() => setVocal(null)} />
-            </div>
-          )}
-        </div>
-      )}
-
-      {infoOuverte && notion && <Infographie notion={notion} source={doc ? `${doc.titre}${doc.licence ? ` (${doc.licence})` : ''}` : undefined} onFermer={() => setInfoOuverte(false)} />}
-    </section>
+      {infographie && contenu && notion && <Infographie notion={notion} sujet={contenu.sujet} source={doc ? `${doc.titre}${doc.licence ? ` (${doc.licence})` : ''}` : nomSource} onFermer={() => setInfographie(false)} />}
+    </div>
   );
 }

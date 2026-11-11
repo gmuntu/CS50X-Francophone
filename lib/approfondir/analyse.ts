@@ -1,6 +1,7 @@
 // « Approfondir le sujet » : analyse d'un PDF ou de notes par gemini-3.8-flash.
 // Utilisé par /api/approfondir/analyser (élève en ligne) et /api/poste/approfondir (ordinateur d'école relayé).
 import { validerContenu } from '@/lib/approfondir/types';
+import { texteDocument } from '@/lib/approfondir/document';
 
 /**
  * « Approfondir le sujet » : découpe un PDF ou des notes de l'élève en notions, avec gemini-3.8-flash.
@@ -23,7 +24,7 @@ function pagesPdf(octets: Buffer): number {
 const CONSIGNE = `Tu prépares une leçon « Approfondir le sujet » en français pour des élèves débutants (cours CS50 en français).
 À partir du document fourni, extrais de 3 à 8 notions clés à comprendre, dans l'ordre du document.
 Pour chaque notion :
-- "page" : le numéro de page d'origine pour un PDF (ex. "p. 4"), ou "notes" pour des notes collées ;
+- "page" : le numéro de page d'origine pour un PDF (ex. "p. 4"), la diapositive pour un PowerPoint (repères [DIAPO n], ex. "diapo 3"), sinon "notes" ;
 - "resume" : UNE seule phrase simple ;
 - "schema" : choisis "cycle" (étapes qui se répètent), "etapes" (suite ordonnée), "comparaison" (2 ou 3 colonnes) ou "relations" (liens entre idées) ; remplis "etapes", "colonnes" ou "liens" en conséquence, avec 3 à 6 éléments courts ;
 - "differences" : seulement si deux idées proches sont faciles à confondre (2 titres, 2 à 5 lignes critère / a / b) ;
@@ -88,16 +89,25 @@ export async function analyserFormulaire(request: Request, avantAppel: () => Pro
 
   let form: FormData;
   try { form = await request.formData(); } catch { return erreur('Envoi illisible.', 400); }
-  const fichier = form.get('pdf');
+  const fichier = form.get('fichier') ?? form.get('pdf');
   const notes = String(form.get('notes') ?? '').trim();
 
   const parts: Record<string, unknown>[] = [{ text: CONSIGNE }];
   let nomDocument = 'Mes notes';
-  if (fichier instanceof File && fichier.size > 0) {
-    if (fichier.size > PDF_MAX) return erreur('Le PDF dépasse 4 Mo.', 413);
-    const octets = Buffer.from(await fichier.arrayBuffer());
+  const estFichier = fichier instanceof File && fichier.size > 0;
+  const octets = estFichier ? Buffer.from(await (fichier as File).arrayBuffer()) : null;
+  if (estFichier && (fichier as File).size > PDF_MAX) return erreur('Le fichier dépasse 4 Mo.', 413);
+  // Word, PowerPoint ou texte : on en extrait le texte, puis il est étudié comme des notes.
+  const texteExtrait = octets && octets.subarray(0, 4).toString('latin1') !== '%PDF' ? texteDocument((fichier as File).name, octets) : null;
+  if (octets && octets.subarray(0, 4).toString('latin1') !== '%PDF' && !texteExtrait) {
+    return erreur('Format non pris en charge : envoyez un PDF, un Word (.docx), un PowerPoint (.pptx) ou un texte (.txt).', 415);
+  }
+  if (texteExtrait) {
+    if (texteExtrait.trim().length < 40) return erreur("Ce document ne contient presque pas de texte.", 422);
+    parts.push({ text: `--- DOCUMENT DE L'ÉLÈVE : ${(fichier as File).name.slice(0, 120)} ---\n${texteExtrait}` });
+    nomDocument = (fichier as File).name.slice(0, 120);
+  } else if (octets && fichier instanceof File) {
     // Vrai PDF seulement (signature « %PDF »), quel que soit le nom du fichier.
-    if (octets.subarray(0, 4).toString('latin1') !== '%PDF') return erreur("Ce fichier n'est pas un PDF.", 415);
     if (pagesPdf(octets) > PAGES_MAX) return erreur(`Le PDF dépasse ${PAGES_MAX} pages : envoyez seulement le chapitre utile.`, 413);
     parts.push({ inlineData: { mimeType: 'application/pdf', data: octets.toString('base64') } });
     nomDocument = fichier.name.slice(0, 120) || 'Mon PDF';

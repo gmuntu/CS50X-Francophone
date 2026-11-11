@@ -115,3 +115,44 @@
   @apply font-bold text-foreground;
 }
 
+
+/* ─── Salle d'étude : tableau « craie » (bleu nuit SavoirIA) et cahier ligné ─── */
+.classe-tableau {
+  background-color: #14244f;
+  background-image:
+    radial-gradient(ellipse at 18% 12%, rgba(255, 255, 255, 0.08), transparent 52%),
+    radial-gradient(ellipse at 85% 88%, rgba(255, 255, 255, 0.05), transparent 55%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E");
+  border: 8px solid #7a5a3a;
+  border-radius: 14px;
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.25), inset 0 0 60px rgba(0, 0, 0, 0.3), 0 10px 30px rgba(0, 0, 0, 0.35);
+  color: #f4f1e8;
+}
+.classe-cahier {
+  background-color: #fbf5e3;
+  background-image:
+    linear-gradient(90deg, transparent 30px, rgba(220, 90, 80, 0.35) 30px, rgba(220, 90, 80, 0.35) 31px, transparent 31px),
+    repeating-linear-gradient(transparent 0, transparent 27px, rgba(37, 99, 235, 0.16) 27px, rgba(37, 99, 235, 0.16) 28px);
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  color: #2b2a26;
+}
+@keyframes classe-apparait {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes classe-trace {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+.classe-apparait { animation: classe-apparait 0.5s ease-out both; }
+.classe-trace { stroke-dasharray: 1; animation: classe-trace 0.6s ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .classe-apparait, .classe-trace { animation: none; }
+}
+/* Impression de l'infographie seule */
+@media print {
+  body:has(.classe-infographie) * { visibility: hidden; }
+  body:has(.classe-infographie) .classe-infographie, body:has(.classe-infographie) .classe-infographie * { visibility: visible; }
+  body:has(.classe-infographie) .classe-infographie { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

@@ -1,13 +1,13 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter, Kalam } from 'next/font/google';
+import { Inter, Caveat } from 'next/font/google';
 import './globals.css';
 import { Providers } from '@/components/providers';
 
 export const dynamic = 'force-dynamic';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
-// Écriture « à la craie » des titres du tableau (Approfondir le sujet). Intégrée au site : marche hors ligne.
-const craie = Kalam({ subsets: ['latin'], weight: ['400', '700'], variable: '--font-craie', display: 'swap' });
+// Écriture « à la craie » de la Salle d'étude (tableau, cahier). Intégrée au site : marche hors ligne.
+const craie = Caveat({ subsets: ['latin'], weight: ['600', '700'], variable: '--font-craie', display: 'swap' });
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXTAUTH_URL || 'http://localhost:3000'),

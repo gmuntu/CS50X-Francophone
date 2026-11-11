@@ -127,7 +127,8 @@ export function useGeminiLive(lessonContext: string, systemPrompt: string = SYST
     setStatus('speaking');
   }, []);
 
-  const start = useCallback(async () => {
+  const start = useCallback(async (ouverture?: string) => {
+    const premiereConsigne = typeof ouverture === 'string' ? ouverture : opts.opening;
     if (wsRef.current) return;
     setError(null);
     setTranscript([]);
@@ -212,8 +213,8 @@ export function useGeminiLive(lessonContext: string, systemPrompt: string = SYST
             // Durée limitée (coûts) : la session s'arrête seule.
             if (opts.maxMinutes) limiteRef.current = setTimeout(() => fail(`Session terminée après ${opts.maxMinutes} minutes. Vous pouvez en relancer une.`), opts.maxMinutes * 60_000);
             // Socrate parle en premier (ex. : ouverture de la défense orale).
-            if (opts.opening && wsRef.current?.readyState === WebSocket.OPEN) {
-              wsRef.current.send(JSON.stringify({ clientContent: { turns: [{ role: 'user', parts: [{ text: opts.opening }] }], turnComplete: true } }));
+            if (premiereConsigne && wsRef.current?.readyState === WebSocket.OPEN) {
+              wsRef.current.send(JSON.stringify({ clientContent: { turns: [{ role: 'user', parts: [{ text: premiereConsigne }] }], turnComplete: true } }));
             }
             return;
           }
@@ -244,7 +245,15 @@ export function useGeminiLive(lessonContext: string, systemPrompt: string = SYST
     }
   }, [fail, lessonContext, systemPrompt, playChunk, stop, stopPlayback, opts.transcript, opts.opening, opts.onStream, opts.maxMinutes, addLine]);
 
+  /** Envoie un texte pendant la conversation (consigne, nouvelle notion au tableau). reponse=false : simple contexte. */
+  const envoyerTexte = useCallback((texte: string, reponse = true) => {
+    const ws = wsRef.current;
+    if (ws?.readyState !== WebSocket.OPEN) return false;
+    ws.send(JSON.stringify({ clientContent: { turns: [{ role: 'user', parts: [{ text: texte }] }], turnComplete: reponse } }));
+    return true;
+  }, []);
+
   useEffect(() => () => stop(), [stop]);
 
-  return { status, error, start, stop, transcript, setTranscript, muted, toggleMute };
+  return { status, error, start, stop, transcript, setTranscript, muted, toggleMute, envoyerTexte };
 }
