@@ -1,0 +1,657 @@
+{
+  "semaine": 2,
+  "sujet": "Les tableaux",
+  "resume": "Comment le C range les données côte à côte en mémoire : tableaux, chaînes de caractères terminées par le caractère nul, les quatre étapes de la compilation, le débogage, le transtypage, les arguments de la ligne de commande et le code de sortie, avec une application à la cryptographie (chiffre de César).",
+  "documents": [
+    {
+      "id": "wb-tableaux",
+      "titre": "Programmation C : Tableaux (Wikilivres)",
+      "url": "https://fr.wikibooks.org/wiki/Programmation_C/Tableaux",
+      "auteur": "Contributeurs de Wikilivres",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wb-chaines",
+      "titre": "Programmation C : Chaînes de caractères (Wikilivres)",
+      "url": "https://fr.wikibooks.org/wiki/Programmation_C/Cha%C3%AEnes_de_caract%C3%A8res",
+      "auteur": "Contributeurs de Wikilivres",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wb-fonctions",
+      "titre": "Programmation C : Fonctions et procédures — la fonction main (Wikilivres)",
+      "url": "https://fr.wikibooks.org/wiki/Programmation_C/Fonctions_et_proc%C3%A9dures",
+      "auteur": "Contributeurs de Wikilivres",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-tableau",
+      "titre": "Tableau (structure de données)",
+      "url": "https://fr.wikipedia.org/wiki/Tableau_(structure_de_donn%C3%A9es)",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-chaine",
+      "titre": "Chaîne de caractères",
+      "url": "https://fr.wikipedia.org/wiki/Cha%C3%AEne_de_caract%C3%A8res",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-nul",
+      "titre": "Caractère nul",
+      "url": "https://fr.wikipedia.org/wiki/Caract%C3%A8re_nul",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-preprocesseur",
+      "titre": "Préprocesseur",
+      "url": "https://fr.wikipedia.org/wiki/Pr%C3%A9processeur",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-liens",
+      "titre": "Édition de liens",
+      "url": "https://fr.wikipedia.org/wiki/%C3%89dition_de_liens",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-debogage",
+      "titre": "Débogage",
+      "url": "https://fr.wikipedia.org/wiki/D%C3%A9bogage",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-conversion",
+      "titre": "Conversion de type",
+      "url": "https://fr.wikipedia.org/wiki/Conversion_de_type",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-cesar",
+      "titre": "Chiffrement par décalage (chiffre de César)",
+      "url": "https://fr.wikipedia.org/wiki/Chiffrement_par_d%C3%A9calage",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-crypto",
+      "titre": "Cryptographie",
+      "url": "https://fr.wikipedia.org/wiki/Cryptographie",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    }
+  ],
+  "notions": [
+    {
+      "id": "compilation-4-etapes",
+      "titre": "Les quatre étapes de la compilation",
+      "resume": "« Compiler » cache quatre étapes : le préprocesseur, la compilation, l'assemblage et l'édition des liens.",
+      "page": "§ Préprocesseur C/C++",
+      "documentId": "wp-preprocesseur",
+      "schema": {
+        "type": "etapes",
+        "etapes": [
+          {
+            "titre": "Préprocesseur",
+            "texte": "Remplace les #include par le contenu des fichiers d'en-tête (stdio.h…)."
+          },
+          {
+            "titre": "Compilation",
+            "texte": "Traduit le C en langage assembleur."
+          },
+          {
+            "titre": "Assemblage",
+            "texte": "Transforme l'assembleur en code machine (0 et 1)."
+          },
+          {
+            "titre": "Édition des liens",
+            "texte": "Assemble ton code et celui des bibliothèques (cs50, stdio) en un seul programme."
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Le préprocesseur C traite le fichier source avant le compilateur : il exécute les directives qui commencent par #, comme #include ou #define.",
+          "documentId": "wp-preprocesseur",
+          "page": "§ Préprocesseur C/C++"
+        },
+        {
+          "texte": "L'édition des liens réunit les fichiers objets produits par la compilation et les bibliothèques utilisées pour créer un fichier exécutable.",
+          "documentId": "wp-liens",
+          "page": "§ Édition des liens"
+        }
+      ],
+      "infographie": {
+        "titre": "make, c'est 4 étapes",
+        "points": [
+          {
+            "icone": "📥",
+            "texte": "1. Préprocesseur : #include."
+          },
+          {
+            "icone": "🔤",
+            "texte": "2. Compilation : C → assembleur."
+          },
+          {
+            "icone": "0️⃣",
+            "texte": "3. Assemblage : assembleur → binaire."
+          },
+          {
+            "icone": "🔗",
+            "texte": "4. Édition des liens : tout réunir."
+          }
+        ]
+      }
+    },
+    {
+      "id": "debogage",
+      "titre": "Déboguer",
+      "resume": "Déboguer, c'est chercher méthodiquement d'où vient une erreur, en observant le programme pas à pas.",
+      "page": "§ Techniques",
+      "documentId": "wp-debogage",
+      "schema": {
+        "type": "cycle",
+        "etapes": [
+          {
+            "titre": "Observer",
+            "texte": "Le programme ne fait pas ce qu'on attend."
+          },
+          {
+            "titre": "Isoler",
+            "texte": "printf ou débogueur (debug50) : où les valeurs deviennent-elles fausses ?"
+          },
+          {
+            "titre": "Corriger",
+            "texte": "Modifier la ligne fautive."
+          },
+          {
+            "titre": "Retester",
+            "texte": "Recompiler et vérifier ; recommencer si besoin."
+          }
+        ]
+      },
+      "differences": {
+        "titres": [
+          "printf",
+          "Débogueur (debug50)"
+        ],
+        "lignes": [
+          {
+            "critere": "Principe",
+            "a": "Afficher des valeurs",
+            "b": "Mettre le programme en pause"
+          },
+          {
+            "critere": "Avantage",
+            "a": "Simple, partout",
+            "b": "Ligne par ligne, toutes les variables"
+          },
+          {
+            "critere": "Inconvénient",
+            "a": "Il faut retirer les printf ensuite",
+            "b": "Outil à apprendre"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Le débogage consiste à trouver et corriger les erreurs d'un programme. Un débogueur permet d'arrêter l'exécution à un point d'arrêt, d'avancer instruction par instruction et d'observer l'état des variables.",
+          "documentId": "wp-debogage",
+          "page": "§ Techniques"
+        }
+      ],
+      "infographie": {
+        "titre": "Trouver un bug",
+        "points": [
+          {
+            "icone": "👀",
+            "texte": "Observer le problème."
+          },
+          {
+            "icone": "🔦",
+            "texte": "Isoler : printf ou point d'arrêt."
+          },
+          {
+            "icone": "🔧",
+            "texte": "Corriger."
+          },
+          {
+            "icone": "🔁",
+            "texte": "Retester."
+          }
+        ]
+      }
+    },
+    {
+      "id": "tableaux",
+      "titre": "Le tableau",
+      "resume": "Un tableau range plusieurs valeurs du même type côte à côte en mémoire, et on accède à chacune par son indice, à partir de 0.",
+      "page": "Tableaux, § Accès aux éléments",
+      "documentId": "wb-tableaux",
+      "schema": {
+        "type": "etapes",
+        "etapes": [
+          {
+            "titre": "Déclarer",
+            "texte": "int notes[3]; réserve 3 cases d'entiers côte à côte."
+          },
+          {
+            "titre": "Remplir",
+            "texte": "notes[0] = 72; notes[1] = 73; notes[2] = 33;"
+          },
+          {
+            "titre": "Lire",
+            "texte": "notes[1] vaut 73 : l'indice commence à 0."
+          },
+          {
+            "titre": "Parcourir",
+            "texte": "Une boucle for de 0 à 2 visite chaque case."
+          }
+        ]
+      },
+      "differences": {
+        "titres": [
+          "Trois variables",
+          "Un tableau"
+        ],
+        "lignes": [
+          {
+            "critere": "Déclaration",
+            "a": "int note1, note2, note3;",
+            "b": "int notes[3];"
+          },
+          {
+            "critere": "Parcourir",
+            "a": "Impossible avec une boucle",
+            "b": "for (int i = 0; i < 3; i++)"
+          },
+          {
+            "critere": "100 valeurs",
+            "a": "100 noms différents",
+            "b": "int notes[100];"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Un tableau est une structure de données qui regroupe une suite d'éléments de même type, rangés de façon contiguë en mémoire et repérés par un indice.",
+          "documentId": "wp-tableau",
+          "page": "§ Tableau à une dimension"
+        },
+        {
+          "texte": "En C, le premier élément d'un tableau a l'indice 0 et le dernier l'indice taille − 1 ; aucun contrôle n'empêche d'accéder en dehors du tableau.",
+          "documentId": "wb-tableaux",
+          "page": "Tableaux, § Accès aux éléments"
+        },
+        {
+          "texte": "L'accès à un élément par son indice est immédiat, mais la taille d'un tableau est fixée à sa création.",
+          "documentId": "wp-tableau",
+          "page": "§ Performances et limites"
+        }
+      ],
+      "infographie": {
+        "titre": "Des cases numérotées",
+        "points": [
+          {
+            "icone": "🗄️",
+            "texte": "Des cases côte à côte, du même type."
+          },
+          {
+            "icone": "0️⃣",
+            "texte": "La première case porte le numéro 0."
+          },
+          {
+            "icone": "🔁",
+            "texte": "Une boucle for les parcourt toutes."
+          },
+          {
+            "icone": "⚠️",
+            "texte": "Ne jamais dépasser la dernière case."
+          }
+        ]
+      }
+    },
+    {
+      "id": "chaines-nul",
+      "titre": "Les chaînes et le caractère nul",
+      "resume": "En C, un texte est un tableau de caractères qui se termine par un octet spécial, le caractère nul '\\0', qui indique où il s'arrête.",
+      "page": "§ Représentation en mémoire",
+      "documentId": "wp-chaine",
+      "schema": {
+        "type": "etapes",
+        "etapes": [
+          {
+            "titre": "string s = \"HI!\";",
+            "texte": "On écrit 3 caractères."
+          },
+          {
+            "titre": "En mémoire : 4 octets",
+            "texte": "'H' 'I' '!' puis '\\0'."
+          },
+          {
+            "titre": "Lire jusqu'au '\\0'",
+            "texte": "printf et strlen s'arrêtent au caractère nul."
+          },
+          {
+            "titre": "Longueur",
+            "texte": "strlen(s) vaut 3 : le '\\0' n'est pas compté."
+          }
+        ]
+      },
+      "differences": {
+        "titres": [
+          "'A' (caractère)",
+          "\"A\" (chaîne)"
+        ],
+        "lignes": [
+          {
+            "critere": "Guillemets",
+            "a": "Simples",
+            "b": "Doubles"
+          },
+          {
+            "critere": "Type",
+            "a": "char",
+            "b": "string (tableau de char)"
+          },
+          {
+            "critere": "Octets en mémoire",
+            "a": "1",
+            "b": "2 ('A' puis '\\0')"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "En C, une chaîne est représentée par une suite de caractères terminée par un caractère nul ; sa longueur n'est pas enregistrée, on la retrouve en cherchant ce caractère.",
+          "documentId": "wp-chaine",
+          "page": "§ Représentation en mémoire"
+        },
+        {
+          "texte": "Le caractère nul a pour code 0 : tous ses bits valent zéro. Il sert de marqueur de fin de chaîne dans de nombreux langages.",
+          "documentId": "wp-nul",
+          "page": "§ Codage"
+        },
+        {
+          "texte": "La fonction strlen renvoie la longueur d'une chaîne, sans compter le caractère nul final.",
+          "documentId": "wb-chaines",
+          "page": "Chaînes de caractères, § Longueur d'une chaîne"
+        }
+      ],
+      "infographie": {
+        "titre": "Où s'arrête le texte ?",
+        "points": [
+          {
+            "icone": "🔤",
+            "texte": "Une chaîne = des char côte à côte."
+          },
+          {
+            "icone": "🛑",
+            "texte": "Le '\\0' marque la fin."
+          },
+          {
+            "icone": "➕",
+            "texte": "\"HI!\" occupe 4 octets, pas 3."
+          },
+          {
+            "icone": "📏",
+            "texte": "strlen ne compte pas le '\\0'."
+          }
+        ]
+      }
+    },
+    {
+      "id": "transtypage",
+      "titre": "Le transtypage (casting)",
+      "resume": "Transtyper, c'est convertir une valeur d'un type à un autre : en C, une lettre est aussi un nombre, ce qui permet de calculer avec.",
+      "page": "§ Introduction",
+      "documentId": "wp-conversion",
+      "schema": {
+        "type": "relations",
+        "liens": [
+          {
+            "de": "'A'",
+            "vers": "65",
+            "label": "(int)"
+          },
+          {
+            "de": "65 + 1",
+            "vers": "'B'",
+            "label": "(char)"
+          },
+          {
+            "de": "'a' − 32",
+            "vers": "'A'",
+            "label": "minuscule → majuscule"
+          },
+          {
+            "de": "7 / 2",
+            "vers": "3,5",
+            "label": "(float) 7 / 2"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "La conversion de type change la représentation d'une valeur d'un type vers un autre. Elle peut être implicite, faite par le compilateur, ou explicite, demandée par le programmeur.",
+          "documentId": "wp-conversion",
+          "page": "§ Introduction"
+        }
+      ],
+      "infographie": {
+        "titre": "Les lettres sont des nombres",
+        "points": [
+          {
+            "icone": "🔁",
+            "texte": "(int) 'A' donne 65."
+          },
+          {
+            "icone": "⬆️",
+            "texte": "'a' − 32 donne 'A'."
+          },
+          {
+            "icone": "➗",
+            "texte": "(float) 7 / 2 donne 3,5, pas 3."
+          }
+        ]
+      }
+    },
+    {
+      "id": "argc-argv",
+      "titre": "argc, argv et le code de sortie",
+      "resume": "La fonction main peut recevoir les mots tapés après le nom du programme (argc et argv) et renvoie un code de sortie : 0 si tout va bien.",
+      "page": "Fonctions et procédures, § Paramètres de ligne de commande",
+      "documentId": "wb-fonctions",
+      "schema": {
+        "type": "etapes",
+        "etapes": [
+          {
+            "titre": "On tape",
+            "texte": "./bonjour Awa"
+          },
+          {
+            "titre": "argc",
+            "texte": "vaut 2 : le nombre de mots."
+          },
+          {
+            "titre": "argv",
+            "texte": "argv[0] = \"./bonjour\", argv[1] = \"Awa\"."
+          },
+          {
+            "titre": "Code de sortie",
+            "texte": "return 0 (succès) ou return 1 (erreur) ; echo $? l'affiche."
+          }
+        ]
+      },
+      "differences": {
+        "titres": [
+          "get_string (saisie)",
+          "argv (ligne de commande)"
+        ],
+        "lignes": [
+          {
+            "critere": "Quand",
+            "a": "Pendant l'exécution",
+            "b": "Au lancement"
+          },
+          {
+            "critere": "Exemple",
+            "a": "Le programme pose une question",
+            "b": "./caesar 13"
+          },
+          {
+            "critere": "Avantage",
+            "a": "Interactif",
+            "b": "Automatisable, sans attente"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "La fonction main peut être déclarée avec deux paramètres : argc, le nombre d'arguments, et argv, un tableau de chaînes qui les contient ; argv[0] est le nom du programme.",
+          "documentId": "wb-fonctions",
+          "page": "Fonctions et procédures, § Paramètres de ligne de commande"
+        },
+        {
+          "texte": "La valeur renvoyée par main est transmise au système : 0 signale un succès, une autre valeur signale une erreur.",
+          "documentId": "wb-fonctions",
+          "page": "Fonctions et procédures, § Valeur de retour"
+        }
+      ],
+      "infographie": {
+        "titre": "Parler au programme dès son lancement",
+        "points": [
+          {
+            "icone": "⌨️",
+            "texte": "./caesar 13 : 13 arrive dans argv[1]."
+          },
+          {
+            "icone": "🔢",
+            "texte": "argc compte les mots, nom du programme compris."
+          },
+          {
+            "icone": "✅",
+            "texte": "return 0 : tout s'est bien passé."
+          },
+          {
+            "icone": "❌",
+            "texte": "return 1 : il y a eu une erreur."
+          }
+        ]
+      }
+    },
+    {
+      "id": "cesar",
+      "titre": "Le chiffre de César et la cryptographie",
+      "resume": "Le chiffre de César cache un message en décalant chaque lettre d'un même nombre de places dans l'alphabet ; c'est le principe de base de la cryptographie.",
+      "page": "§ Exemple",
+      "documentId": "wp-cesar",
+      "schema": {
+        "type": "etapes",
+        "etapes": [
+          {
+            "titre": "Texte clair",
+            "texte": "HI"
+          },
+          {
+            "titre": "Clé",
+            "texte": "Décaler de 1."
+          },
+          {
+            "titre": "Texte chiffré",
+            "texte": "IJ (H → I, I → J)."
+          },
+          {
+            "titre": "Déchiffrer",
+            "texte": "Décaler de 1 dans l'autre sens pour retrouver HI."
+          }
+        ]
+      },
+      "differences": {
+        "titres": [
+          "Chiffrer",
+          "Déchiffrer"
+        ],
+        "lignes": [
+          {
+            "critere": "Entrée",
+            "a": "Texte clair + clé",
+            "b": "Texte chiffré + clé"
+          },
+          {
+            "critere": "Opération",
+            "a": "Décaler en avant",
+            "b": "Décaler en arrière"
+          },
+          {
+            "critere": "Après Z",
+            "a": "On revient à A (modulo 26)",
+            "b": "Avant A, on revient à Z"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Le chiffrement par décalage remplace chaque lettre par la lettre située un nombre fixe de positions plus loin dans l'alphabet ; Jules César aurait utilisé un décalage de 3.",
+          "documentId": "wp-cesar",
+          "page": "§ Exemple"
+        },
+        {
+          "texte": "Avec seulement 25 décalages possibles, ce chiffre se casse facilement en les essayant tous, ou par l'analyse de la fréquence des lettres.",
+          "documentId": "wp-cesar",
+          "page": "§ Attaques"
+        },
+        {
+          "texte": "La cryptographie protège des messages pour en assurer la confidentialité, l'authenticité et l'intégrité, en s'aidant de secrets appelés clés.",
+          "documentId": "wp-crypto",
+          "page": "§ Étymologie et vocabulaire"
+        },
+        {
+          "texte": "Le chiffre de César fait partie des algorithmes de chiffrement faibles, facilement déchiffrables ; les systèmes modernes utilisent des clés bien plus longues.",
+          "documentId": "wp-crypto",
+          "page": "§ Algorithmes de chiffrement faible (facilement déchiffrables)"
+        }
+      ],
+      "infographie": {
+        "titre": "Cacher un message",
+        "points": [
+          {
+            "icone": "🔑",
+            "texte": "Une clé : le nombre de décalages."
+          },
+          {
+            "icone": "➡️",
+            "texte": "Chiffrer : A + 3 = D."
+          },
+          {
+            "icone": "🔄",
+            "texte": "Après Z, on repart à A."
+          },
+          {
+            "icone": "🔓",
+            "texte": "Faible : 25 essais suffisent pour le casser."
+          }
+        ]
+      }
+    }
+  ]
+}
