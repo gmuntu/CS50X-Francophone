@@ -4,9 +4,11 @@
 // Pour ajouter une semaine : créer le fichier (skill « preparer-approfondir »), puis l'importer ici.
 import { validerContenu, type ContenuApprofondir } from './types';
 import semaine0 from '@/content/approfondir/semaine-0.json';
+import semaine1 from '@/content/approfondir/semaine-1.json';
 
 const FICHIERS: Record<number, unknown> = {
   0: semaine0,
+  1: semaine1,
 };
 
 const cache = new Map<number, ContenuApprofondir | null>();

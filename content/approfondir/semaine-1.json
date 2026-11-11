@@ -1,0 +1,184 @@
+{
+  "semaine": 1,
+  "sujet": "Le langage C",
+  "resume": "Le passage des blocs Scratch au texte en C : écrire un programme, le compiler en code machine, choisir les bons types de données, répéter avec les boucles, vérifier ce que tape l'utilisateur et travailler dans le terminal.",
+  "documents": [
+    { "id": "wb-c", "titre": "Programmation C (Wikilivres)", "url": "https://fr.wikibooks.org/wiki/Programmation_C", "auteur": "Contributeurs de Wikilivres", "licence": "CC BY-SA 4.0", "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr" },
+    { "id": "wp-c", "titre": "C (langage)", "url": "https://fr.wikipedia.org/wiki/C_(langage)", "auteur": "Contributeurs de Wikipédia", "licence": "CC BY-SA 4.0", "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr" },
+    { "id": "wp-compilateur", "titre": "Compilateur", "url": "https://fr.wikipedia.org/wiki/Compilateur", "auteur": "Contributeurs de Wikipédia", "licence": "CC BY-SA 4.0", "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr" },
+    { "id": "wp-depassement", "titre": "Dépassement d'entier", "url": "https://fr.wikipedia.org/wiki/D%C3%A9passement_d%27entier", "auteur": "Contributeurs de Wikipédia", "licence": "CC BY-SA 4.0", "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr" },
+    { "id": "wp-controle", "titre": "Structure de contrôle", "url": "https://fr.wikipedia.org/wiki/Structure_de_contr%C3%B4le", "auteur": "Contributeurs de Wikipédia", "licence": "CC BY-SA 4.0", "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr" },
+    { "id": "wp-cli", "titre": "Interface en ligne de commande", "url": "https://fr.wikipedia.org/wiki/Interface_en_ligne_de_commande", "auteur": "Contributeurs de Wikipédia", "licence": "CC BY-SA 4.0", "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr" },
+    { "id": "wb-linux", "titre": "Le système d'exploitation GNU-Linux (Wikilivres)", "url": "https://fr.wikibooks.org/wiki/Le_syst%C3%A8me_d%27exploitation_GNU-Linux", "auteur": "Contributeurs de Wikilivres", "licence": "CC BY-SA 4.0", "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr" }
+  ],
+  "notions": [
+    {
+      "id": "du-bloc-au-texte",
+      "titre": "Des blocs Scratch au langage C",
+      "resume": "En C, on écrit en texte les mêmes idées que les blocs Scratch : fonctions, conditions, boucles et variables.",
+      "page": "§ Aperçu de la syntaxe",
+      "documentId": "wp-c",
+      "schema": { "type": "comparaison", "colonnes": [
+        { "titre": "Scratch", "points": ["« dire Bonjour »", "« si … alors »", "« répéter 3 fois »", "variable « compteur »"] },
+        { "titre": "C", "points": ["printf(\"Bonjour\\n\");", "if (x < y) { … }", "for (int i = 0; i < 3; i++) { … }", "int compteur = 0;"] }
+      ] },
+      "passages": [
+        { "texte": "Le C est un langage impératif créé au début des années 1970 par Dennis Ritchie pour écrire le système Unix. Il reste très utilisé car il est proche de la machine.", "documentId": "wp-c", "page": "§ Histoire" },
+        { "texte": "Apprendre le C aide à comprendre comment fonctionne réellement un ordinateur : la mémoire, les types et la compilation y sont visibles.", "documentId": "wb-c", "page": "Introduction, § Pourquoi apprendre le langage C ?" }
+      ],
+      "infographie": { "titre": "Même logique, autre écriture", "points": [
+        { "icone": "🧱", "texte": "Scratch : on emboîte des blocs." },
+        { "icone": "⌨️", "texte": "C : on écrit des lignes de texte." },
+        { "icone": "；", "texte": "Chaque instruction C se termine par un point-virgule." },
+        { "icone": "{ }", "texte": "Les accolades regroupent les instructions comme un bloc." }
+      ] }
+    },
+    {
+      "id": "compilation",
+      "titre": "La compilation",
+      "resume": "Le compilateur traduit le code source écrit par un humain en code machine, une suite de 0 et de 1 que le processeur peut exécuter.",
+      "page": "§ Présentation générale",
+      "documentId": "wp-compilateur",
+      "schema": { "type": "etapes", "etapes": [
+        { "titre": "Code source", "texte": "hello.c, écrit en C par le programmeur." },
+        { "titre": "Compilateur", "texte": "make hello (qui lance clang) traduit le texte." },
+        { "titre": "Code machine", "texte": "Le fichier hello, fait de 0 et de 1." },
+        { "titre": "Exécution", "texte": "./hello lance le programme." }
+      ] },
+      "differences": {
+        "titres": ["Code source", "Code machine"],
+        "lignes": [
+          { "critere": "Écrit par", "a": "Un humain", "b": "Le compilateur" },
+          { "critere": "Lisible par", "a": "Les humains", "b": "Le processeur" },
+          { "critere": "Forme", "a": "Texte (hello.c)", "b": "Binaire (hello)" }
+        ]
+      },
+      "passages": [
+        { "texte": "Un compilateur est un programme qui transforme un code source en un code objet, généralement du langage machine directement exécutable.", "documentId": "wp-compilateur", "page": "§ Présentation générale" },
+        { "texte": "Contrairement à un interpréteur qui lit et exécute le code au fur et à mesure, le compilateur traduit tout le programme avant son exécution.", "documentId": "wp-compilateur", "page": "§ Lien avec les interpréteurs" }
+      ],
+      "infographie": { "titre": "Du texte au programme", "points": [
+        { "icone": "📝", "texte": "J'écris hello.c." },
+        { "icone": "⚙️", "texte": "make hello : le compilateur traduit." },
+        { "icone": "0️⃣", "texte": "Résultat : du code machine." },
+        { "icone": "▶️", "texte": "./hello : le programme s'exécute." }
+      ] }
+    },
+    {
+      "id": "types-depassement",
+      "titre": "Les types et le dépassement d'entier",
+      "resume": "Chaque variable a un type de taille fixe (int, long, float…) : si une valeur dépasse cette taille, elle « déborde » et devient fausse.",
+      "page": "Types de base, § Entiers",
+      "documentId": "wb-c",
+      "schema": { "type": "cycle", "etapes": [
+        { "titre": "Compteur à 4 chiffres", "texte": "Comme un compteur kilométrique : 9998, 9999…" },
+        { "titre": "Il est plein", "texte": "Tous les chiffres sont au maximum." },
+        { "titre": "On ajoute 1", "texte": "Il n'y a plus de place pour la retenue." },
+        { "titre": "Retour à 0000", "texte": "La valeur repart du début : c'est le dépassement." }
+      ] },
+      "differences": {
+        "titres": ["int", "long"],
+        "lignes": [
+          { "critere": "Taille habituelle", "a": "32 bits (4 octets)", "b": "64 bits (8 octets)" },
+          { "critere": "Maximum (environ)", "a": "2 milliards", "b": "9 trillions" },
+          { "critere": "Affichage printf", "a": "%i", "b": "%li" }
+        ]
+      },
+      "passages": [
+        { "texte": "Un type entier est stocké sur un nombre fixe de bits : il ne peut donc représenter qu'un intervalle limité de valeurs.", "documentId": "wb-c", "page": "Types de base, § Entiers" },
+        { "texte": "Quand le résultat d'un calcul dépasse la plus grande valeur du type, on parle de débordement ; pour un entier signé, le comportement n'est pas défini par la norme.", "documentId": "wb-c", "page": "Types de base, § Débordement" },
+        { "texte": "Un dépassement d'entier se produit lorsqu'une opération produit une valeur trop grande pour l'espace prévu : la valeur obtenue est alors erronée, ce qui peut causer des bugs ou des failles de sécurité.", "documentId": "wp-depassement", "page": "§ Origine" }
+      ],
+      "infographie": { "titre": "Attention au débordement", "points": [
+        { "icone": "📦", "texte": "Chaque type est une boîte de taille fixe." },
+        { "icone": "🔢", "texte": "int : environ 2 milliards au maximum." },
+        { "icone": "💥", "texte": "Trop grand ? La valeur déborde et devient fausse." },
+        { "icone": "🛡️", "texte": "Choisir long pour les grands nombres." }
+      ] }
+    },
+    {
+      "id": "boucles",
+      "titre": "Les boucles et les boucles imbriquées",
+      "resume": "Une boucle répète des instructions ; une boucle placée dans une autre permet de dessiner une grille ligne par ligne, comme la pyramide de Mario.",
+      "page": "Itérations, § Boucle for",
+      "documentId": "wb-c",
+      "schema": { "type": "etapes", "etapes": [
+        { "titre": "Boucle extérieure", "texte": "Pour chaque ligne i de la grille…" },
+        { "titre": "Boucle intérieure", "texte": "… pour chaque colonne j, afficher un #." },
+        { "titre": "Fin de ligne", "texte": "Après les colonnes, aller à la ligne (\\n)." },
+        { "titre": "Ligne suivante", "texte": "La boucle extérieure passe à i + 1." }
+      ] },
+      "differences": {
+        "titres": ["for", "while"],
+        "lignes": [
+          { "critere": "Quand l'utiliser", "a": "On connaît le nombre de tours", "b": "On répète tant qu'une condition est vraie" },
+          { "critere": "Écriture", "a": "for (int i = 0; i < n; i++)", "b": "while (condition)" },
+          { "critere": "Exemple", "a": "Afficher 3 fois « miaou »", "b": "Attendre que l'utilisateur réponde" }
+        ]
+      },
+      "passages": [
+        { "texte": "La boucle for regroupe en une ligne l'initialisation du compteur, la condition de continuation et l'incrément.", "documentId": "wb-c", "page": "Itérations, § Boucle for" },
+        { "texte": "Les structures de contrôle itératives répètent une suite d'instructions ; on peut les imbriquer pour parcourir des données à deux dimensions.", "documentId": "wp-controle", "page": "§ Structures de contrôle itératives" }
+      ],
+      "infographie": { "titre": "Une grille avec deux boucles", "points": [
+        { "icone": "↕️", "texte": "Boucle extérieure : les lignes." },
+        { "icone": "↔️", "texte": "Boucle intérieure : les colonnes." },
+        { "icone": "#", "texte": "Lignes × colonnes = nombre de # affichés." }
+      ] }
+    },
+    {
+      "id": "do-while",
+      "titre": "Vérifier la saisie avec do-while",
+      "resume": "La boucle do-while exécute son bloc au moins une fois, puis redemande tant que la réponse de l'utilisateur n'est pas valable.",
+      "page": "Itérations, § Boucle do-while",
+      "documentId": "wb-c",
+      "schema": { "type": "cycle", "etapes": [
+        { "titre": "Demander", "texte": "n = get_int(\"Taille : \");" },
+        { "titre": "Vérifier", "texte": "La condition while (n < 1) est-elle vraie ?" },
+        { "titre": "Recommencer si besoin", "texte": "Oui : on redemande. Non : on sort de la boucle." }
+      ] },
+      "differences": {
+        "titres": ["while", "do-while"],
+        "lignes": [
+          { "critere": "Test de la condition", "a": "Avant le bloc", "b": "Après le bloc" },
+          { "critere": "Nombre minimum de tours", "a": "0", "b": "1" },
+          { "critere": "Usage typique", "a": "Répéter tant que…", "b": "Demander jusqu'à obtenir une bonne réponse" }
+        ]
+      },
+      "passages": [
+        { "texte": "Dans une boucle do-while, la condition est testée après l'exécution du bloc : celui-ci est donc toujours exécuté au moins une fois.", "documentId": "wb-c", "page": "Itérations, § Boucle do-while" }
+      ],
+      "infographie": { "titre": "Redemander jusqu'à ce que ce soit bon", "points": [
+        { "icone": "❓", "texte": "Poser la question au moins une fois." },
+        { "icone": "🔍", "texte": "Tester la réponse." },
+        { "icone": "🔁", "texte": "Mauvaise réponse : on redemande." },
+        { "icone": "✅", "texte": "Bonne réponse : on continue le programme." }
+      ] }
+    },
+    {
+      "id": "terminal",
+      "titre": "Le terminal et la ligne de commande",
+      "resume": "Dans le terminal, on tape des commandes en texte pour gérer ses fichiers et lancer ses programmes, sans souris.",
+      "page": "§ Syntaxe générale des commandes",
+      "documentId": "wp-cli",
+      "schema": { "type": "relations", "liens": [
+        { "de": "ls", "vers": "Lister les fichiers", "label": "sert à" },
+        { "de": "cd dossier", "vers": "Entrer dans un dossier", "label": "sert à" },
+        { "de": "mkdir dossier", "vers": "Créer un dossier", "label": "sert à" },
+        { "de": "rm fichier", "vers": "Supprimer (définitivement)", "label": "sert à" },
+        { "de": "./hello", "vers": "Lancer un programme", "label": "sert à" }
+      ] },
+      "passages": [
+        { "texte": "Une commande se compose d'un nom, éventuellement suivi d'options et d'arguments séparés par des espaces.", "documentId": "wp-cli", "page": "§ Syntaxe générale des commandes" },
+        { "texte": "Sous Unix, l'interpréteur de commandes (le shell) lit chaque ligne tapée, la découpe en mots puis lance le programme demandé.", "documentId": "wp-cli", "page": "§ L'interface en lignes de commandes sous Unix" },
+        { "texte": "Le livre détaille les commandes de base de GNU-Linux pour se déplacer dans les dossiers et manipuler les fichiers.", "documentId": "wb-linux", "page": "§ Tables de matières" }
+      ],
+      "infographie": { "titre": "Les 5 commandes de départ", "points": [
+        { "icone": "📂", "texte": "ls : voir ce qu'il y a ici." },
+        { "icone": "🚪", "texte": "cd : changer de dossier (cd .. pour remonter)." },
+        { "icone": "➕", "texte": "mkdir : créer un dossier." },
+        { "icone": "🗑️", "texte": "rm : supprimer, sans corbeille !" }
+      ] }
+    }
+  ]
+}
