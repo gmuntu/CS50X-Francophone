@@ -1,0 +1,586 @@
+{
+  "semaine": 3,
+  "sujet": "Les algorithmes",
+  "resume": "Chercher et trier efficacement : recherche linéaire et binaire, tri par sélection, tri à bulles et tri fusion, comment mesurer leur vitesse avec les notations O, Ω et Θ, et la récursion.",
+  "documents": [
+    {
+      "id": "wp-sequentielle",
+      "titre": "Recherche séquentielle",
+      "url": "https://fr.wikipedia.org/wiki/Recherche_s%C3%A9quentielle",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-dichotomie",
+      "titre": "Recherche dichotomique",
+      "url": "https://fr.wikipedia.org/wiki/Recherche_dichotomique",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-selection",
+      "titre": "Tri par sélection",
+      "url": "https://fr.wikipedia.org/wiki/Tri_par_s%C3%A9lection",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-bulles",
+      "titre": "Tri à bulles",
+      "url": "https://fr.wikipedia.org/wiki/Tri_%C3%A0_bulles",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-fusion",
+      "titre": "Tri fusion",
+      "url": "https://fr.wikipedia.org/wiki/Tri_fusion",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-asymptotique",
+      "titre": "Comparaison asymptotique (notations O, Ω, Θ)",
+      "url": "https://fr.wikipedia.org/wiki/Comparaison_asymptotique",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-complexite",
+      "titre": "Analyse de la complexité des algorithmes",
+      "url": "https://fr.wikipedia.org/wiki/Analyse_de_la_complexit%C3%A9_des_algorithmes",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-recursif",
+      "titre": "Algorithme récursif",
+      "url": "https://fr.wikipedia.org/wiki/Algorithme_r%C3%A9cursif",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-diviser",
+      "titre": "Diviser pour régner (informatique)",
+      "url": "https://fr.wikipedia.org/wiki/Diviser_pour_r%C3%A9gner_(informatique)",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    }
+  ],
+  "notions": [
+    {
+      "id": "recherche-lineaire-binaire",
+      "titre": "Recherche linéaire et recherche binaire",
+      "resume": "La recherche linéaire regarde chaque case une par une ; la recherche binaire, beaucoup plus rapide, exige un tableau trié.",
+      "page": "§ Principe",
+      "documentId": "wp-sequentielle",
+      "schema": {
+        "type": "comparaison",
+        "colonnes": [
+          {
+            "titre": "Recherche linéaire",
+            "points": [
+              "Case 0, puis 1, puis 2…",
+              "Marche sur un tableau non trié",
+              "n étapes au pire : O(n)"
+            ]
+          },
+          {
+            "titre": "Recherche binaire",
+            "points": [
+              "Regarder le milieu",
+              "Garder la bonne moitié",
+              "log₂ n étapes au pire : O(log n)"
+            ]
+          }
+        ]
+      },
+      "differences": {
+        "titres": [
+          "Linéaire",
+          "Binaire"
+        ],
+        "lignes": [
+          {
+            "critere": "Tableau trié ?",
+            "a": "Non nécessaire",
+            "b": "Obligatoire"
+          },
+          {
+            "critere": "Pire cas",
+            "a": "O(n)",
+            "b": "O(log n)"
+          },
+          {
+            "critere": "Meilleur cas",
+            "a": "Ω(1)",
+            "b": "Ω(1)"
+          },
+          {
+            "critere": "1 million d'éléments",
+            "a": "jusqu'à 1 000 000 essais",
+            "b": "environ 20 essais"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "La recherche séquentielle parcourt les éléments un par un, du premier au dernier, jusqu'à trouver celui qu'on cherche ou atteindre la fin.",
+          "documentId": "wp-sequentielle",
+          "page": "§ Principe"
+        },
+        {
+          "texte": "Dans le pire des cas, il faut examiner tous les éléments : le nombre de comparaisons est proportionnel à la taille de la liste.",
+          "documentId": "wp-sequentielle",
+          "page": "§ Complexité"
+        },
+        {
+          "texte": "La recherche dichotomique divise l'intervalle de recherche par deux à chaque étape, d'où un nombre d'étapes logarithmique.",
+          "documentId": "wp-dichotomie",
+          "page": "§ Complexité et performances"
+        }
+      ],
+      "infographie": {
+        "titre": "Chercher vite",
+        "points": [
+          {
+            "icone": "🚶",
+            "texte": "Linéaire : une case après l'autre."
+          },
+          {
+            "icone": "✂️",
+            "texte": "Binaire : couper en deux à chaque fois."
+          },
+          {
+            "icone": "📚",
+            "texte": "Binaire : seulement si c'est trié."
+          },
+          {
+            "icone": "⚡",
+            "texte": "1 million de cases : 20 essais au lieu d'1 million."
+          }
+        ]
+      }
+    },
+    {
+      "id": "big-o",
+      "titre": "Les notations O, Ω et Θ",
+      "resume": "O décrit le temps d'un algorithme dans le pire des cas, Ω dans le meilleur des cas, et Θ quand les deux sont pareils.",
+      "page": "§ Coût dans le pire cas",
+      "documentId": "wp-complexite",
+      "schema": {
+        "type": "etapes",
+        "etapes": [
+          {
+            "titre": "O(1)",
+            "texte": "Constant : le même temps quelle que soit la taille."
+          },
+          {
+            "titre": "O(log n)",
+            "texte": "Logarithmique : recherche binaire."
+          },
+          {
+            "titre": "O(n)",
+            "texte": "Linéaire : recherche linéaire."
+          },
+          {
+            "titre": "O(n log n)",
+            "texte": "Tri fusion."
+          },
+          {
+            "titre": "O(n²)",
+            "texte": "Quadratique : tri par sélection, tri à bulles."
+          }
+        ]
+      },
+      "differences": {
+        "titres": [
+          "O (grand O)",
+          "Ω (oméga)"
+        ],
+        "lignes": [
+          {
+            "critere": "Décrit",
+            "a": "Le pire des cas (borne haute)",
+            "b": "Le meilleur des cas (borne basse)"
+          },
+          {
+            "critere": "Recherche linéaire",
+            "a": "O(n)",
+            "b": "Ω(1)"
+          },
+          {
+            "critere": "Tri à bulles",
+            "a": "O(n²)",
+            "b": "Ω(n)"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "On mesure souvent la complexité dans le pire des cas : le nombre maximal d'opérations pour une entrée de taille n.",
+          "documentId": "wp-complexite",
+          "page": "§ Coût dans le pire cas"
+        },
+        {
+          "texte": "La complexité dans le meilleur des cas donne le nombre minimal d'opérations, par exemple quand l'élément cherché est le premier.",
+          "documentId": "wp-complexite",
+          "page": "§ Coût dans le meilleur cas"
+        },
+        {
+          "texte": "La notation O signifie qu'une fonction est dominée par une autre à une constante près quand n devient grand : on ne garde que le terme qui croît le plus vite.",
+          "documentId": "wp-asymptotique",
+          "page": "§ Domination"
+        }
+      ],
+      "infographie": {
+        "titre": "Mesurer la vitesse",
+        "points": [
+          {
+            "icone": "📈",
+            "texte": "O : au pire."
+          },
+          {
+            "icone": "📉",
+            "texte": "Ω : au mieux."
+          },
+          {
+            "icone": "🟰",
+            "texte": "Θ : pire = meilleur."
+          },
+          {
+            "icone": "🐢",
+            "texte": "n² devient vite très lent quand n grandit."
+          }
+        ]
+      }
+    },
+    {
+      "id": "tri-selection",
+      "titre": "Le tri par sélection",
+      "resume": "Le tri par sélection cherche le plus petit élément restant et le met à sa place, encore et encore.",
+      "page": "§ Description, pseudo-code et variantes",
+      "documentId": "wp-selection",
+      "schema": {
+        "type": "cycle",
+        "etapes": [
+          {
+            "titre": "Chercher le minimum",
+            "texte": "Parcourir la partie non triée."
+          },
+          {
+            "titre": "Échanger",
+            "texte": "Le placer au début de la partie non triée."
+          },
+          {
+            "titre": "Avancer",
+            "texte": "La partie triée grandit d'une case."
+          },
+          {
+            "titre": "Recommencer",
+            "texte": "Jusqu'à ce que tout soit trié."
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Le tri par sélection cherche le plus petit élément du tableau et l'échange avec le premier, puis recommence avec le reste du tableau.",
+          "documentId": "wp-selection",
+          "page": "§ Description, pseudo-code et variantes"
+        },
+        {
+          "texte": "Il effectue environ n²/2 comparaisons, que le tableau soit déjà trié ou non : il est en O(n²) et en Ω(n²).",
+          "documentId": "wp-selection",
+          "page": "§ Analyse de la complexité"
+        }
+      ],
+      "infographie": {
+        "titre": "Trier en choisissant le plus petit",
+        "points": [
+          {
+            "icone": "🔍",
+            "texte": "Trouver le plus petit."
+          },
+          {
+            "icone": "🔄",
+            "texte": "L'échanger avec le premier non trié."
+          },
+          {
+            "icone": "➡️",
+            "texte": "Avancer d'une case."
+          },
+          {
+            "icone": "🐢",
+            "texte": "Toujours n² : même si c'est déjà trié."
+          }
+        ]
+      }
+    },
+    {
+      "id": "tri-bulles",
+      "titre": "Le tri à bulles",
+      "resume": "Le tri à bulles compare les voisins deux par deux et les échange s'ils sont dans le désordre : les grands éléments « remontent » comme des bulles.",
+      "page": "§ Principe et pseudo-code",
+      "documentId": "wp-bulles",
+      "schema": {
+        "type": "cycle",
+        "etapes": [
+          {
+            "titre": "Comparer deux voisins",
+            "texte": "Cases i et i + 1."
+          },
+          {
+            "titre": "Échanger si besoin",
+            "texte": "Le plus grand passe à droite."
+          },
+          {
+            "titre": "Finir le passage",
+            "texte": "Le plus grand est arrivé au bout."
+          },
+          {
+            "titre": "Repasser",
+            "texte": "Recommencer tant qu'il y a eu un échange."
+          }
+        ]
+      },
+      "differences": {
+        "titres": [
+          "Tri par sélection",
+          "Tri à bulles"
+        ],
+        "lignes": [
+          {
+            "critere": "Idée",
+            "a": "Placer le minimum",
+            "b": "Échanger les voisins"
+          },
+          {
+            "critere": "Pire cas",
+            "a": "O(n²)",
+            "b": "O(n²)"
+          },
+          {
+            "critere": "Déjà trié",
+            "a": "Ω(n²)",
+            "b": "Ω(n) : il s'arrête après un passage sans échange"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "L'algorithme parcourt le tableau et compare les éléments consécutifs ; lorsqu'ils sont mal ordonnés, ils sont échangés.",
+          "documentId": "wp-bulles",
+          "page": "§ Principe et pseudo-code"
+        },
+        {
+          "texte": "Dans le pire cas, le tri à bulles fait de l'ordre de n² comparaisons ; si l'on arrête dès qu'un passage ne fait aucun échange, un tableau déjà trié ne demande qu'un passage.",
+          "documentId": "wp-bulles",
+          "page": "§ Analyse de la complexité"
+        }
+      ],
+      "infographie": {
+        "titre": "Les bulles remontent",
+        "points": [
+          {
+            "icone": "👯",
+            "texte": "Comparer les voisins."
+          },
+          {
+            "icone": "🔄",
+            "texte": "Échanger s'ils sont mal rangés."
+          },
+          {
+            "icone": "🫧",
+            "texte": "Le plus grand remonte au bout."
+          },
+          {
+            "icone": "✅",
+            "texte": "Aucun échange : c'est trié."
+          }
+        ]
+      }
+    },
+    {
+      "id": "recursion",
+      "titre": "La récursion",
+      "resume": "Une fonction récursive s'appelle elle-même sur un problème plus petit, jusqu'à un cas de base qui arrête les appels.",
+      "page": "§ Un exemple liminaire : la factorielle",
+      "documentId": "wp-recursif",
+      "schema": {
+        "type": "etapes",
+        "etapes": [
+          {
+            "titre": "Cas de base",
+            "texte": "Si n vaut 1 : on répond directement 1."
+          },
+          {
+            "titre": "Cas récursif",
+            "texte": "Sinon : factorielle(n) = n × factorielle(n − 1)."
+          },
+          {
+            "titre": "Descendre",
+            "texte": "factorielle(3) → 3 × factorielle(2) → 2 × factorielle(1)."
+          },
+          {
+            "titre": "Remonter",
+            "texte": "1, puis 2 × 1 = 2, puis 3 × 2 = 6."
+          }
+        ]
+      },
+      "differences": {
+        "titres": [
+          "Boucle (itération)",
+          "Récursion"
+        ],
+        "lignes": [
+          {
+            "critere": "Répétition",
+            "a": "for ou while",
+            "b": "La fonction s'appelle elle-même"
+          },
+          {
+            "critere": "Arrêt",
+            "a": "La condition de la boucle",
+            "b": "Le cas de base"
+          },
+          {
+            "critere": "Exemple CS50",
+            "a": "Pyramide avec deux boucles",
+            "b": "Pyramide de hauteur n = pyramide n − 1 + une ligne"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "La factorielle se définit par récurrence : 0! = 1, et n! = n × (n − 1)! ; un algorithme récursif suit exactement cette définition.",
+          "documentId": "wp-recursif",
+          "page": "§ Un exemple liminaire : la factorielle"
+        },
+        {
+          "texte": "Un algorithme récursif doit toujours prévoir un cas qui se résout sans appel récursif, sinon il ne s'arrêterait jamais.",
+          "documentId": "wp-recursif",
+          "page": "§ Bien démarrer"
+        }
+      ],
+      "infographie": {
+        "titre": "Se rappeler soi-même",
+        "points": [
+          {
+            "icone": "🪆",
+            "texte": "Comme des poupées russes : un problème plus petit dedans."
+          },
+          {
+            "icone": "🛑",
+            "texte": "Un cas de base pour s'arrêter."
+          },
+          {
+            "icone": "⬇️",
+            "texte": "On descend jusqu'au cas de base…"
+          },
+          {
+            "icone": "⬆️",
+            "texte": "… puis on remonte les résultats."
+          }
+        ]
+      }
+    },
+    {
+      "id": "tri-fusion",
+      "titre": "Le tri fusion",
+      "resume": "Le tri fusion coupe le tableau en deux, trie chaque moitié (récursivement), puis fusionne les deux moitiés triées.",
+      "page": "§ Algorithme",
+      "documentId": "wp-fusion",
+      "schema": {
+        "type": "etapes",
+        "etapes": [
+          {
+            "titre": "Diviser",
+            "texte": "Couper le tableau en deux moitiés."
+          },
+          {
+            "titre": "Régner",
+            "texte": "Trier chaque moitié avec le tri fusion."
+          },
+          {
+            "titre": "Cas de base",
+            "texte": "Un seul élément : déjà trié."
+          },
+          {
+            "titre": "Fusionner",
+            "texte": "Prendre à chaque fois le plus petit des deux débuts de moitiés."
+          }
+        ]
+      },
+      "differences": {
+        "titres": [
+          "Tri à bulles",
+          "Tri fusion"
+        ],
+        "lignes": [
+          {
+            "critere": "Méthode",
+            "a": "Échanges entre voisins",
+            "b": "Diviser pour régner"
+          },
+          {
+            "critere": "Pire cas",
+            "a": "O(n²)",
+            "b": "O(n log n)"
+          },
+          {
+            "critere": "Mémoire en plus",
+            "a": "Presque aucune",
+            "b": "Un second tableau"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Fusionner deux listes déjà triées est facile : il suffit de comparer leurs premiers éléments et de prendre le plus petit, encore et encore.",
+          "documentId": "wp-fusion",
+          "page": "§ Intuition"
+        },
+        {
+          "texte": "Le tri fusion effectue de l'ordre de n log n comparaisons, dans le pire comme dans le meilleur des cas.",
+          "documentId": "wp-fusion",
+          "page": "§ Analyse de la complexité"
+        },
+        {
+          "texte": "Diviser pour régner consiste à découper un problème en sous-problèmes semblables plus petits, les résoudre, puis combiner leurs solutions : le tri fusion en est l'exemple classique.",
+          "documentId": "wp-diviser",
+          "page": "§ Exemples"
+        }
+      ],
+      "infographie": {
+        "titre": "Diviser pour régner",
+        "points": [
+          {
+            "icone": "✂️",
+            "texte": "Couper en deux."
+          },
+          {
+            "icone": "🔁",
+            "texte": "Trier chaque moitié pareil."
+          },
+          {
+            "icone": "🤝",
+            "texte": "Fusionner les moitiés triées."
+          },
+          {
+            "icone": "🚀",
+            "texte": "n log n : bien plus rapide que n²."
+          }
+        ]
+      }
+    }
+  ]
+}
