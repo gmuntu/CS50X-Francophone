@@ -1,0 +1,601 @@
+{
+  "semaine": 5,
+  "sujet": "Les structures de données",
+  "resume": "Organiser les données en mémoire avec des struct et des pointeurs : piles et files, listes chaînées, arbres binaires de recherche, tables de hachage et tries, et ce que chacune gagne ou perd en temps et en mémoire.",
+  "documents": [
+    {
+      "id": "wb-types",
+      "titre": "Programmation C : Types avancés (Wikilivres)",
+      "url": "https://fr.wikibooks.org/wiki/Programmation_C/Types_avanc%C3%A9s",
+      "auteur": "Contributeurs de Wikilivres",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-structure",
+      "titre": "Structure de données",
+      "url": "https://fr.wikipedia.org/wiki/Structure_de_donn%C3%A9es",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-abstrait",
+      "titre": "Type abstrait",
+      "url": "https://fr.wikipedia.org/wiki/Type_abstrait",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-liste",
+      "titre": "Liste chaînée",
+      "url": "https://fr.wikipedia.org/wiki/Liste_cha%C3%AEn%C3%A9e",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-pile",
+      "titre": "Pile (informatique)",
+      "url": "https://fr.wikipedia.org/wiki/Pile_(informatique)",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-file",
+      "titre": "File (structure de données)",
+      "url": "https://fr.wikipedia.org/wiki/File_(structure_de_donn%C3%A9es)",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-abr",
+      "titre": "Arbre binaire de recherche",
+      "url": "https://fr.wikipedia.org/wiki/Arbre_binaire_de_recherche",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-hachage",
+      "titre": "Table de hachage",
+      "url": "https://fr.wikipedia.org/wiki/Table_de_hachage",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-fhachage",
+      "titre": "Fonction de hachage",
+      "url": "https://fr.wikipedia.org/wiki/Fonction_de_hachage",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    },
+    {
+      "id": "wp-trie",
+      "titre": "Trie (informatique)",
+      "url": "https://fr.wikipedia.org/wiki/Trie_(informatique)",
+      "auteur": "Contributeurs de Wikipédia",
+      "licence": "CC BY-SA 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/deed.fr"
+    }
+  ],
+  "notions": [
+    {
+      "id": "struct-abstrait",
+      "titre": "struct et types abstraits",
+      "resume": "Une struct regroupe plusieurs valeurs sous un même nom ; un type abstrait décrit ce qu'une structure permet de faire, sans dire comment elle est construite.",
+      "page": "Types avancés, § Structures",
+      "documentId": "wb-types",
+      "schema": {
+        "type": "relations",
+        "liens": [
+          {
+            "de": "typedef struct { string nom; string numero; } personne;",
+            "vers": "un nouveau type « personne »",
+            "label": "définit"
+          },
+          {
+            "de": "p.nom",
+            "vers": "le champ nom",
+            "label": "accède à"
+          },
+          {
+            "de": "p->nom",
+            "vers": "le champ nom via un pointeur",
+            "label": "raccourci de (*p).nom"
+          },
+          {
+            "de": "Type abstrait (pile, file…)",
+            "vers": "des opérations : ajouter, retirer…",
+            "label": "décrit"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Une structure regroupe plusieurs variables, appelées champs, éventuellement de types différents, sous un seul nom.",
+          "documentId": "wb-types",
+          "page": "§ Structures"
+        },
+        {
+          "texte": "Avec un pointeur vers une structure, on accède aux champs par l'opérateur ->, équivalent de (*p).champ.",
+          "documentId": "wb-types",
+          "page": "§ Pointeurs vers structures"
+        },
+        {
+          "texte": "Un type abstrait est défini par ses opérations et leurs règles, indépendamment de la façon de le programmer : une pile se définit par empiler, dépiler et regarder le sommet.",
+          "documentId": "wp-abstrait",
+          "page": "§ Exemple commenté : la pile"
+        }
+      ],
+      "infographie": {
+        "titre": "Ranger ensemble",
+        "points": [
+          {
+            "icone": "🗂️",
+            "texte": "struct : plusieurs champs, un seul nom."
+          },
+          {
+            "icone": "🔹",
+            "texte": "p.nom : accès direct."
+          },
+          {
+            "icone": "➡️",
+            "texte": "p->nom : accès par pointeur."
+          },
+          {
+            "icone": "🧩",
+            "texte": "Type abstrait : ce qu'on peut faire, pas comment."
+          }
+        ]
+      }
+    },
+    {
+      "id": "pile-file",
+      "titre": "Pile et file",
+      "resume": "Dans une pile, le dernier arrivé sort le premier (LIFO) ; dans une file, le premier arrivé sort le premier (FIFO).",
+      "page": "§ Primitives",
+      "documentId": "wp-pile",
+      "schema": {
+        "type": "comparaison",
+        "colonnes": [
+          {
+            "titre": "Pile (LIFO)",
+            "points": [
+              "Empiler (push)",
+              "Dépiler (pop) : le dernier ajouté",
+              "Comme une pile d'assiettes",
+              "Bouton « Annuler »"
+            ]
+          },
+          {
+            "titre": "File (FIFO)",
+            "points": [
+              "Enfiler (enqueue)",
+              "Défiler (dequeue) : le premier ajouté",
+              "Comme la queue au marché",
+              "File d'impression"
+            ]
+          }
+        ]
+      },
+      "differences": {
+        "titres": [
+          "Pile",
+          "File"
+        ],
+        "lignes": [
+          {
+            "critere": "Sigle",
+            "a": "LIFO : dernier entré, premier sorti",
+            "b": "FIFO : premier entré, premier sorti"
+          },
+          {
+            "critere": "Ajouter",
+            "a": "push",
+            "b": "enqueue"
+          },
+          {
+            "critere": "Retirer",
+            "a": "pop",
+            "b": "dequeue"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Une pile repose sur deux opérations principales : empiler un élément au sommet et dépiler l'élément du sommet ; le dernier élément ajouté est le premier retiré.",
+          "documentId": "wp-pile",
+          "page": "§ Primitives"
+        },
+        {
+          "texte": "Dans une file, les éléments sont ajoutés à une extrémité et retirés à l'autre : le premier entré est le premier sorti, comme dans une file d'attente.",
+          "documentId": "wp-file",
+          "page": "§ Description"
+        }
+      ],
+      "infographie": {
+        "titre": "Qui sort en premier ?",
+        "points": [
+          {
+            "icone": "🍽️",
+            "texte": "Pile : la dernière assiette posée."
+          },
+          {
+            "icone": "🧍",
+            "texte": "File : la première personne arrivée."
+          },
+          {
+            "icone": "⬆️",
+            "texte": "push / pop."
+          },
+          {
+            "icone": "➡️",
+            "texte": "enqueue / dequeue."
+          }
+        ]
+      }
+    },
+    {
+      "id": "liste-chainee",
+      "titre": "La liste chaînée",
+      "resume": "Une liste chaînée relie des nœuds dispersés en mémoire : chaque nœud garde une valeur et un pointeur vers le suivant.",
+      "page": "§ Principe",
+      "documentId": "wp-liste",
+      "schema": {
+        "type": "etapes",
+        "etapes": [
+          {
+            "titre": "Nœud",
+            "texte": "typedef struct node { int number; struct node *next; } node;"
+          },
+          {
+            "titre": "Début",
+            "texte": "Un pointeur list vers le premier nœud."
+          },
+          {
+            "titre": "Ajouter",
+            "texte": "malloc un nœud, le relier : n->next = list ; list = n;"
+          },
+          {
+            "titre": "Fin",
+            "texte": "Le dernier nœud a next = NULL."
+          }
+        ]
+      },
+      "differences": {
+        "titres": [
+          "Tableau",
+          "Liste chaînée"
+        ],
+        "lignes": [
+          {
+            "critere": "En mémoire",
+            "a": "Cases côte à côte",
+            "b": "Nœuds dispersés"
+          },
+          {
+            "critere": "Taille",
+            "a": "Fixe",
+            "b": "Grandit avec malloc"
+          },
+          {
+            "critere": "Accès au i-ème",
+            "a": "Immédiat : O(1)",
+            "b": "Parcours : O(n)"
+          },
+          {
+            "critere": "Insertion au début",
+            "a": "Tout décaler : O(n)",
+            "b": "O(1)"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Une liste chaînée est une suite d'éléments dont chacun contient une donnée et un lien vers l'élément suivant ; leur ordre ne dépend pas de leur place en mémoire.",
+          "documentId": "wp-liste",
+          "page": "§ Principe"
+        },
+        {
+          "texte": "Ajouter un élément en tête de liste ne demande que de créer le nouvel élément et de modifier deux liens.",
+          "documentId": "wp-liste",
+          "page": "§ Ajout d'un élément"
+        }
+      ],
+      "infographie": {
+        "titre": "Des wagons accrochés",
+        "points": [
+          {
+            "icone": "🚃",
+            "texte": "Chaque nœud : une valeur + un lien."
+          },
+          {
+            "icone": "🔗",
+            "texte": "next pointe vers le suivant."
+          },
+          {
+            "icone": "🛑",
+            "texte": "NULL : fin de la liste."
+          },
+          {
+            "icone": "⚖️",
+            "texte": "Ajout facile, accès plus lent."
+          }
+        ]
+      }
+    },
+    {
+      "id": "arbre-binaire",
+      "titre": "L'arbre binaire de recherche",
+      "resume": "Dans un arbre binaire de recherche, chaque nœud a au plus deux enfants : les plus petits à gauche, les plus grands à droite.",
+      "page": "§ Définition",
+      "documentId": "wp-abr",
+      "schema": {
+        "type": "etapes",
+        "etapes": [
+          {
+            "titre": "Racine",
+            "texte": "Partir du nœud du haut."
+          },
+          {
+            "titre": "Comparer",
+            "texte": "Plus petit : aller à gauche. Plus grand : à droite."
+          },
+          {
+            "titre": "Descendre",
+            "texte": "Recommencer avec l'enfant choisi."
+          },
+          {
+            "titre": "Arriver",
+            "texte": "Valeur trouvée, ou NULL : elle n'y est pas."
+          }
+        ]
+      },
+      "differences": {
+        "titres": [
+          "Liste chaînée",
+          "Arbre binaire de recherche"
+        ],
+        "lignes": [
+          {
+            "critere": "Liens par nœud",
+            "a": "1 (next)",
+            "b": "2 (gauche, droite)"
+          },
+          {
+            "critere": "Recherche",
+            "a": "O(n)",
+            "b": "O(log n) s'il est équilibré"
+          },
+          {
+            "critere": "Ressemble à",
+            "a": "Recherche linéaire",
+            "b": "Recherche binaire"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Un arbre binaire de recherche est un arbre où chaque nœud a une clé supérieure à toutes celles de son sous-arbre gauche et inférieure à toutes celles de son sous-arbre droit.",
+          "documentId": "wp-abr",
+          "page": "§ Définition générale"
+        },
+        {
+          "texte": "La recherche part de la racine et descend à gauche ou à droite selon la comparaison : le temps dépend de la hauteur de l'arbre.",
+          "documentId": "wp-abr",
+          "page": "§ Recherche"
+        },
+        {
+          "texte": "Si l'arbre est déséquilibré, il ressemble à une liste et la recherche redevient lente ; les arbres équilibrés évitent ce problème.",
+          "documentId": "wp-abr",
+          "page": "§ Equilibrage"
+        }
+      ],
+      "infographie": {
+        "titre": "Gauche plus petit, droite plus grand",
+        "points": [
+          {
+            "icone": "🌳",
+            "texte": "Partir de la racine."
+          },
+          {
+            "icone": "⬅️",
+            "texte": "Plus petit : à gauche."
+          },
+          {
+            "icone": "➡️",
+            "texte": "Plus grand : à droite."
+          },
+          {
+            "icone": "⚡",
+            "texte": "Équilibré : O(log n)."
+          }
+        ]
+      }
+    },
+    {
+      "id": "table-hachage",
+      "titre": "Table de hachage et collisions",
+      "resume": "Une table de hachage utilise une fonction de hachage pour transformer une clé en numéro de case ; quand deux clés tombent dans la même case, c'est une collision.",
+      "page": "§ Fonction de hachage",
+      "documentId": "wp-hachage",
+      "schema": {
+        "type": "etapes",
+        "etapes": [
+          {
+            "titre": "Clé",
+            "texte": "« Mario »."
+          },
+          {
+            "titre": "Fonction de hachage",
+            "texte": "Première lettre : M → case 12."
+          },
+          {
+            "titre": "Ranger",
+            "texte": "Mettre Mario dans la case 12."
+          },
+          {
+            "titre": "Collision",
+            "texte": "« Luigi » et « Link » → même case L : on les chaîne dans une liste."
+          }
+        ]
+      },
+      "differences": {
+        "titres": [
+          "Fonction de hachage",
+          "Table de hachage"
+        ],
+        "lignes": [
+          {
+            "critere": "Ce que c'est",
+            "a": "Un calcul",
+            "b": "Une structure de données"
+          },
+          {
+            "critere": "Entrée → sortie",
+            "a": "Une clé → un numéro",
+            "b": "Une clé → une valeur rangée"
+          },
+          {
+            "critere": "Exemple",
+            "a": "hash(\"Mario\") = 12",
+            "b": "Le tableau de 26 listes chaînées"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Une table de hachage associe des clés à des valeurs : la fonction de hachage calcule, à partir de la clé, l'indice de la case où ranger la valeur.",
+          "documentId": "wp-hachage",
+          "page": "§ Fonction de hachage"
+        },
+        {
+          "texte": "Pour résoudre les collisions par chaînage, chaque case contient une liste chaînée de tous les éléments dont la clé donne cet indice.",
+          "documentId": "wp-hachage",
+          "page": "§ Chaînage"
+        },
+        {
+          "texte": "Une bonne fonction de hachage répartit les clés le plus uniformément possible entre les cases, pour limiter les collisions.",
+          "documentId": "wp-fhachage",
+          "page": "§ Uniformité"
+        },
+        {
+          "texte": "Une fonction de hachage doit être déterministe : la même clé donne toujours le même résultat.",
+          "documentId": "wp-fhachage",
+          "page": "§ Déterminisme"
+        }
+      ],
+      "infographie": {
+        "titre": "Ranger par étiquette",
+        "points": [
+          {
+            "icone": "🏷️",
+            "texte": "La clé passe dans la fonction de hachage."
+          },
+          {
+            "icone": "🔢",
+            "texte": "Elle donne un numéro de case."
+          },
+          {
+            "icone": "💥",
+            "texte": "Collision : deux clés, même case."
+          },
+          {
+            "icone": "🔗",
+            "texte": "Solution : une liste chaînée par case."
+          }
+        ]
+      }
+    },
+    {
+      "id": "trie",
+      "titre": "Le trie (arbre préfixe)",
+      "resume": "Un trie range les mots lettre par lettre dans un arbre : les mots qui commencent pareil partagent le même chemin.",
+      "page": "§ Introduction",
+      "documentId": "wp-trie",
+      "schema": {
+        "type": "etapes",
+        "etapes": [
+          {
+            "titre": "Racine",
+            "texte": "Un tableau de 26 pointeurs, un par lettre."
+          },
+          {
+            "titre": "1re lettre",
+            "texte": "« T » → suivre le pointeur T."
+          },
+          {
+            "titre": "Lettres suivantes",
+            "texte": "« O », puis « M »…"
+          },
+          {
+            "titre": "Fin du mot",
+            "texte": "Un drapeau dit « ici se termine un mot »."
+          }
+        ]
+      },
+      "differences": {
+        "titres": [
+          "Table de hachage",
+          "Trie"
+        ],
+        "lignes": [
+          {
+            "critere": "Recherche",
+            "a": "Presque O(1), selon les collisions",
+            "b": "O(longueur du mot), indépendant du nombre de mots"
+          },
+          {
+            "critere": "Mémoire",
+            "a": "Raisonnable",
+            "b": "Beaucoup de pointeurs vides"
+          },
+          {
+            "critere": "Préfixes communs",
+            "a": "Non partagés",
+            "b": "Partagés"
+          }
+        ]
+      },
+      "passages": [
+        {
+          "texte": "Un trie est un arbre dans lequel chaque nœud correspond à un préfixe : la clé n'est pas stockée dans un nœud, elle se lit le long du chemin depuis la racine.",
+          "documentId": "wp-trie",
+          "page": "§ Introduction"
+        },
+        {
+          "texte": "Les tries servent notamment aux dictionnaires, à la vérification orthographique et à l'autocomplétion.",
+          "documentId": "wp-trie",
+          "page": "§ Applications"
+        }
+      ],
+      "infographie": {
+        "titre": "Un mot = un chemin",
+        "points": [
+          {
+            "icone": "🔤",
+            "texte": "Une lettre par étage."
+          },
+          {
+            "icone": "🌿",
+            "texte": "Préfixes communs partagés."
+          },
+          {
+            "icone": "🏁",
+            "texte": "Un drapeau marque la fin du mot."
+          },
+          {
+            "icone": "⚡",
+            "texte": "Temps = longueur du mot."
+          }
+        ]
+      }
+    }
+  ]
+}
