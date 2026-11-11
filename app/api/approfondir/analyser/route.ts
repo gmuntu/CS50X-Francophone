@@ -13,6 +13,15 @@ export const maxDuration = 60;
 const MODELE = 'gemini-3.8-flash';
 const PDF_MAX = 4 * 1024 * 1024; // Vercel refuse les envois de plus de 4,5 Mo
 const NOTES_MAX = 60_000;
+const PAGES_MAX = 50; // coût : Gemini facture chaque page lue
+
+/** Nombre de pages d'un PDF (objets « /Type /Page » et compteur « /Count »), sans bibliothèque. */
+function pagesPdf(octets: Buffer): number {
+  const texte = octets.toString('latin1');
+  const objets = texte.match(/\/Type\s*\/Page(?![a-zA-Z])/g)?.length ?? 0;
+  const compteurs = [...texte.matchAll(/\/Count\s+(\d+)/g)].map((m) => Number(m[1]));
+  return Math.max(objets, ...compteurs, 0);
+}
 
 const CONSIGNE = `Tu prépares une leçon « Approfondir le sujet » en français pour des élèves débutants (cours CS50 en français).
 À partir du document fourni, extrais de 3 à 8 notions clés à comprendre, dans l'ordre du document.
@@ -92,6 +101,7 @@ export async function POST(request: Request) {
     const octets = Buffer.from(await fichier.arrayBuffer());
     // Vrai PDF seulement (signature « %PDF »), quel que soit le nom du fichier.
     if (octets.subarray(0, 4).toString('latin1') !== '%PDF') return erreur("Ce fichier n'est pas un PDF.", 415);
+    if (pagesPdf(octets) > PAGES_MAX) return erreur(`Le PDF dépasse ${PAGES_MAX} pages : envoyez seulement le chapitre utile.`, 413);
     parts.push({ inlineData: { mimeType: 'application/pdf', data: octets.toString('base64') } });
     nomDocument = fichier.name.slice(0, 120) || 'Mon PDF';
   } else if (notes.length >= 40) {

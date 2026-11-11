@@ -111,7 +111,12 @@ export default function SalleApprofondir({ moduleId, prepare }: { moduleId: numb
     setEchanges((e) => [...e, { question: libelle, reponse: '' }]);
     try {
       await demanderTuteur(
-        { moduleId, approfondir: { contexte, mode }, messages: [{ role: 'user', content: texte }] },
+        {
+          moduleId,
+          // Cours préparé : le serveur relit lui-même le contexte ; document de l'élève : on l'envoie.
+          approfondir: contenu?.semaine !== undefined ? { semaine: contenu.semaine, notionId: notion.id, mode } : { contexte, mode },
+          messages: [{ role: 'user', content: texte }],
+        },
         (rep) => setEchanges((e) => [...e.slice(0, -1), { question: libelle, reponse: rep }]),
       );
     } catch (err: any) {
