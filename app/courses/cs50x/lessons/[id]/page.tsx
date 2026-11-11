@@ -3,7 +3,6 @@ import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import LessonClient from './_components/lesson-client';
 import { CS50_MODULES } from '@/config/course-modules';
-import { contenuSemaine, salleActive } from '@/lib/approfondir/contenus';
 
 export default async function LessonPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -30,9 +29,5 @@ export default async function LessonPage({ params }: { params: Promise<{ id: str
     console.error('Lesson fetch error:', e);
   }
 
-  const salle = salleActive();
-  return (
-    <LessonClient moduleConfig={moduleConfig} lesson={lesson} userId={session.user.id}
-      salle={salle} approfondir={salle === 'approfondir' ? contenuSemaine(lessonId) : null} />
-  );
+  return <LessonClient moduleConfig={moduleConfig} lesson={lesson} userId={session.user.id} />;
 }

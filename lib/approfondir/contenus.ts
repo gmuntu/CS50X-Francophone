@@ -40,8 +40,3 @@ export function contenuSemaine(lessonId: number): ContenuApprofondir | null {
   if (!cache.has(lessonId)) cache.set(lessonId, FICHIERS[lessonId] ? validerContenu(FICHIERS[lessonId]) : null);
   return cache.get(lessonId) ?? null;
 }
-
-/** Interrupteur Vercel SALLE_APPROFONDIR : « notebooklm » réaffiche l'ancienne carte NotebookLM. */
-export function salleActive(): 'approfondir' | 'notebooklm' {
-  return process.env.SALLE_APPROFONDIR?.trim().toLowerCase() === 'notebooklm' ? 'notebooklm' : 'approfondir';
-}

@@ -11,9 +11,6 @@ import { CS50_PROBLEM_WEEKS } from '@/config/cs50-problems';
 import InteractiveQuizModal from '@/components/interactive-quiz-modal';
 import CourseAssistant from '@/components/course-assistant';
 import OfflineLessonButton from '@/components/pwa/offline-lesson-button';
-import NotebookCard from '@/components/notebook-card';
-import SalleApprofondir from '@/components/approfondir/salle-approfondir';
-import type { ContenuApprofondir } from '@/lib/approfondir/types';
 import IdentityReminder from '@/components/identity/identity-reminder';
 import FinalProject from '@/components/formations/ia/final-project';
 import WeekPackButton from '@/components/pwa/week-pack-button';
@@ -25,13 +22,9 @@ interface Props {
   moduleConfig: CourseModuleConfig;
   lesson: any;
   userId: string;
-  /** Interrupteur Vercel SALLE_APPROFONDIR : « approfondir » (par défaut) ou « notebooklm ». */
-  salle: 'approfondir' | 'notebooklm';
-  /** Cours préparé de la semaine (content/approfondir), ou null. */
-  approfondir: ContenuApprofondir | null;
 }
 
-export default function LessonClient({ moduleConfig, lesson, userId, salle, approfondir }: Props) {
+export default function LessonClient({ moduleConfig, lesson, userId }: Props) {
   const [activeTab, setActiveTab] = useState<'video' | 'audio' | 'quiz' | 'exercises'>('video');
   const [quizModalOpen, setQuizModalOpen] = useState(false);
   const [selectedQuiz, setSelectedQuiz] = useState<any>(null);
@@ -106,9 +99,10 @@ export default function LessonClient({ moduleConfig, lesson, userId, salle, appr
         </motion.div>
 
         <div className="mb-8">
-          {salle === 'notebooklm'
-            ? <NotebookCard url={moduleConfig?.notebookUrl} />
-            : <SalleApprofondir moduleId={moduleConfig.id} prepare={approfondir} />}
+          <Link href={`/salle-etude?semaine=${moduleConfig.id}`}
+            className="inline-flex items-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm sm:text-base font-extrabold text-primary-foreground shadow-sm hover:bg-primary/90">
+            📚 Aller à la Salle d’étude →
+          </Link>
         </div>
 
         {/* Semaine 10 : projet final CS50x + défense orale avec Socrate */}
@@ -320,7 +314,7 @@ export default function LessonClient({ moduleConfig, lesson, userId, salle, appr
 
           {/* Sticky Assistant Socratique Column */}
           <div className="lg:col-span-1 lg:sticky lg:top-20">
-            <CourseAssistant moduleConfig={moduleConfig} audioScripts={audioScripts} quizzes={quizzes} notebook={salle === 'notebooklm'} />
+            <CourseAssistant moduleConfig={moduleConfig} audioScripts={audioScripts} quizzes={quizzes} />
           </div>
         </div>
       </main>

@@ -12,7 +12,7 @@ vi.mock('@/lib/quota', () => ({ quotaIA: async () => quota.bloque }));
 vi.mock('@/lib/tuteur-contexte', () => ({ systemeTuteur: async () => 'CONSIGNES DU TUTEUR' }));
 
 import { contexteTuteur, validerContenu } from '@/lib/approfondir/types';
-import { contenuSemaine, salleActive } from '@/lib/approfondir/contenus';
+import { contenuSemaine } from '@/lib/approfondir/contenus';
 import { POST as analyser } from '@/app/api/approfondir/analyser/route';
 import { POST as tuteur } from '@/app/api/tutor/route';
 
@@ -70,17 +70,6 @@ describe('Cours préparés (content/approfondir)', () => {
       for (const n of c!.notions) expect(n.page, `${f} : ${n.id}`).toBeTruthy();
       expect(contenuSemaine(brut.semaine), f).not.toBeNull(); // bien importé dans lib/approfondir/contenus.ts
     }
-  });
-});
-
-describe('Interrupteur SALLE_APPROFONDIR', () => {
-  it('par défaut : Approfondir le sujet', () => {
-    vi.stubEnv('SALLE_APPROFONDIR', '');
-    expect(salleActive()).toBe('approfondir');
-  });
-  it('« notebooklm » réaffiche NotebookLM', () => {
-    vi.stubEnv('SALLE_APPROFONDIR', 'NotebookLM');
-    expect(salleActive()).toBe('notebooklm');
   });
 });
 

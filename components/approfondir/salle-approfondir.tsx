@@ -51,8 +51,8 @@ async function demanderTuteur(corps: object, surTexte: (t: string) => void) {
 }
 
 /**
- * « Approfondir le sujet · Ma salle de classe » : un tableau (la notion) et un cahier (les notions et les questions).
- * Une nouvelle vue du même tuteur que l'assistant de cours. Remplace la carte NotebookLM.
+ * « Salle d’étude · Approfondir le sujet » : un tableau (la notion) et un cahier (les notions et les questions).
+ * Une nouvelle vue du même tuteur que l’assistant de cours, affichée dans la page « Salle d’étude ».
  */
 export default function SalleApprofondir({ moduleId, prepare }: { moduleId: number; prepare: ContenuApprofondir | null }) {
   const enLigne = useEnLigne();
@@ -68,6 +68,12 @@ export default function SalleApprofondir({ moduleId, prepare }: { moduleId: numb
   const [attente, setAttente] = useState(false);
   const fichierRef = useRef<HTMLInputElement>(null);
   const tableauRef = useRef<HTMLDivElement>(null);
+  // Les réponses du tuteur défilent DANS le cahier : la page ne bouge pas, le tableau reste visible.
+  const reponsesRef = useRef<HTMLDivElement>(null);
+  const suivreReponse = () => requestAnimationFrame(() => {
+    const z = reponsesRef.current;
+    if (z) z.scrollTop = z.scrollHeight;
+  });
 
   const notion: Notion | undefined = useMemo(() => contenu?.notions.find((n) => n.id === notionId) ?? contenu?.notions[0], [contenu, notionId]);
   const doc = contenu?.documents.find((d) => d.id === notion?.documentId) ?? contenu?.documents[0];
@@ -109,6 +115,7 @@ export default function SalleApprofondir({ moduleId, prepare }: { moduleId: numb
     setAttente(true);
     setQuestion('');
     setEchanges((e) => [...e, { question: libelle, reponse: '' }]);
+    suivreReponse();
     try {
       await demanderTuteur(
         {
@@ -117,7 +124,7 @@ export default function SalleApprofondir({ moduleId, prepare }: { moduleId: numb
           approfondir: contenu?.semaine !== undefined ? { semaine: contenu.semaine, notionId: notion.id, mode } : { contexte, mode },
           messages: [{ role: 'user', content: texte }],
         },
-        (rep) => setEchanges((e) => [...e.slice(0, -1), { question: libelle, reponse: rep }]),
+        (rep) => { setEchanges((e) => [...e.slice(0, -1), { question: libelle, reponse: rep }]); suivreReponse(); },
       );
     } catch (err: any) {
       setEchanges((e) => [...e.slice(0, -1), { question: libelle, reponse: `⚠️ ${err?.message ?? 'Le tuteur ne répond pas.'}` }]);
@@ -139,9 +146,8 @@ export default function SalleApprofondir({ moduleId, prepare }: { moduleId: numb
     <section aria-labelledby="titre-approfondir" className="rounded-3xl border border-border bg-card p-4 sm:p-6 shadow-soft-sm">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-xs font-extrabold uppercase tracking-wide text-primary">Ma salle de classe</p>
-          <h2 id="titre-approfondir" className="text-2xl sm:text-3xl font-extrabold text-foreground">Approfondir le sujet</h2>
-          {contenu && <p className="text-sm text-muted-foreground">Sujet : <strong className="text-foreground">{contenu.sujet}</strong></p>}
+          <h2 id="titre-approfondir" className="sr-only">Approfondir le sujet</h2>
+          {contenu && <p className="text-base text-muted-foreground">Sujet : <strong className="text-foreground">{contenu.sujet}</strong></p>}
         </div>
         {!enLigne && <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-900 dark:bg-amber-900/40 dark:text-amber-100">Mode sans Internet</span>}
       </header>
@@ -196,9 +202,9 @@ export default function SalleApprofondir({ moduleId, prepare }: { moduleId: numb
           {enLigne ? 'Le cours préparé de cette semaine arrive bientôt. En attendant, envoyez un PDF ou collez vos notes.' : 'Le cours préparé de cette semaine arrive bientôt.'}
         </p>
       ) : notion && (
-        <div className="mt-5 grid gap-5 lg:grid-cols-5">
+        <div className="mt-5 grid gap-5 2xl:grid-cols-5 2xl:items-start">
           {/* Le tableau */}
-          <div ref={tableauRef} className="lg:col-span-3 rounded-3xl border-4 border-blue-900/60 bg-blue-950 p-5 text-white shadow-lg dark:border-blue-800/60">
+          <div ref={tableauRef} className="2xl:col-span-3 2xl:sticky 2xl:top-24 scroll-mt-24 rounded-3xl border-4 border-blue-900/60 bg-blue-950 p-5 text-white shadow-lg dark:border-blue-800/60">
             <p className="text-[11px] font-bold uppercase tracking-wide text-sky-200">Au tableau{notion.page ? ` · ${notion.page}` : ''}</p>
             <h3 className="mt-1 font-craie text-3xl font-bold leading-tight">{notion.titre}</h3>
             <p className="mt-2 text-base text-white/90">{notion.resume}</p>
@@ -211,7 +217,7 @@ export default function SalleApprofondir({ moduleId, prepare }: { moduleId: numb
           </div>
 
           {/* Le cahier */}
-          <div className="lg:col-span-2 rounded-3xl border border-border bg-card p-5 shadow-soft-sm"
+          <div className="2xl:col-span-2 rounded-3xl border border-border bg-card p-5 shadow-soft-sm"
             style={{ backgroundImage: 'repeating-linear-gradient(to bottom, transparent 0, transparent 31px, hsl(var(--primary) / 0.12) 31px, hsl(var(--primary) / 0.12) 32px)' }}>
             <p className="text-[11px] font-bold uppercase tracking-wide text-primary">Mon cahier</p>
             <p className="font-extrabold text-foreground">{contenu.sujet}</p>
@@ -268,7 +274,7 @@ export default function SalleApprofondir({ moduleId, prepare }: { moduleId: numb
             </form>
 
             {echanges.length > 0 && (
-              <div className="mt-3 space-y-3" aria-live="polite">
+              <div ref={reponsesRef} className="mt-3 max-h-[45vh] space-y-3 overflow-y-auto overscroll-contain rounded-xl pr-1 [overflow-anchor:none]" aria-live="polite">
                 {echanges.map((e, i) => (
                   <div key={i} className="rounded-xl bg-muted/60 p-3 text-sm">
                     <p className="font-bold text-primary">{e.question}</p>
@@ -278,7 +284,7 @@ export default function SalleApprofondir({ moduleId, prepare }: { moduleId: numb
               </div>
             )}
 
-            <div className="mt-4 grid grid-cols-1 gap-2 border-t border-border pt-4 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+            <div className="mt-4 grid grid-cols-1 gap-2 border-t border-border pt-4 sm:grid-cols-2">
               <button type="button" onClick={() => setVocal('parler')} className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-3 py-2.5 text-sm font-bold text-primary-foreground hover:bg-primary/90">
                 <Mic className="h-4 w-4" /> Parler au tuteur
               </button>
@@ -289,7 +295,7 @@ export default function SalleApprofondir({ moduleId, prepare }: { moduleId: numb
           </div>
 
           {vocal && (
-            <div className="lg:col-span-5">
+            <div className="2xl:col-span-5">
               <TuteurVocal key={`${vocal}-${notion.id}-${enLigne}`} mode={vocal} contexte={contexte} contexteCourt={contexteCourt} moduleId={moduleId}
                 enLigne={enLigne} titreNotion={notion.titre} onFermer={() => setVocal(null)} />
             </div>

@@ -5,7 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import SyntaxHighlighter from '@/components/code-bloc-lazy';
 import {
-  Mic, Send, Play, Square, Download, NotebookPen, ScrollText,
+  Mic, Send, Play, Square, Download, ScrollText,
   ChevronDown, ChevronUp, Volume2, Landmark, Lightbulb, Code2, Loader2,
 } from 'lucide-react';
 import type { CourseModuleConfig } from '@/config/course-modules';
@@ -14,6 +14,7 @@ import {
   detecterMode, demanderSocrateLocal, pcm16VersWav, noterQuestion,
   questionsEnAttente, viderQuestionsEnAttente, prechaufferTuteur, ORDINATEUR_LOCAL, type ModeSocrate,
 } from '@/lib/socrate-local';
+import Link from 'next/link';
 import { enregistrementVersPcm16 as toPcm16 } from '@/lib/audio-pcm';
 import { sanitizeForVoice } from '@/lib/voix-texte';
 
@@ -28,8 +29,6 @@ interface Props {
   moduleConfig: CourseModuleConfig;
   audioScripts: any[];
   quizzes: any[];
-  /** Bouton « Ouvrir le Notebook » : seulement si l'interrupteur SALLE_APPROFONDIR réaffiche NotebookLM. */
-  notebook?: boolean;
 }
 
 const DAY_LABELS: Record<DayType, string> = {
@@ -93,7 +92,7 @@ const MessageMarkdown = React.memo(function MessageMarkdown({ content }: { conte
     </ReactMarkdown>  );
 });
 
-export default function CourseAssistant({ moduleConfig, audioScripts, quizzes, notebook = true }: Props) {
+export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }: Props) {
   const moduleId = moduleConfig?.id ?? 0;
 
   const [selectedDay, setSelectedDay] = useState<DayType>('MONDAY');
@@ -809,26 +808,14 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes, n
           )}
         </div>
 
-        {/* Notebook (masqué quand « Approfondir le sujet » le remplace) */}
-        {!notebook ? null : moduleConfig?.notebookUrl ? (
-          <a
-            href={moduleConfig.notebookUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => stopAllSpeech()}
-            className="w-full text-xs font-bold bg-card hover:bg-primary hover:text-primary-foreground text-foreground py-2.5 px-3 rounded-xl transition-all text-center flex items-center justify-center gap-2 border border-border/80 hover:border-primary shadow-soft-sm"
-          >
-            <NotebookPen className="w-4 h-4 text-primary" /> Ouvrir le Notebook de la Semaine
-          </a>
-        ) : (
-          <button
-            type="button"
-            onClick={() => { stopAllSpeech(); alert('Le notebook de cette semaine sera bientôt disponible.'); }}
-            className="w-full text-xs font-bold bg-card hover:bg-muted text-muted-foreground py-2.5 px-3 rounded-xl transition-all text-center flex items-center justify-center gap-2 border border-border/80 opacity-80"
-          >
-            <NotebookPen className="w-4 h-4" /> Ouvrir le Notebook de la Semaine
-          </button>
-        )}
+        {/* Salle d'étude de la semaine (tableau + cahier) */}
+        <Link
+          href={`/salle-etude?semaine=${moduleConfig?.id ?? 0}`}
+          onClick={() => stopAllSpeech()}
+          className="w-full text-xs font-bold bg-card hover:bg-primary hover:text-primary-foreground text-foreground py-2.5 px-3 rounded-xl transition-all text-center flex items-center justify-center gap-2 border border-border/80 hover:border-primary shadow-soft-sm"
+        >
+          📚 Aller à la Salle d’étude →
+        </Link>
 
         {/* Questions rapides */}
         <div className="flex flex-col gap-1.5 pt-2 border-t border-border/70">
