@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse, after } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
-import { tropDEssais } from '@/lib/quota';
+import { tropDEssais, tropAujourdhui } from '@/lib/quota';
 import { adresseIP } from '@/lib/securite';
 import { sendEmail } from '@/lib/email';
 import { erreurDateNaissance, erreurTelephone, lireDateNaissance, telephonePropre } from '@/lib/controle-inscription';
@@ -158,8 +158,8 @@ export async function POST(request: Request) {
     const hashedPassword = await bcrypt.hash(rawPassword, 12);
 
     if (dejaInscrit) {
-      // Aucun compte créé ni modifié. Au plus 3 emails d'avertissement par heure pour une même adresse.
-      if (!(await tropDEssais('inscription-existant', trimmedEmail, 3))) {
+      // Aucun compte créé ni modifié. Un seul email d'avertissement par jour pour une même adresse (pas de harcèlement possible).
+      if (!(await tropAujourdhui('inscription-existant', trimmedEmail, 1))) {
         // Pas de lien dans l'email : l'adresse du site ne doit jamais venir de la requête (elle pourrait être falsifiée).
         after(() =>
           sendEmail({

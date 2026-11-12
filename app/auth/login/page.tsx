@@ -16,7 +16,7 @@ function LoginForm() {
   const [error, setError] = useState('');
   // Arrivée juste après l'inscription : on rassure l'élève, son compte attend la validation.
   const info = searchParams?.get('registered') === 'true'
-    ? "Votre dossier est bien enregistré. Il doit maintenant être validé par l'administration : vous pourrez vous connecter dès que ce sera fait."
+    ? "Si cette adresse n'avait pas encore de compte, votre dossier est enregistré : il doit maintenant être validé par l'administration avant votre première connexion. Consultez aussi vos courriels."
     : '';
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);

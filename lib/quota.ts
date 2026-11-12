@@ -36,3 +36,8 @@ export async function quotaIA(user: { id?: string; role?: string } | undefined, 
 export async function tropDEssais(type: string, identifiant: string, limite: number): Promise<boolean> {
   return depasse(`${type}:${identifiant.toLowerCase()}:${heure()}`, limite, 3600_000);
 }
+
+/** Limite par jour (et non par heure) : true = déjà atteinte aujourd'hui pour cet identifiant. */
+export async function tropAujourdhui(type: string, identifiant: string, limite: number): Promise<boolean> {
+  return depasse(`${type}:${identifiant.toLowerCase()}:${jour()}`, limite, JOUR);
+}
