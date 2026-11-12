@@ -47,3 +47,13 @@ export function resumePaiement(u: PaiementDUnCompte): { texte: string; ton: TonP
   if (statut === 'FAILED') return { texte: `Échoué (${montant})`, ton: 'erreur' };
   return { texte: 'Non renseigné', ton: 'erreur' };
 }
+
+/** Vrai si le statut de paiement est l'un des quatre statuts connus. */
+export function statutPaiementConnu(statut: unknown): statut is (typeof STATUTS_PAIEMENT)[number] {
+  return typeof statut === 'string' && (STATUTS_PAIEMENT as readonly string[]).includes(statut);
+}
+
+/** Vrai si le moyen de paiement fait partie de la liste proposée dans l'admin (ou « Personnel »). */
+export function moyenPaiementConnu(moyen: unknown): moyen is string {
+  return typeof moyen === 'string' && (moyen === 'PERSONNEL' || PAYMENT_METHODS.some((m) => m.id === moyen));
+}

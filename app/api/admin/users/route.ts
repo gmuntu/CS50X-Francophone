@@ -5,7 +5,7 @@ import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { generateDossierNumber } from '@/config/african-countries';
-import { STATUTS_PAIEMENT } from '@/lib/paiement';
+import { moyenPaiementConnu, statutPaiementConnu } from '@/lib/paiement';
 
 const SUPER_ADMIN_EMAILS = ['gmuntusip@gmail.com', 'admin@cs50x-francophone.com'];
 const isSuperAdminEmail = (email: string | null | undefined) => !!email && SUPER_ADMIN_EMAILS.includes(email.toLowerCase().trim());
@@ -157,8 +157,8 @@ export async function POST(request: NextRequest) {
 
     // 8. Types d'étudiants & Montant de paiement
     const finalAmount = isInstructor || isUniversitaire ? 0 : (typeof paymentAmount === 'number' ? paymentAmount : 500);
-    const finalPaymentStatus = isInstructor || isUniversitaire ? 'EXEMPTED' : (paymentStatus || 'PENDING');
-    const finalPaymentMethod = isInstructor ? 'PERSONNEL' : (isUniversitaire ? 'EXEMPT_UNIVERSITY' : paymentMethod);
+    const finalPaymentStatus = isInstructor || isUniversitaire ? 'EXEMPTED' : (statutPaiementConnu(paymentStatus) ? paymentStatus : 'PENDING');
+    const finalPaymentMethod = isInstructor ? 'PERSONNEL' : (isUniversitaire ? 'EXEMPT_UNIVERSITY' : (moyenPaiementConnu(paymentMethod) ? paymentMethod : null));
     const finalStudentType = isInstructor ? 'PERSONNEL' : (isUniversitaire ? 'UNIVERSITAIRE' : 'LIBRE');
 
     // 9. Hachage du mot de passe
@@ -345,7 +345,17 @@ export async function PUT(request: NextRequest) {
 
     // 8. Type d'étudiant & Paiement
     //    Le statut de paiement ne change que s'il est envoyé explicitement, et seulement vers une valeur connue.
-    const statutValide = (STATUTS_PAIEMENT as readonly string[]).includes(paymentStatus);
+    //    Une valeur inconnue est refusée avec un message clair, jamais ignorée en silence.
+    const statutEnvoye = paymentStatus !== undefined && paymentStatus !== null && paymentStatus !== '';
+    if (statutEnvoye && !statutPaiementConnu(paymentStatus) && paymentStatus !== existingUser.paymentStatus) {
+      return NextResponse.json({ error: 'Statut de paiement inconnu. Choisissez : Payé, En attente, Exempté ou Échoué.' }, { status: 400 });
+    }
+    const statutValide = statutPaiementConnu(paymentStatus);
+    const moyenEnvoye = paymentMethod !== undefined && paymentMethod !== null && paymentMethod !== '';
+    if (moyenEnvoye && !moyenPaiementConnu(paymentMethod) && paymentMethod !== existingUser.paymentMethod) {
+      return NextResponse.json({ error: 'Moyen de paiement inconnu. Choisissez-en un dans la liste.' }, { status: 400 });
+    }
+    const moyenFinal = moyenEnvoye ? String(paymentMethod) : null;
     if (studentType) {
       data.studentType = studentType;
       if (studentType === 'UNIVERSITAIRE') {
@@ -361,11 +371,11 @@ export async function PUT(request: NextRequest) {
           data.paymentAmount = 500;
         }
         if (statutValide) data.paymentStatus = paymentStatus;
-        if (paymentMethod !== undefined) data.paymentMethod = paymentMethod ? String(paymentMethod) : null;
+        if (paymentMethod !== undefined) data.paymentMethod = moyenFinal;
       }
     } else {
       if (statutValide) data.paymentStatus = paymentStatus;
-      if (paymentMethod !== undefined) data.paymentMethod = paymentMethod ? String(paymentMethod) : null;
+      if (paymentMethod !== undefined) data.paymentMethod = moyenFinal;
       if (paymentAmount !== undefined) data.paymentAmount = typeof paymentAmount === 'number' ? paymentAmount : parseFloat(paymentAmount) || 0;
       if (university !== undefined) data.university = university ? String(university).trim() : null;
     }
