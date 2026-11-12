@@ -90,6 +90,15 @@ export default function SignupPage() {
       .catch(() => {});
   }, []);
 
+  // Âge minimum : c'est le serveur qui décide (14 ans en ligne, 10 ans sur un poste d'école) ; on affiche sa règle.
+  const [ageMinimum, setAgeMinimum] = useState<number>(POSTE_ECOLE ? AGE_MINIMUM_ECOLE : AGE_MINIMUM_EN_LIGNE);
+  useEffect(() => {
+    fetch('/api/signup')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d?.ageMinimum === AGE_MINIMUM_ECOLE || d?.ageMinimum === AGE_MINIMUM_EN_LIGNE) setAgeMinimum(d.ageMinimum); })
+      .catch(() => {});
+  }, []);
+
   useEffect(() => {
     fetch('/api/auth/providers-status')
       .then((res) => res.json())
@@ -157,7 +166,7 @@ export default function SignupPage() {
         stepCauses.push("Date de naissance manquante : Veuillez indiquer votre date de naissance.");
         localFieldErrors.birthDate = "La date de naissance est obligatoire.";
       } else {
-        const erreurDate = erreurDateNaissance(formData.birthDate, new Date(), POSTE_ECOLE ? AGE_MINIMUM_ECOLE : AGE_MINIMUM_EN_LIGNE);
+        const erreurDate = erreurDateNaissance(formData.birthDate, new Date(), ageMinimum);
         if (erreurDate) {
           stepCauses.push(`Date de naissance : ${erreurDate}`);
           localFieldErrors.birthDate = erreurDate;

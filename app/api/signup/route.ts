@@ -13,6 +13,11 @@ import { AGE_MINIMUM_ECOLE, AGE_MINIMUM_EN_LIGNE, erreurDateNaissance, erreurTel
 // Poste d'école sans Internet : aucun email ne peut partir, l'inscription crée donc le compte tout de suite.
 const HORS_LIGNE = process.env.SAVOIRIA_LOCAL === '1';
 
+/** Âge minimum appliqué par ce serveur : le formulaire le lit ici, pour afficher la même règle que lui. */
+export async function GET() {
+  return NextResponse.json({ ageMinimum: HORS_LIGNE ? AGE_MINIMUM_ECOLE : AGE_MINIMUM_EN_LIGNE });
+}
+
 export async function POST(request: Request) {
   try {
     // Anti-robots : 60 tentatives d'inscription par heure et par adresse IP (une classe entière derrière la même connexion, erreurs de saisie comprises)

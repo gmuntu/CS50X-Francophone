@@ -60,6 +60,18 @@ describe('Confirmation de l’adresse à l’inscription', () => {
     expect(base.comptes).toHaveLength(1);
   });
 
+  it('dossier d’un élève de moins de 14 ans (déposé avant le changement de règle) : refusé au clic, rien n’est créé', async () => {
+    const maintenant = new Date('2026-11-12T12:00:00Z');
+    const jeton = await mettreDeCote(dossier({ birthDate: '2014-03-01T00:00:00.000Z' }));
+    expect(await confirmerInscription(jeton, 'mauvais', maintenant)).toBe('motdepasse'); // l'âge n'est révélé qu'au bon mot de passe
+    expect(await confirmerInscription(jeton, MDP, maintenant)).toBe('age');
+    expect(base.comptes).toHaveLength(0);
+    expect(base.attentes).toHaveLength(0);
+    // 14 ans pile : accepté.
+    const jeton2 = await mettreDeCote(dossier({ birthDate: '2012-11-12T00:00:00.000Z' }));
+    expect(await confirmerInscription(jeton2, MDP, maintenant)).toBe('ok');
+  });
+
   it('bon lien mais mauvais mot de passe ou mot de passe absent : rien n’est créé, le lien reste utilisable', async () => {
     const jeton = await mettreDeCote(dossier());
     expect(await confirmerInscription(jeton, 'un-autre-mot-de-passe')).toBe('motdepasse');
