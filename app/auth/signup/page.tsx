@@ -279,7 +279,13 @@ export default function SignupPage() {
         return;
       }
 
-      // Connexion automatique après enregistrement
+      // En ligne : l'adresse doit d'abord être confirmée par le lien reçu par email (aucun compte n'existe encore).
+      if (data?.confirmation) {
+        router.replace('/auth/confirmer');
+        return;
+      }
+
+      // Poste hors ligne : le compte « en attente » vient d'être créé.
       const signInRes = await signIn('credentials', {
         email: formData.email.trim().toLowerCase(),
         password: formData.password,

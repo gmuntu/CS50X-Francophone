@@ -6,7 +6,11 @@ import bcrypt from 'bcryptjs';
 import { tropDEssais, tropAujourdhui } from '@/lib/quota';
 import { adresseIP } from '@/lib/securite';
 import { sendEmail } from '@/lib/email';
+import { compteDepuisDossier, courrielDeConfirmation, mettreDeCote, type DossierInscription } from '@/lib/inscription-confirmation';
 import { erreurDateNaissance, erreurTelephone, lireDateNaissance, telephonePropre } from '@/lib/controle-inscription';
+
+// Poste d'école sans Internet : aucun email ne peut partir, l'inscription crée donc le compte tout de suite.
+const HORS_LIGNE = process.env.SAVOIRIA_LOCAL === '1';
 
 export async function POST(request: Request) {
   try {
@@ -56,10 +60,15 @@ export async function POST(request: Request) {
       causes.push(`Format d'email invalide ("${trimmedEmail}") : Veuillez entrer une adresse email valide (ex: etudiant@gmail.com).`);
       if (!errorField) errorField = 'email';
     } else {
-      // Adresse déjà inscrite : on ne le dit PAS à l'écran (sinon n'importe qui peut savoir qui a un compte).
-      // La réponse sera la même que pour une nouvelle inscription, et le vrai propriétaire est prévenu par email.
+      // Adresse déjà inscrite : en ligne, on ne le dit PAS à l'écran (sinon n'importe qui peut savoir qui a un compte) ;
+      // la réponse est la même que pour une nouvelle inscription, et le vrai propriétaire est prévenu par email.
       const existing = await prisma.user.findUnique({ where: { email: trimmedEmail }, select: { id: true } });
       dejaInscrit = !!existing;
+      // Poste hors ligne (salle de classe, aucun email possible) : on le dit clairement, comme avant.
+      if (dejaInscrit && HORS_LIGNE) {
+        causes.push("Email déjà utilisé : un compte existe déjà avec cette adresse. Connectez-vous ou réinitialisez votre mot de passe.");
+        if (!errorField) errorField = 'email';
+      }
     }
 
     // 3. Validation du mot de passe
@@ -170,41 +179,46 @@ export async function POST(request: Request) {
           })
         );
       }
-      return NextResponse.json({ success: true });
+      return NextResponse.json({ success: true, confirmation: true });
     }
     const resolvedPaymentStatus = resolvedType === 'UNIVERSITAIRE' ? 'EXEMPTED' : 'PENDING';
     // Montant fixé par le serveur, jamais par le navigateur
     const resolvedPaymentAmount = resolvedType === 'UNIVERSITAIRE' ? 0 : Number(process.env.COURSE_PRICE_USD || 500);
 
-    await prisma.user.create({
-      data: {
-        email: trimmedEmail,
-        password: hashedPassword,
-        name: compositeName || (trimmedFirst ? `${trimmedFirst} ${trimmedLast}`.trim() : trimmedEmail.split('@')[0]),
-        firstName: trimmedFirst || null,
-        lastName: trimmedLast || null,
-        role: 'STUDENT',
-        // Tous les nouveaux comptes attendent une validation de l'administration :
-        // paiement vérifié (candidat libre) ou présence sur la liste de l'établissement (partenaire).
-        status: 'PENDING',
-        institutionId: partnerInstitutionId,
-        courseSessionId: partnerSessionId,
-        birthDate: parsedBirthDate,
-        countryCode: countryCode ? String(countryCode) : null,
-        dialCode: dialCode ? String(dialCode) : null,
-        phone: telephonePropre(String(phone)),
-        dossierNumber: validDossier,
-        // Plus de photo à l'inscription : le visage « témoin » est pris dans l'empreinte SavoirIA (stockage privé).
-        studentType: resolvedType,
-        university: resolvedUniversity,
-        paymentStatus: resolvedPaymentStatus,
-        paymentMethod: paymentMethod ? String(paymentMethod) : (resolvedType === 'UNIVERSITAIRE' ? 'EXEMPT_UNIVERSITY' : 'MPESA'),
-        paymentAmount: resolvedPaymentAmount,
-      },
-    });
+    const dossier: DossierInscription = {
+      email: trimmedEmail,
+      password: hashedPassword,
+      name: compositeName || (trimmedFirst ? `${trimmedFirst} ${trimmedLast}`.trim() : trimmedEmail.split('@')[0]),
+      firstName: trimmedFirst || null,
+      lastName: trimmedLast || null,
+      institutionId: partnerInstitutionId,
+      courseSessionId: partnerSessionId,
+      birthDate: parsedBirthDate ? parsedBirthDate.toISOString() : null,
+      countryCode: countryCode ? String(countryCode) : null,
+      dialCode: dialCode ? String(dialCode) : null,
+      phone: telephonePropre(String(phone)),
+      dossierNumber: validDossier,
+      // Plus de photo à l'inscription : le visage « témoin » est pris dans l'empreinte SavoirIA (stockage privé).
+      studentType: resolvedType,
+      university: resolvedUniversity,
+      paymentStatus: resolvedPaymentStatus,
+      paymentMethod: paymentMethod ? String(paymentMethod) : (resolvedType === 'UNIVERSITAIRE' ? 'EXEMPT_UNIVERSITY' : 'MPESA'),
+      paymentAmount: resolvedPaymentAmount,
+    };
 
-    // Même réponse que pour une adresse déjà inscrite : rien ne permet de distinguer les deux cas.
-    return NextResponse.json({ success: true });
+    if (HORS_LIGNE) {
+      // Poste hors ligne : pas de confirmation par email possible, le compte « en attente » est créé tout de suite.
+      await prisma.user.create({ data: compteDepuisDossier(dossier) });
+      return NextResponse.json({ success: true });
+    }
+
+    // En ligne : aucun compte n'est créé maintenant. Le dossier est mis de côté et un lien de confirmation part par email
+    // (3 par jour et par adresse au plus). La réponse est la même que pour une adresse déjà inscrite.
+    if (!(await tropAujourdhui('inscription-confirmation', trimmedEmail, 3))) {
+      const jeton = await mettreDeCote(dossier);
+      after(() => sendEmail({ to: trimmedEmail, ...courrielDeConfirmation(jeton) }));
+    }
+    return NextResponse.json({ success: true, confirmation: true });
   } catch (error: any) {
     console.error('Signup error:', error);
 

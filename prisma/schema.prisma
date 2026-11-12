@@ -459,6 +459,18 @@ model IdentityProfile {
 }
 
 // Compteurs anti-abus : quotas IA par jour, tentatives de connexion par heure.
+// Inscription mise de côté tant que l'adresse email n'est pas confirmée (lien valable 24 h).
+// Aucun compte n'existe avant le clic sur le lien. Le jeton du lien n'est jamais stocké en clair.
+model InscriptionEnAttente {
+  id         String   @id @default(cuid())
+  email      String   @unique // une seule inscription en attente par adresse : la dernière remplace la précédente
+  jetonHache String   @unique // empreinte SHA-256 du jeton envoyé par email
+  donnees    Json     // dossier déjà contrôlé par le serveur (mot de passe déjà haché)
+  expireLe   DateTime
+  createdAt  DateTime @default(now())
+  @@index([expireLe])
+}
+
 model Compteur {
   cle       String   @id // ex. "ia:tutor:<userId>:2026-10-28" ou "login:<email>:2026-10-28T14"
   nombre    Int      @default(0)
