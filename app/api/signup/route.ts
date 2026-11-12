@@ -6,7 +6,12 @@ import bcrypt from 'bcryptjs';
 import { tropDEssais, tropAujourdhui } from '@/lib/quota';
 import { adresseIP } from '@/lib/securite';
 import { sendEmail } from '@/lib/email';
+import { LEGAL } from '@/lib/legal';
+import { compteDepuisDossier, courrielDeConfirmation, menageDossiersExpires, mettreDeCote, MOT_DE_PASSE_LONGUEUR_MAX, type DossierInscription } from '@/lib/inscription-confirmation';
 import { erreurDateNaissance, erreurTelephone, lireDateNaissance, telephonePropre } from '@/lib/controle-inscription';
+
+// Poste d'école sans Internet : aucun email ne peut partir, l'inscription crée donc le compte tout de suite.
+const HORS_LIGNE = process.env.SAVOIRIA_LOCAL === '1';
 
 export async function POST(request: Request) {
   try {
@@ -56,10 +61,15 @@ export async function POST(request: Request) {
       causes.push(`Format d'email invalide ("${trimmedEmail}") : Veuillez entrer une adresse email valide (ex: etudiant@gmail.com).`);
       if (!errorField) errorField = 'email';
     } else {
-      // Adresse déjà inscrite : on ne le dit PAS à l'écran (sinon n'importe qui peut savoir qui a un compte).
-      // La réponse sera la même que pour une nouvelle inscription, et le vrai propriétaire est prévenu par email.
+      // Adresse déjà inscrite : en ligne, on ne le dit PAS à l'écran (sinon n'importe qui peut savoir qui a un compte) ;
+      // la réponse est la même que pour une nouvelle inscription, et le vrai propriétaire est prévenu par email.
       const existing = await prisma.user.findUnique({ where: { email: trimmedEmail }, select: { id: true } });
       dejaInscrit = !!existing;
+      // Poste hors ligne (salle de classe, aucun email possible) : on le dit clairement, comme avant.
+      if (dejaInscrit && HORS_LIGNE) {
+        causes.push("Email déjà utilisé : un compte existe déjà avec cette adresse. Connectez-vous ou réinitialisez votre mot de passe.");
+        if (!errorField) errorField = 'email';
+      }
     }
 
     // 3. Validation du mot de passe
@@ -69,6 +79,9 @@ export async function POST(request: Request) {
       if (!errorField) errorField = 'password';
     } else if (rawPassword.length < 10) {
       causes.push("Mot de passe trop court : Le mot de passe doit comporter au moins 10 caractères.");
+      if (!errorField) errorField = 'password';
+    } else if (rawPassword.length > MOT_DE_PASSE_LONGUEUR_MAX) {
+      causes.push(`Mot de passe trop long : ${MOT_DE_PASSE_LONGUEUR_MAX} caractères au plus.`);
       if (!errorField) errorField = 'password';
     }
 
@@ -170,41 +183,74 @@ export async function POST(request: Request) {
           })
         );
       }
-      return NextResponse.json({ success: true });
+      return NextResponse.json({ success: true, confirmation: true });
     }
     const resolvedPaymentStatus = resolvedType === 'UNIVERSITAIRE' ? 'EXEMPTED' : 'PENDING';
     // Montant fixé par le serveur, jamais par le navigateur
     const resolvedPaymentAmount = resolvedType === 'UNIVERSITAIRE' ? 0 : Number(process.env.COURSE_PRICE_USD || 500);
 
-    await prisma.user.create({
-      data: {
-        email: trimmedEmail,
-        password: hashedPassword,
-        name: compositeName || (trimmedFirst ? `${trimmedFirst} ${trimmedLast}`.trim() : trimmedEmail.split('@')[0]),
-        firstName: trimmedFirst || null,
-        lastName: trimmedLast || null,
-        role: 'STUDENT',
-        // Tous les nouveaux comptes attendent une validation de l'administration :
-        // paiement vérifié (candidat libre) ou présence sur la liste de l'établissement (partenaire).
-        status: 'PENDING',
-        institutionId: partnerInstitutionId,
-        courseSessionId: partnerSessionId,
-        birthDate: parsedBirthDate,
-        countryCode: countryCode ? String(countryCode) : null,
-        dialCode: dialCode ? String(dialCode) : null,
-        phone: telephonePropre(String(phone)),
-        dossierNumber: validDossier,
-        // Plus de photo à l'inscription : le visage « témoin » est pris dans l'empreinte SavoirIA (stockage privé).
-        studentType: resolvedType,
-        university: resolvedUniversity,
-        paymentStatus: resolvedPaymentStatus,
-        paymentMethod: paymentMethod ? String(paymentMethod) : (resolvedType === 'UNIVERSITAIRE' ? 'EXEMPT_UNIVERSITY' : 'MPESA'),
-        paymentAmount: resolvedPaymentAmount,
-      },
-    });
+    const dossier: DossierInscription = {
+      email: trimmedEmail,
+      password: hashedPassword,
+      name: compositeName || (trimmedFirst ? `${trimmedFirst} ${trimmedLast}`.trim() : trimmedEmail.split('@')[0]),
+      firstName: trimmedFirst || null,
+      lastName: trimmedLast || null,
+      institutionId: partnerInstitutionId,
+      courseSessionId: partnerSessionId,
+      birthDate: parsedBirthDate ? parsedBirthDate.toISOString() : null,
+      countryCode: countryCode ? String(countryCode) : null,
+      dialCode: dialCode ? String(dialCode) : null,
+      phone: telephonePropre(String(phone)),
+      dossierNumber: validDossier,
+      // Plus de photo à l'inscription : le visage « témoin » est pris dans l'empreinte SavoirIA (stockage privé).
+      studentType: resolvedType,
+      university: resolvedUniversity,
+      paymentStatus: resolvedPaymentStatus,
+      paymentMethod: paymentMethod ? String(paymentMethod) : (resolvedType === 'UNIVERSITAIRE' ? 'EXEMPT_UNIVERSITY' : 'MPESA'),
+      paymentAmount: resolvedPaymentAmount,
+    };
 
-    // Même réponse que pour une adresse déjà inscrite : rien ne permet de distinguer les deux cas.
-    return NextResponse.json({ success: true });
+    if (HORS_LIGNE) {
+      // Poste hors ligne : pas de confirmation par email possible, le compte « en attente » est créé tout de suite.
+      await prisma.user.create({ data: compteDepuisDossier(dossier) });
+      return NextResponse.json({ success: true });
+    }
+
+    // En ligne : aucun compte n'est créé maintenant. Le dossier est mis de côté et un lien de confirmation part par email.
+    // La réponse est la même que pour une adresse déjà inscrite. Garde-fous contre les abus, du plus étroit au plus large
+    // (une demande arrêtée par un garde-fou ne consomme pas les suivants) :
+    //  - 15 liens par jour depuis une même connexion (une seule machine ne peut pas épuiser le plafond du site) ;
+    //  - 3 liens par jour pour une même adresse depuis une même connexion (un tiers ne bloque pas le vrai élève) ;
+    //  - 8 liens par jour pour une même adresse, toutes connexions confondues (la boîte de l'élève n'est pas inondée) ;
+    //  - un plafond quotidien pour tout le site (le site ne sert pas à envoyer des emails en masse).
+    const ip = adresseIP(request);
+    const plafondSite = Number(process.env.CONFIRMATIONS_MAX_PAR_JOUR || 500);
+    const bloqueAvantPlafond =
+      (await tropAujourdhui('inscription-confirmation-connexion', ip, 15)) ||
+      (await tropAujourdhui('inscription-confirmation', `${trimmedEmail}|${ip}`, 3)) ||
+      (await tropAujourdhui('inscription-confirmation-adresse', trimmedEmail, 8));
+    const plafondAtteint = !bloqueAvantPlafond && (await tropAujourdhui('inscription-confirmation-site', 'total', plafondSite));
+    if (plafondAtteint) {
+      console.error('[inscription] Plafond quotidien de liens de confirmation atteint : plus aucun email envoyé aujourd\'hui.');
+      // Une seule alerte par jour à l'administration : de vrais élèves n'ont peut-être pas reçu leur lien.
+      if (!(await tropAujourdhui('inscription-confirmation-alerte', 'site', 1))) {
+        after(() =>
+          sendEmail({
+            to: process.env.ALERTE_ADMIN_EMAIL || LEGAL.contactEmail,
+            subject: 'SavoirIA : plafond des inscriptions atteint aujourd\'hui',
+            text: `Le plafond de ${plafondSite} liens de confirmation par jour vient d'être atteint. Jusqu'à minuit (heure universelle), les nouvelles inscriptions ne reçoivent plus de lien : les élèves concernés devront recommencer demain. Si ce n'est pas une vraie affluence, il s'agit peut-être d'un abus du formulaire d'inscription.`,
+            html: `<p>Le plafond de <strong>${plafondSite}</strong> liens de confirmation par jour vient d'être atteint.</p><p>Jusqu'à minuit (heure universelle), les nouvelles inscriptions ne reçoivent plus de lien : les élèves concernés devront recommencer demain.</p><p>Si ce n'est pas une vraie affluence, il s'agit peut-être d'un abus du formulaire d'inscription.</p>`,
+          })
+        );
+      }
+    } else if (!bloqueAvantPlafond) {
+      const jeton = await mettreDeCote(dossier);
+      after(async () => {
+        await sendEmail({ to: trimmedEmail, ...courrielDeConfirmation(jeton) });
+        await menageDossiersExpires();
+      });
+    }
+    return NextResponse.json({ success: true, confirmation: true });
   } catch (error: any) {
     console.error('Signup error:', error);
 
