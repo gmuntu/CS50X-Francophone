@@ -16,7 +16,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import GoogleAuthModal from '@/components/google-auth-modal';
 import {
   AFRICAN_COUNTRIES, CountryOption, generateDossierNumber,
-  PAYMENT_METHODS, PARTNER_UNIVERSITIES
+  PARTNER_UNIVERSITIES
 } from '@/config/african-countries';
 
 export default function SignupPage() {
@@ -239,7 +239,7 @@ export default function SignupPage() {
           partnerCode: formData.studentType === 'UNIVERSITAIRE' ? formData.partnerCode.trim() : undefined,
           studentType: formData.studentType,
           university: resolvedUniversity,
-          paymentMethod: formData.studentType === 'UNIVERSITAIRE' ? 'EXEMPT_UNIVERSITY' : formData.paymentMethod,
+          paymentMethod: formData.studentType === 'UNIVERSITAIRE' ? 'EXEMPT_UNIVERSITY' : 'A_CONVENIR',
           paymentAmount: formData.studentType === 'UNIVERSITAIRE' ? 0 : 500,
           academicHonorCodeAccepted: formData.academicHonorCodeAccepted,
         }),
@@ -794,51 +794,12 @@ export default function SignupPage() {
                     animate={{ opacity: 1, y: 0 }}
                     className="p-5 rounded-2xl bg-card border border-border/80 space-y-4 shadow-sm"
                   >
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
-                        <CreditCard className="w-4 h-4 text-primary" /> Mode de règlement des frais (500 USD)
-                      </h3>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                        Paiement sécurisé
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                      {PAYMENT_METHODS.filter((p) => p.category !== 'EXEMPT').map((pm) => {
-                        const isSelected = formData.paymentMethod === pm.id;
-                        return (
-                          <button
-                            key={pm.id}
-                            type="button"
-                            onClick={() => updateField('paymentMethod', pm.id)}
-                            className={`p-3 rounded-xl border text-left transition-all ${
-                              isSelected
-                                ? 'border-primary bg-primary/10 shadow-sm font-bold'
-                                : 'border-border/80 hover:bg-muted/50 text-muted-foreground hover:text-foreground'
-                            }`}
-                          >
-                            <p className="text-xs font-bold text-foreground leading-snug">{pm.name}</p>
-                            <p className="text-[10px] text-muted-foreground truncate mt-0.5">{pm.description}</p>
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    {['MPESA', 'ORANGE_MONEY', 'AIRTEL_MONEY', 'MTN_MOMO', 'WAVE', 'AFRIMONEY'].includes(formData.paymentMethod) && (
-                      <div className="space-y-1.5 pt-2">
-                        <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                          <Phone className="w-3.5 h-3.5 text-primary" />
-                          Numéro de compte Mobile Money pour la facturation
-                        </label>
-                        <input
-                          type="tel"
-                          value={formData.mobileMoneyPhone}
-                          onChange={(e) => updateField('mobileMoneyPhone', e.target.value)}
-                          placeholder="Ex: 0812345678"
-                          className="w-full px-4 py-3 rounded-xl bg-background border border-border text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                        />
-                      </div>
-                    )}
+                    <h3 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
+                      <CreditCard className="w-4 h-4 text-primary" /> Règlement des frais (500 USD)
+                    </h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Aucun paiement n'est demandé maintenant. Après votre inscription, l'administration vous contacte pour le règlement ; votre accès aux cours est ouvert une fois le paiement confirmé.
+                    </p>
                   </motion.div>
                 )}
               </motion.div>
@@ -884,7 +845,7 @@ export default function SignupPage() {
                       <p className="text-[11px] text-muted-foreground">
                         {formData.studentType === 'UNIVERSITAIRE'
                           ? `Partenariat : ${formData.university}`
-                          : `Candidat Libre (${formData.paymentMethod})`}
+                          : 'Candidat Libre'}
                       </p>
                     </div>
                   </div>
@@ -1014,7 +975,7 @@ export default function SignupPage() {
                 className="px-7 py-3.5 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-sm transition-all shadow-xl shadow-primary/25 disabled:opacity-50 flex items-center gap-2"
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                {loading ? "Création du dossier d'admission..." : "Confirmer l'Admission & Accéder aux Cours"}
+                {loading ? "Envoi de votre dossier..." : "Envoyer mon dossier d'inscription"}
               </button>
             )}
           </div>

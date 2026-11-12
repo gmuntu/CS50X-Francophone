@@ -176,7 +176,7 @@ export const AFRICAN_COUNTRIES: CountryOption[] = [
 export interface PaymentMethodOption {
   id: string;
   name: string;
-  category: 'CARDS' | 'PAYPAL' | 'MOBILE_MONEY' | 'EXEMPT';
+  category: 'CARDS' | 'PAYPAL' | 'MOBILE_MONEY' | 'EXEMPT' | 'A_CONVENIR';
   description: string;
   badgeColor: string;
   badgeBg: string;
@@ -254,6 +254,15 @@ export const PAYMENT_METHODS: PaymentMethodOption[] = [
     description: 'Africell RDC, Gambie, Sierra Leone',
     badgeColor: 'text-purple-700',
     badgeBg: 'bg-purple-50 border border-purple-200',
+  },
+  {
+    // Valeur enregistrée à l'inscription d'un candidat libre : aucun moyen choisi, l'administration le contacte.
+    id: 'A_CONVENIR',
+    name: 'À convenir',
+    category: 'A_CONVENIR',
+    description: "Moyen de règlement à fixer avec l'élève",
+    badgeColor: 'text-slate-700',
+    badgeBg: 'bg-slate-100 border border-slate-200',
   },
   {
     id: 'EXEMPT_UNIVERSITY',
