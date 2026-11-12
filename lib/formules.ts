@@ -41,7 +41,7 @@ function horsCode(texte: string): string {
   // Formule isolée $$…$$ puis formule dans la phrase $…$ (sans espace collé aux dollars, pour ne pas toucher aux prix « 5 $ »).
   return texte
     .replace(/\$\$([^$]{1,400}?)\$\$/g, (_t, f: string) => formuleEnTexte(f))
-    .replace(/\$(?!\s)([^$\n]{1,120}?)(?<!\s)\$(?!\d)/g, (_t, f: string) => formuleEnTexte(f));
+    .replace(/\$(?!\s)([^$\n]{1,120}?)\$(?!\d)/g, (tout: string, f: string) => (/\s$/.test(f) ? tout : formuleEnTexte(f)));
 }
 
 export function formulesLisibles(markdown: string | null | undefined): string {

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { formulesLisibles } from '@/lib/formules';
-import { erreurDateNaissance, erreurTelephone } from '@/lib/controle-inscription';
+import { erreurDateNaissance, erreurTelephone, lireDateNaissance, telephonePropre } from '@/lib/controle-inscription';
 
 describe('Formules lisibles dans les résumés', () => {
   it('formule isolée : flèches et \\text', () => {
@@ -39,7 +39,14 @@ describe('Contrôles de l’inscription', () => {
   it('date de naissance plausible : acceptée', () => {
     expect(erreurDateNaissance('2000-01-01', aujourdhui)).toBeNull();
     expect(erreurDateNaissance('2016-11-11', aujourdhui)).toBeNull();
-    expect(erreurDateNaissance('', aujourdhui)).toBeNull();
+  });
+  it('date de naissance : obligatoire, format strict, jour qui existe', () => {
+    expect(erreurDateNaissance('', aujourdhui)).toMatch(/obligatoire/);
+    expect(erreurDateNaissance(undefined, aujourdhui)).toMatch(/obligatoire/);
+    expect(erreurDateNaissance(2015, aujourdhui)).toMatch(/invalide/);
+    expect(erreurDateNaissance('12', aujourdhui)).toMatch(/invalide/);
+    expect(erreurDateNaissance('2000-02-31', aujourdhui)).toMatch(/invalide/);
+    expect(lireDateNaissance('2000-01-01')?.toISOString()).toBe('2000-01-01T00:00:00.000Z');
   });
   it('téléphone : lettres, trop court, trop long', () => {
     expect(erreurTelephone('abc')).toMatch(/chiffres/);
@@ -51,5 +58,14 @@ describe('Contrôles de l’inscription', () => {
     expect(erreurTelephone('812 345 678')).toBeNull();
     expect(erreurTelephone('+243 812-345-678')).toBeNull();
     expect(erreurTelephone('(514) 123.4567')).toBeNull();
+    expect(erreurTelephone('0812/345 678')).toBeNull();
+    expect(erreurTelephone('+243\u00a0812\u202f345\u00a0678')).toBeNull();
+    expect(telephonePropre(' +243\u00a0812   345\u202f678 ')).toBe('+243 812 345 678');
+  });
+  it('téléphone : obligatoire, texte seulement, longueur totale limitée', () => {
+    expect(erreurTelephone('')).toMatch(/obligatoire/);
+    expect(erreurTelephone(undefined)).toMatch(/obligatoire/);
+    expect(erreurTelephone(812345678)).toMatch(/invalide/);
+    expect(erreurTelephone('8 1 2 3 4 5 6 7 8' + ' '.repeat(40) + '9')).toMatch(/long/);
   });
 });
