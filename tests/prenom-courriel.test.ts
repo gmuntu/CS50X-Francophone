@@ -13,9 +13,13 @@ describe('prénom repris dans les courriels', () => {
   });
 
   it('refuse chiffres, liens, symboles, balises, retours à la ligne et prénoms trop longs', () => {
-    const refuses = ['', '   ', 'Awa2', 'evil.com', 'http://evil.com', 'Awa <b>', '<script>', 'Awa\nCliquez', 'a@b', 'Awa!', 'Awa,', '-Awa', "'Awa", 'A'.repeat(41), 42, null, undefined];
+    const refuses = ['', '   ', 'Awa2', 'evil.com', 'http://evil.com', 'Awa <b>', '<script>', 'Awa\nCliquez', 'a@b', 'Awa!', 'Awa,', '-Awa', "'Awa", 'A'.repeat(26), 42, null, undefined,
+      'Votre compte est suspendu', 'Appelez vite Paul', 'Awa  Diop', 'A - -', "N''Golo", 'Awa-', "Awa'", 'Jean--Pierre',
+      'A\u0301\u0301\u0301', 'A\u3164B', 'Awa\u202E', 'Awa\u00A0Diop', 'Awa\u200B', 'A\uFE0F', 'Аwa', 'محمد', 'Awa\tDiop'];
     for (const p of refuses) expect(prenomPourCourriel(p)).toBeNull();
-    expect(prenomPourCourriel('A'.repeat(40))).not.toBeNull();
+    expect(prenomPourCourriel('A'.repeat(25))).not.toBeNull();
+    expect(prenomPourCourriel('E\u0301lise')).toBe('Élise');
+    expect(prenomPourCourriel('Ẹ\u0301niọlá')).not.toBeNull();
   });
 
   it('écrit « Bonjour Prénom, » ou garde « Bonjour, »', () => {
