@@ -13,6 +13,14 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import EditUserModal from './edit-user-modal';
+import { moyenPaiementFr, resumePaiement, type TonPaiement } from '@/lib/paiement';
+
+const TON_PAIEMENT: Record<TonPaiement, string> = {
+  ok: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800',
+  attente: 'text-amber-600 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800',
+  erreur: 'text-rose-600 bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800',
+  neutre: 'text-muted-foreground bg-muted border-border',
+};
 import DeleteUserModal from './delete-user-modal';
 import {
   AFRICAN_COUNTRIES,
@@ -597,7 +605,7 @@ export default function UsersClient({ users: initialUsers }: Props) {
                               </span>
                               {u.paymentMethod && (
                                 <p className="text-[11px] text-muted-foreground mt-0.5">
-                                  {PAYMENT_METHODS.find((m) => m.id === u.paymentMethod)?.name || u.paymentMethod}
+                                  {moyenPaiementFr(u.paymentMethod)}
                                 </p>
                               )}
                             </div>
@@ -606,27 +614,9 @@ export default function UsersClient({ users: initialUsers }: Props) {
 
                         {/* Paiement */}
                         <td className="py-3 px-4">
-                          {u.role === 'INSTRUCTOR' || u.role === 'ADMIN' ? (
-                            <span className="text-xs font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded-lg border border-border">
-                              Personnel (0$)
-                            </span>
-                          ) : isUni ? (
-                            <span className="text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-800">
-                              Exonéré (0 USD)
-                            </span>
-                          ) : u.paymentStatus === 'PAID' ? (
-                            <span className="text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-800">
-                              Payé (500 USD)
-                            </span>
-                          ) : u.paymentStatus === 'PENDING' ? (
-                            <span className="text-xs font-bold text-amber-600 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-lg border border-amber-200 dark:border-amber-800">
-                              En attente
-                            </span>
-                          ) : (
-                            <span className="text-xs font-bold text-rose-600 bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded-lg border border-rose-200 dark:border-rose-800">
-                              {u.paymentStatus || 'Non payé'}
-                            </span>
-                          )}
+                          <span className={`text-xs font-bold px-2 py-0.5 rounded-lg border ${TON_PAIEMENT[resumePaiement(u).ton]}`}>
+                            {resumePaiement(u).texte}
+                          </span>
                         </td>
 
                         {/* Actions */}
@@ -1366,10 +1356,12 @@ export default function UsersClient({ users: initialUsers }: Props) {
                 <div className="flex justify-between py-1.5 border-b border-border">
                   <span className="text-muted-foreground">Paiement :</span>
                   <span className="font-bold text-foreground">
-                    {detailUser.studentType === 'UNIVERSITAIRE'
-                      ? '0 USD (Convention)'
-                      : `${detailUser.paymentAmount || 500} USD — ${detailUser.paymentStatus}`}
+                    {resumePaiement(detailUser).texte}
                   </span>
+                </div>
+                <div className="flex justify-between py-1.5 border-b border-border">
+                  <span className="text-muted-foreground">Moyen de paiement :</span>
+                  <span className="font-bold text-foreground">{moyenPaiementFr(detailUser.paymentMethod)}</span>
                 </div>
                 <div className="flex justify-between py-1.5">
                   <span className="text-muted-foreground">Date d'admission :</span>

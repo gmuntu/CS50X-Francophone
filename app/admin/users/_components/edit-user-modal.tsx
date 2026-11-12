@@ -1,5 +1,6 @@
 'use client';
 
+import { moyenPaiementFr, statutPaiementConnu } from '@/lib/paiement';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -89,8 +90,8 @@ export default function EditUserModal({ user, isOpen, onClose, onUserUpdated }: 
         studentType: user.studentType === 'UNIVERSITAIRE' ? 'UNIVERSITAIRE' : 'LIBRE',
         university: isKnownUni ? user.university || '' : (user.university ? 'Autre université (saisie libre)' : ''),
         customUniversity: isKnownUni ? '' : (user.university || ''),
-        paymentStatus: user.paymentStatus || 'PENDING',
-        paymentMethod: user.paymentMethod || 'MPESA',
+        paymentStatus: statutPaiementConnu(user.paymentStatus) ? user.paymentStatus : (user.paymentStatus ? '' : 'PENDING'),
+        paymentMethod: user.paymentMethod || '',
         paymentAmount:
           typeof user.paymentAmount === 'number'
             ? user.paymentAmount
@@ -176,7 +177,7 @@ export default function EditUserModal({ user, isOpen, onClose, onUserUpdated }: 
           birthDate: formData.birthDate || null,
           studentType: formData.studentType,
           university: finalUniversity,
-          paymentStatus: formData.paymentStatus,
+          paymentStatus: formData.paymentStatus || undefined,
           paymentMethod: formData.paymentMethod,
           paymentAmount: formData.studentType === 'UNIVERSITAIRE' ? 0 : Number(formData.paymentAmount),
           role: formData.role,
@@ -427,6 +428,10 @@ export default function EditUserModal({ user, isOpen, onClose, onUserUpdated }: 
                     onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
                     className="w-full px-3 py-2 bg-muted border border-border rounded-xl text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-primary"
                   >
+                    <option value="">Non renseigné</option>
+                    {formData.paymentMethod && !PAYMENT_METHODS.some((pm) => pm.id === formData.paymentMethod) && (
+                      <option value={formData.paymentMethod}>{moyenPaiementFr(formData.paymentMethod)}</option>
+                    )}
                     {PAYMENT_METHODS.map((pm) => (
                       <option key={pm.id} value={pm.id}>
                         {pm.name}
@@ -442,9 +447,10 @@ export default function EditUserModal({ user, isOpen, onClose, onUserUpdated }: 
                     onChange={(e) => setFormData({ ...formData, paymentStatus: e.target.value })}
                     className="w-full px-3 py-2 bg-muted border border-border rounded-xl text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-primary"
                   >
+                    {!formData.paymentStatus && <option value="">Non renseigné (à choisir)</option>}
                     <option value="PAID">✅ Payé / Validé</option>
                     <option value="PENDING">⏳ En attente</option>
-                    <option value="EXEMPTED">🎓 Exempté (Convention)</option>
+                    <option value="EXEMPTED">🎓 Exempté</option>
                     <option value="FAILED">❌ Échoué</option>
                   </select>
                 </div>
