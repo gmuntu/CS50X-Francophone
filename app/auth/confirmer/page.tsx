@@ -5,26 +5,31 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { CheckCircle2, Clock, Loader2, MailCheck, TriangleAlert } from 'lucide-react';
 import { BrandMark, BrandName } from '@/components/brand-logo';
+import PasswordInput from '@/components/password-input';
+import { LEGAL } from '@/lib/legal';
 
-type Etat = 'attente' | 'envoi' | 'ok' | 'expire' | 'invalide' | 'erreur';
+type Etat = 'attente' | 'envoi' | 'ok' | 'expire' | 'invalide' | 'motdepasse' | 'trop' | 'erreur';
 
 function Confirmer() {
   const params = useSearchParams();
   const jeton = params?.get('jeton') || '';
   const [etat, setEtat] = useState<Etat>('attente');
+  const [motDePasse, setMotDePasse] = useState('');
 
   // Le compte n'est créé qu'au clic sur le bouton (et non à l'ouverture du lien),
   // pour qu'un antivirus de messagerie qui « visite » le lien ne confirme rien à la place de l'élève.
-  const confirmer = async () => {
+  const confirmer = async (e: React.FormEvent) => {
+    e.preventDefault();
     setEtat('envoi');
     try {
       const res = await fetch('/api/signup/confirmer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jeton }),
+        body: JSON.stringify({ jeton, motDePasse }),
       });
       const data = await res.json().catch(() => ({}));
-      setEtat(data?.resultat === 'ok' ? 'ok' : data?.resultat === 'expire' ? 'expire' : data?.resultat === 'invalide' ? 'invalide' : 'erreur');
+      const connus: Etat[] = ['ok', 'expire', 'invalide', 'motdepasse', 'trop'];
+      setEtat(connus.includes(data?.resultat) ? data.resultat : 'erreur');
     } catch {
       setEtat('erreur');
     }
@@ -44,6 +49,10 @@ function Confirmer() {
         </p>
         <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
           Votre dossier sera ensuite validé par l&apos;administration.
+        </p>
+        <p className="mt-3 text-xs text-muted-foreground leading-relaxed">
+          Quelques envois par jour au plus pour une même adresse. Rien reçu ? Réessayez demain ou écrivez-nous :{' '}
+          <a href={`mailto:${LEGAL.contactEmail}`} className="font-semibold text-primary hover:underline">{LEGAL.contactEmail}</a>.
         </p>
         <Link href="/auth/login" className="mt-6 inline-block text-sm font-bold text-primary hover:underline">Aller à la page de connexion</Link>
       </>
@@ -81,23 +90,40 @@ function Confirmer() {
     );
   }
 
+  const messages: Partial<Record<Etat, string>> = {
+    motdepasse: 'Ce mot de passe n\u2019est pas celui choisi à l\u2019inscription. Si vous n\u2019avez pas fait cette inscription vous-même, ignorez ce courriel.',
+    trop: 'Trop d\u2019essais. Réessayez dans une heure.',
+    erreur: 'Une erreur est survenue. Vérifiez votre connexion et réessayez.',
+  };
+
   return (
-    <>
+    <form onSubmit={confirmer}>
       <MailCheck className="mx-auto h-12 w-12 text-primary" />
       <h1 className="mt-4 text-2xl font-extrabold text-foreground">Confirmez votre inscription</h1>
       <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-        Appuyez sur le bouton pour confirmer votre adresse et terminer votre inscription à SavoirIA.
+        Pour prouver que c&apos;est bien vous, saisissez le mot de passe que vous avez choisi à l&apos;inscription.
       </p>
-      {etat === 'erreur' && (
+      <div className="mt-5 text-left">
+        <label htmlFor="mdp-confirmation" className="mb-1.5 block text-sm font-semibold text-foreground">Mot de passe choisi à l&apos;inscription</label>
+        <PasswordInput
+          id="mdp-confirmation"
+          value={motDePasse}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMotDePasse(e.target.value)}
+          autoComplete="current-password"
+          required
+          className="w-full rounded-xl border border-border bg-muted px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+        />
+      </div>
+      {messages[etat] && (
         <p role="alert" className="mt-4 flex items-start gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-left text-sm text-red-500">
           <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
-          Une erreur est survenue. Vérifiez votre connexion et réessayez.
+          {messages[etat]}
         </p>
       )}
-      <button type="button" onClick={confirmer} disabled={etat === 'envoi'} className={`${bouton} mt-6`}>
+      <button type="submit" disabled={etat === 'envoi' || !motDePasse} className={`${bouton} mt-6`}>
         {etat === 'envoi' ? <><Loader2 className="h-4 w-4 animate-spin" /> Confirmation…</> : 'Confirmer mon inscription'}
       </button>
-    </>
+    </form>
   );
 }
 

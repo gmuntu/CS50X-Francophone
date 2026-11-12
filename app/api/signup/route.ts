@@ -6,7 +6,7 @@ import bcrypt from 'bcryptjs';
 import { tropDEssais, tropAujourdhui } from '@/lib/quota';
 import { adresseIP } from '@/lib/securite';
 import { sendEmail } from '@/lib/email';
-import { compteDepuisDossier, courrielDeConfirmation, mettreDeCote, type DossierInscription } from '@/lib/inscription-confirmation';
+import { compteDepuisDossier, courrielDeConfirmation, menageDossiersExpires, mettreDeCote, type DossierInscription } from '@/lib/inscription-confirmation';
 import { erreurDateNaissance, erreurTelephone, lireDateNaissance, telephonePropre } from '@/lib/controle-inscription';
 
 // Poste d'école sans Internet : aucun email ne peut partir, l'inscription crée donc le compte tout de suite.
@@ -212,11 +212,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true });
     }
 
-    // En ligne : aucun compte n'est créé maintenant. Le dossier est mis de côté et un lien de confirmation part par email
-    // (3 par jour et par adresse au plus). La réponse est la même que pour une adresse déjà inscrite.
-    if (!(await tropAujourdhui('inscription-confirmation', trimmedEmail, 3))) {
+    // En ligne : aucun compte n'est créé maintenant. Le dossier est mis de côté et un lien de confirmation part par email.
+    // La réponse est la même que pour une adresse déjà inscrite. Trois garde-fous contre les abus :
+    //  - 3 liens par jour pour une même adresse depuis une même connexion (un tiers ne bloque pas le vrai élève) ;
+    //  - 8 liens par jour pour une même adresse, toutes connexions confondues (la boîte de l'élève n'est pas inondée) ;
+    //  - un plafond quotidien pour tout le site (le site ne sert pas à envoyer des emails en masse).
+    const plafondSite = Number(process.env.CONFIRMATIONS_MAX_PAR_JOUR || 500);
+    const bloque =
+      (await tropAujourdhui('inscription-confirmation', `${trimmedEmail}|${adresseIP(request)}`, 3)) ||
+      (await tropAujourdhui('inscription-confirmation-adresse', trimmedEmail, 8)) ||
+      (await tropAujourdhui('inscription-confirmation-site', 'total', plafondSite));
+    if (bloque) {
+      console.error('[inscription] Limite de liens de confirmation atteinte : aucun email envoyé pour cette demande.');
+    } else {
       const jeton = await mettreDeCote(dossier);
-      after(() => sendEmail({ to: trimmedEmail, ...courrielDeConfirmation(jeton) }));
+      after(async () => {
+        await sendEmail({ to: trimmedEmail, ...courrielDeConfirmation(jeton) });
+        await menageDossiersExpires();
+      });
     }
     return NextResponse.json({ success: true, confirmation: true });
   } catch (error: any) {

@@ -5,6 +5,7 @@
  * Ainsi personne ne peut déposer un dossier avec l'adresse de quelqu'un d'autre, ni deviner qui est inscrit.
  */
 import { createHash, randomBytes } from 'node:crypto';
+import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 
 export const DUREE_LIEN_MS = 24 * 3600_000;
@@ -67,21 +68,21 @@ export function compteDepuisDossier(d: DossierInscription) {
   };
 }
 
+/** Efface les dossiers jamais confirmés dont le lien a expiré (appelé après chaque inscription ou confirmation). */
+export async function menageDossiersExpires(maintenant: Date = new Date()): Promise<void> {
+  await prisma.inscriptionEnAttente.deleteMany({ where: { expireLe: { lt: maintenant } } }).catch(() => {});
+}
+
 /** Met le dossier de côté et renvoie le jeton à placer dans le lien (seule son empreinte est gardée en base). */
 export async function mettreDeCote(dossier: DossierInscription, maintenant: Date = new Date()): Promise<string> {
   const jeton = randomBytes(32).toString('base64url');
-  const valeurs = { jetonHache: hacherJeton(jeton), donnees: dossier as any, expireLe: new Date(maintenant.getTime() + DUREE_LIEN_MS) };
-  await prisma.inscriptionEnAttente.upsert({
-    where: { email: dossier.email },
-    create: { email: dossier.email, ...valeurs },
-    update: valeurs,
+  await prisma.inscriptionEnAttente.create({
+    data: { email: dossier.email, jetonHache: hacherJeton(jeton), donnees: dossier as any, expireLe: new Date(maintenant.getTime() + DUREE_LIEN_MS) },
   });
-  // Ménage : les dossiers jamais confirmés ne restent pas en base.
-  prisma.inscriptionEnAttente.deleteMany({ where: { expireLe: { lt: maintenant } } }).catch(() => {});
   return jeton;
 }
 
-export type ResultatConfirmation = 'ok' | 'expire' | 'invalide';
+export type ResultatConfirmation = 'ok' | 'expire' | 'invalide' | 'motdepasse';
 
 function nouveauNumeroDossier(dossier: DossierInscription): string {
   const prefixe = String(dossier.dialCode || '+243').replace(/[^0-9]/g, '') || '243';
@@ -89,8 +90,12 @@ function nouveauNumeroDossier(dossier: DossierInscription): string {
   return `${prefixe}-${annee}-${Math.floor(10000 + Math.random() * 90000)}`;
 }
 
-/** Clic sur le lien : crée le compte « en attente » si le jeton est bon et encore valable. Le lien ne sert qu'une fois. */
-export async function confirmerInscription(jeton: string, maintenant: Date = new Date()): Promise<ResultatConfirmation> {
+/**
+ * Clic sur le lien : crée le compte « en attente » si le jeton est bon, encore valable, ET si le mot de passe saisi
+ * est celui choisi à l'inscription. Sans ce contrôle, quelqu'un pourrait s'inscrire avec l'adresse d'un élève et son
+ * propre mot de passe, puis laisser l'élève confirmer ce dossier sans le savoir.
+ */
+export async function confirmerInscription(jeton: string, motDePasse: string, maintenant: Date = new Date()): Promise<ResultatConfirmation> {
   if (typeof jeton !== 'string' || jeton.length < 20 || jeton.length > 200) return 'invalide';
   const attente = await prisma.inscriptionEnAttente.findUnique({ where: { jetonHache: hacherJeton(jeton) } });
   if (!attente) return 'invalide';
@@ -99,14 +104,23 @@ export async function confirmerInscription(jeton: string, maintenant: Date = new
     return 'expire';
   }
   const dossier = attente.donnees as unknown as DossierInscription;
-  // Un compte a été créé entre-temps avec cette adresse : on ne crée rien de plus, le lien est consommé.
+  if (typeof motDePasse !== 'string' || !motDePasse || motDePasse.length > 200) return 'motdepasse';
+  if (!(await bcrypt.compare(motDePasse, dossier.password))) return 'motdepasse';
+
+  // Un compte existe déjà avec cette adresse (autre lien confirmé entre-temps) : on ne crée rien de plus.
   const existant = await prisma.user.findUnique({ where: { email: dossier.email }, select: { id: true } });
   if (!existant) {
     const pris = await prisma.user.findUnique({ where: { dossierNumber: dossier.dossierNumber }, select: { id: true } });
     const donnees = compteDepuisDossier(pris ? { ...dossier, dossierNumber: nouveauNumeroDossier(dossier) } : dossier);
-    await prisma.user.create({ data: donnees });
+    try {
+      await prisma.user.create({ data: donnees });
+    } catch (e: any) {
+      // Deux clics en même temps : le premier a créé le compte, le second n'a plus rien à faire.
+      if (e?.code !== 'P2002') throw e;
+    }
   }
-  await prisma.inscriptionEnAttente.delete({ where: { id: attente.id } }).catch(() => {});
+  // L'adresse est confirmée : tous les dossiers en attente pour cette adresse (autres liens) sont effacés.
+  await prisma.inscriptionEnAttente.deleteMany({ where: { email: dossier.email } }).catch(() => {});
   return 'ok';
 }
 
@@ -115,7 +129,7 @@ export function courrielDeConfirmation(jeton: string): { subject: string; text: 
   const lien = `${adresseDuSite()}/auth/confirmer?jeton=${encodeURIComponent(jeton)}`;
   return {
     subject: 'Confirmez votre inscription à SavoirIA',
-    text: `Bonjour,\n\nPour terminer votre inscription à SavoirIA, confirmez votre adresse en ouvrant ce lien (valable 24 heures) :\n${lien}\n\nVotre dossier sera ensuite validé par l'administration.\n\nSi vous n'avez pas demandé cette inscription, ignorez cet email : aucun compte ne sera créé.`,
-    html: `<p>Bonjour,</p><p>Pour terminer votre inscription à SavoirIA, confirmez votre adresse (lien valable 24 heures) :</p><p><a href="${lien}" style="display:inline-block;padding:12px 20px;background:#2563eb;color:#fff;border-radius:10px;text-decoration:none;font-weight:bold">Confirmer mon inscription</a></p><p>Si le bouton ne marche pas, copiez cette adresse dans votre navigateur :<br>${lien}</p><p>Votre dossier sera ensuite validé par l'administration.</p><p style="color:#666">Si vous n'avez pas demandé cette inscription, ignorez cet email : aucun compte ne sera créé.</p>`,
+    text: `Bonjour,\n\nPour terminer votre inscription à SavoirIA, confirmez votre adresse en ouvrant ce lien (valable 24 heures) :\n${lien}\n\nLe mot de passe choisi à l'inscription vous sera demandé.\n\nVotre dossier sera ensuite validé par l'administration.\n\nSi vous n'avez pas demandé cette inscription, ignorez cet email : aucun compte ne sera créé.`,
+    html: `<p>Bonjour,</p><p>Pour terminer votre inscription à SavoirIA, confirmez votre adresse (lien valable 24 heures) :</p><p><a href="${lien}" style="display:inline-block;padding:12px 20px;background:#2563eb;color:#fff;border-radius:10px;text-decoration:none;font-weight:bold">Confirmer mon inscription</a></p><p>Si le bouton ne marche pas, copiez cette adresse dans votre navigateur :<br>${lien}</p><p>Le mot de passe choisi à l'inscription vous sera demandé. Votre dossier sera ensuite validé par l'administration.</p><p style="color:#666">Si vous n'avez pas demandé cette inscription, ignorez cet email : aucun compte ne sera créé.</p>`,
   };
 }

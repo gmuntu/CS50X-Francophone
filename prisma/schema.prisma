@@ -463,12 +463,13 @@ model IdentityProfile {
 // Aucun compte n'existe avant le clic sur le lien. Le jeton du lien n'est jamais stocké en clair.
 model InscriptionEnAttente {
   id         String   @id @default(cuid())
-  email      String   @unique // une seule inscription en attente par adresse : la dernière remplace la précédente
+  email      String   // plusieurs dossiers possibles pour une adresse (un par lien) : personne ne peut écraser celui d'un autre
   jetonHache String   @unique // empreinte SHA-256 du jeton envoyé par email
   donnees    Json     // dossier déjà contrôlé par le serveur (mot de passe déjà haché)
   expireLe   DateTime
   createdAt  DateTime @default(now())
   @@index([expireLe])
+  @@index([email])
 }
 
 model Compteur {
