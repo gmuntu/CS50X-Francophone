@@ -5,6 +5,7 @@ import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { generateDossierNumber } from '@/config/african-countries';
+import { STATUTS_PAIEMENT } from '@/lib/paiement';
 
 const SUPER_ADMIN_EMAILS = ['gmuntusip@gmail.com', 'admin@cs50x-francophone.com'];
 const isSuperAdminEmail = (email: string | null | undefined) => !!email && SUPER_ADMIN_EMAILS.includes(email.toLowerCase().trim());
@@ -343,6 +344,8 @@ export async function PUT(request: NextRequest) {
     //    vit dans l'empreinte (stockage privé), jamais en clair dans la base.
 
     // 8. Type d'étudiant & Paiement
+    //    Le statut de paiement ne change que s'il est envoyé explicitement, et seulement vers une valeur connue.
+    const statutValide = (STATUTS_PAIEMENT as readonly string[]).includes(paymentStatus);
     if (studentType) {
       data.studentType = studentType;
       if (studentType === 'UNIVERSITAIRE') {
@@ -357,12 +360,12 @@ export async function PUT(request: NextRequest) {
         } else if (existingUser.paymentAmount === 0 || existingUser.studentType === 'UNIVERSITAIRE') {
           data.paymentAmount = 500;
         }
-        if (paymentStatus) data.paymentStatus = paymentStatus;
-        if (paymentMethod !== undefined) data.paymentMethod = paymentMethod;
+        if (statutValide) data.paymentStatus = paymentStatus;
+        if (paymentMethod !== undefined) data.paymentMethod = paymentMethod ? String(paymentMethod) : null;
       }
     } else {
-      if (paymentStatus) data.paymentStatus = paymentStatus;
-      if (paymentMethod !== undefined) data.paymentMethod = paymentMethod;
+      if (statutValide) data.paymentStatus = paymentStatus;
+      if (paymentMethod !== undefined) data.paymentMethod = paymentMethod ? String(paymentMethod) : null;
       if (paymentAmount !== undefined) data.paymentAmount = typeof paymentAmount === 'number' ? paymentAmount : parseFloat(paymentAmount) || 0;
       if (university !== undefined) data.university = university ? String(university).trim() : null;
     }
