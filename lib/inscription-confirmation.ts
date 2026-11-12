@@ -7,6 +7,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
+import { salutationCourriel } from '@/lib/controle-inscription';
 
 export const DUREE_LIEN_MS = 24 * 3600_000;
 
@@ -137,11 +138,12 @@ export async function confirmerInscription(jeton: string, motDePasse: string, ma
 }
 
 /** Email envoyé à l'inscription : un seul lien, construit avec l'adresse du site de la configuration. */
-export function courrielDeConfirmation(jeton: string): { subject: string; text: string; html: string } {
+export function courrielDeConfirmation(jeton: string, prenom?: unknown): { subject: string; text: string; html: string } {
+  const bonjour = salutationCourriel(prenom);
   const lien = `${adresseDuSite()}/auth/confirmer?jeton=${encodeURIComponent(jeton)}`;
   return {
     subject: 'Confirmez votre inscription à SavoirIA',
-    text: `Bonjour,\n\nPour terminer votre inscription à SavoirIA, confirmez votre adresse en ouvrant ce lien (valable 24 heures) :\n${lien}\n\nLe mot de passe choisi à l'inscription vous sera demandé.\n\nVotre dossier sera ensuite validé par l'administration.\n\nSi vous n'avez pas demandé cette inscription, ignorez cet email : aucun compte ne sera créé.`,
-    html: `<p>Bonjour,</p><p>Pour terminer votre inscription à SavoirIA, confirmez votre adresse (lien valable 24 heures) :</p><p><a href="${lien}" style="display:inline-block;padding:12px 20px;background:#2563eb;color:#fff;border-radius:10px;text-decoration:none;font-weight:bold">Confirmer mon inscription</a></p><p>Si le bouton ne marche pas, copiez cette adresse dans votre navigateur :<br>${lien}</p><p>Le mot de passe choisi à l'inscription vous sera demandé. Votre dossier sera ensuite validé par l'administration.</p><p style="color:#666">Si vous n'avez pas demandé cette inscription, ignorez cet email : aucun compte ne sera créé.</p>`,
+    text: `${bonjour.texte}\n\nPour terminer votre inscription à SavoirIA, confirmez votre adresse en ouvrant ce lien (valable 24 heures) :\n${lien}\n\nLe mot de passe choisi à l'inscription vous sera demandé.\n\nVotre dossier sera ensuite validé par l'administration.\n\nSi vous n'avez pas demandé cette inscription, ignorez cet email : aucun compte ne sera créé.`,
+    html: `<p>${bonjour.html}</p><p>Pour terminer votre inscription à SavoirIA, confirmez votre adresse (lien valable 24 heures) :</p><p><a href="${lien}" style="display:inline-block;padding:12px 20px;background:#2563eb;color:#fff;border-radius:10px;text-decoration:none;font-weight:bold">Confirmer mon inscription</a></p><p>Si le bouton ne marche pas, copiez cette adresse dans votre navigateur :<br>${lien}</p><p>Le mot de passe choisi à l'inscription vous sera demandé. Votre dossier sera ensuite validé par l'administration.</p><p style="color:#666">Si vous n'avez pas demandé cette inscription, ignorez cet email : aucun compte ne sera créé.</p>`,
   };
 }

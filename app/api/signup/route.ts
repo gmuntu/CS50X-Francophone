@@ -8,7 +8,7 @@ import { adresseIP } from '@/lib/securite';
 import { sendEmail } from '@/lib/email';
 import { LEGAL } from '@/lib/legal';
 import { compteDepuisDossier, courrielDeConfirmation, menageDossiersExpires, mettreDeCote, MOT_DE_PASSE_LONGUEUR_MAX, type DossierInscription } from '@/lib/inscription-confirmation';
-import { erreurDateNaissance, erreurTelephone, lireDateNaissance, telephonePropre } from '@/lib/controle-inscription';
+import { erreurDateNaissance, erreurTelephone, lireDateNaissance, salutationCourriel, telephonePropre } from '@/lib/controle-inscription';
 
 // Poste d'école sans Internet : aucun email ne peut partir, l'inscription crée donc le compte tout de suite.
 const HORS_LIGNE = process.env.SAVOIRIA_LOCAL === '1';
@@ -41,6 +41,7 @@ export async function POST(request: Request) {
     const causes: string[] = [];
     let errorField: string | null = null;
     let dejaInscrit = false;
+    let prenomDuCompte: string | null = null;
 
     // 1. Validation du prénom et du nom
     const trimmedFirst = String(firstName || '').trim();
@@ -63,8 +64,9 @@ export async function POST(request: Request) {
     } else {
       // Adresse déjà inscrite : en ligne, on ne le dit PAS à l'écran (sinon n'importe qui peut savoir qui a un compte) ;
       // la réponse est la même que pour une nouvelle inscription, et le vrai propriétaire est prévenu par email.
-      const existing = await prisma.user.findUnique({ where: { email: trimmedEmail }, select: { id: true } });
+      const existing = await prisma.user.findUnique({ where: { email: trimmedEmail }, select: { id: true, firstName: true } });
       dejaInscrit = !!existing;
+      prenomDuCompte = existing?.firstName ?? null;
       // Poste hors ligne (salle de classe, aucun email possible) : on le dit clairement, comme avant.
       if (dejaInscrit && HORS_LIGNE) {
         causes.push("Email déjà utilisé : un compte existe déjà avec cette adresse. Connectez-vous ou réinitialisez votre mot de passe.");
@@ -174,12 +176,14 @@ export async function POST(request: Request) {
       // Aucun compte créé ni modifié. Un seul email d'avertissement par jour pour une même adresse (pas de harcèlement possible).
       if (!(await tropAujourdhui('inscription-existant', trimmedEmail, 1))) {
         // Pas de lien dans l'email : l'adresse du site ne doit jamais venir de la requête (elle pourrait être falsifiée).
+        // Prénom du compte existant, jamais celui tapé par la personne qui tente l'inscription (ce pourrait être un tiers).
+        const bonjour = salutationCourriel(prenomDuCompte);
         after(() =>
           sendEmail({
             to: trimmedEmail,
             subject: 'Vous avez déjà un compte SavoirIA',
-            text: "Bonjour,\n\nUne inscription vient d'être tentée avec votre adresse, mais vous avez déjà un compte SavoirIA.\n\nPour y accéder, ouvrez la page de connexion de SavoirIA. Si vous avez oublié votre mot de passe, utilisez « Mot de passe oublié ? » sur cette page.\n\nSi ce n'était pas vous, ignorez cet email : votre compte n'a pas été modifié.",
-            html: "<p>Bonjour,</p><p>Une inscription vient d'être tentée avec votre adresse, mais vous avez déjà un compte SavoirIA.</p><p>Pour y accéder, ouvrez la page de connexion de SavoirIA. Si vous avez oublié votre mot de passe, utilisez « Mot de passe oublié ? » sur cette page.</p><p style=\"color:#666\">Si ce n'était pas vous, ignorez cet email : votre compte n'a pas été modifié.</p>",
+            text: bonjour.texte + "\n\nUne inscription vient d'être tentée avec votre adresse, mais vous avez déjà un compte SavoirIA.\n\nPour y accéder, ouvrez la page de connexion de SavoirIA. Si vous avez oublié votre mot de passe, utilisez « Mot de passe oublié ? » sur cette page.\n\nSi ce n'était pas vous, ignorez cet email : votre compte n'a pas été modifié.",
+            html: "<p>" + bonjour.html + "</p><p>Une inscription vient d'être tentée avec votre adresse, mais vous avez déjà un compte SavoirIA.</p><p>Pour y accéder, ouvrez la page de connexion de SavoirIA. Si vous avez oublié votre mot de passe, utilisez « Mot de passe oublié ? » sur cette page.</p><p style=\"color:#666\">Si ce n'était pas vous, ignorez cet email : votre compte n'a pas été modifié.</p>",
           })
         );
       }
@@ -246,7 +250,7 @@ export async function POST(request: Request) {
     } else if (!bloqueAvantPlafond) {
       const jeton = await mettreDeCote(dossier);
       after(async () => {
-        await sendEmail({ to: trimmedEmail, ...courrielDeConfirmation(jeton) });
+        await sendEmail({ to: trimmedEmail, ...courrielDeConfirmation(jeton, trimmedFirst) });
         await menageDossiersExpires();
       });
     }

@@ -56,3 +56,34 @@ export function erreurTelephone(valeur: unknown): string | null {
 export function telephonePropre(valeur: string): string {
   return valeur.trim().replace(/\s+/g, ' ');
 }
+
+/** Longueur maximale et nombre de mots maximal d'un prénom repris dans un courriel. */
+const PRENOM_COURRIEL_LONGUEUR_MAX = 25;
+const PRENOM_COURRIEL_MOTS_MAX = 2;
+
+// Une suite de lettres latines (accents permis, au plus une marque d'accent séparée par lettre).
+const LETTRES = "(?:\\p{Script=Latin}[\\u0300-\\u036f]?)+";
+// Des groupes de lettres reliés par UN seul séparateur : espace, trait d'union ou apostrophe.
+const PRENOM_COURRIEL = new RegExp(`^${LETTRES}(?:[ '’-]${LETTRES})*$`, 'u');
+
+/**
+ * Prénom autorisé dans un courriel : uniquement des lettres latines (accents permis), reliées par un seul
+ * espace, trait d'union ou apostrophe ; 25 caractères et 2 mots au plus. Renvoie null sinon (chiffres, liens,
+ * symboles, balises, caractères invisibles, accents empilés, phrase entière…).
+ * Le prénom est saisi par un inconnu : il ne doit jamais pouvoir glisser un lien, du code ou un message dans un courriel.
+ */
+export function prenomPourCourriel(valeur: unknown): string | null {
+  if (typeof valeur !== 'string') return null;
+  const prenom = valeur.normalize('NFC').trim();
+  if (!prenom || prenom.length > PRENOM_COURRIEL_LONGUEUR_MAX) return null;
+  if (prenom.split(' ').length > PRENOM_COURRIEL_MOTS_MAX) return null;
+  if (!PRENOM_COURRIEL.test(prenom)) return null;
+  return prenom;
+}
+
+/** Première ligne d'un courriel : « Bonjour Awa, » si le prénom est acceptable, sinon « Bonjour, ». */
+export function salutationCourriel(prenom: unknown): { texte: string; html: string } {
+  const p = prenomPourCourriel(prenom);
+  if (!p) return { texte: 'Bonjour,', html: 'Bonjour,' };
+  return { texte: `Bonjour ${p},`, html: `Bonjour ${p.replace(/'/g, '&#39;')},` };
+}
