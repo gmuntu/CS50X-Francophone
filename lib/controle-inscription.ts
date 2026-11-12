@@ -56,3 +56,26 @@ export function erreurTelephone(valeur: unknown): string | null {
 export function telephonePropre(valeur: string): string {
   return valeur.trim().replace(/\s+/g, ' ');
 }
+
+/** Longueur maximale d'un prénom repris dans un courriel. */
+const PRENOM_COURRIEL_LONGUEUR_MAX = 40;
+
+/**
+ * Prénom autorisé dans un courriel : uniquement des lettres (accents permis), espaces, traits d'union
+ * et apostrophes, 40 caractères au plus. Renvoie null sinon (chiffres, liens, symboles, balises…).
+ * Le prénom est saisi par un inconnu : il ne doit jamais pouvoir glisser un lien ou du code dans un courriel.
+ */
+export function prenomPourCourriel(valeur: unknown): string | null {
+  if (typeof valeur !== 'string') return null;
+  const prenom = valeur.normalize('NFC').trim();
+  if (!prenom || prenom.length > PRENOM_COURRIEL_LONGUEUR_MAX) return null;
+  if (!/^\p{L}[\p{L}\p{M} '’-]*$/u.test(prenom)) return null;
+  return prenom;
+}
+
+/** Première ligne d'un courriel : « Bonjour Awa, » si le prénom est acceptable, sinon « Bonjour, ». */
+export function salutationCourriel(prenom: unknown): { texte: string; html: string } {
+  const p = prenomPourCourriel(prenom);
+  if (!p) return { texte: 'Bonjour,', html: 'Bonjour,' };
+  return { texte: `Bonjour ${p},`, html: `Bonjour ${p.replace(/'/g, '&#39;')},` };
+}

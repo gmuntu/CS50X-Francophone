@@ -8,7 +8,7 @@ import { adresseIP } from '@/lib/securite';
 import { sendEmail } from '@/lib/email';
 import { LEGAL } from '@/lib/legal';
 import { compteDepuisDossier, courrielDeConfirmation, menageDossiersExpires, mettreDeCote, MOT_DE_PASSE_LONGUEUR_MAX, type DossierInscription } from '@/lib/inscription-confirmation';
-import { erreurDateNaissance, erreurTelephone, lireDateNaissance, telephonePropre } from '@/lib/controle-inscription';
+import { erreurDateNaissance, erreurTelephone, lireDateNaissance, salutationCourriel, telephonePropre } from '@/lib/controle-inscription';
 
 // Poste d'école sans Internet : aucun email ne peut partir, l'inscription crée donc le compte tout de suite.
 const HORS_LIGNE = process.env.SAVOIRIA_LOCAL === '1';
@@ -174,12 +174,13 @@ export async function POST(request: Request) {
       // Aucun compte créé ni modifié. Un seul email d'avertissement par jour pour une même adresse (pas de harcèlement possible).
       if (!(await tropAujourdhui('inscription-existant', trimmedEmail, 1))) {
         // Pas de lien dans l'email : l'adresse du site ne doit jamais venir de la requête (elle pourrait être falsifiée).
+        const bonjour = salutationCourriel(trimmedFirst);
         after(() =>
           sendEmail({
             to: trimmedEmail,
             subject: 'Vous avez déjà un compte SavoirIA',
-            text: "Bonjour,\n\nUne inscription vient d'être tentée avec votre adresse, mais vous avez déjà un compte SavoirIA.\n\nPour y accéder, ouvrez la page de connexion de SavoirIA. Si vous avez oublié votre mot de passe, utilisez « Mot de passe oublié ? » sur cette page.\n\nSi ce n'était pas vous, ignorez cet email : votre compte n'a pas été modifié.",
-            html: "<p>Bonjour,</p><p>Une inscription vient d'être tentée avec votre adresse, mais vous avez déjà un compte SavoirIA.</p><p>Pour y accéder, ouvrez la page de connexion de SavoirIA. Si vous avez oublié votre mot de passe, utilisez « Mot de passe oublié ? » sur cette page.</p><p style=\"color:#666\">Si ce n'était pas vous, ignorez cet email : votre compte n'a pas été modifié.</p>",
+            text: bonjour.texte + "\n\nUne inscription vient d'être tentée avec votre adresse, mais vous avez déjà un compte SavoirIA.\n\nPour y accéder, ouvrez la page de connexion de SavoirIA. Si vous avez oublié votre mot de passe, utilisez « Mot de passe oublié ? » sur cette page.\n\nSi ce n'était pas vous, ignorez cet email : votre compte n'a pas été modifié.",
+            html: "<p>" + bonjour.html + "</p><p>Une inscription vient d'être tentée avec votre adresse, mais vous avez déjà un compte SavoirIA.</p><p>Pour y accéder, ouvrez la page de connexion de SavoirIA. Si vous avez oublié votre mot de passe, utilisez « Mot de passe oublié ? » sur cette page.</p><p style=\"color:#666\">Si ce n'était pas vous, ignorez cet email : votre compte n'a pas été modifié.</p>",
           })
         );
       }
@@ -246,7 +247,7 @@ export async function POST(request: Request) {
     } else if (!bloqueAvantPlafond) {
       const jeton = await mettreDeCote(dossier);
       after(async () => {
-        await sendEmail({ to: trimmedEmail, ...courrielDeConfirmation(jeton) });
+        await sendEmail({ to: trimmedEmail, ...courrielDeConfirmation(jeton, trimmedFirst) });
         await menageDossiersExpires();
       });
     }
