@@ -38,7 +38,16 @@ describe('Contrôles de l’inscription', () => {
   });
   it('date de naissance plausible : acceptée', () => {
     expect(erreurDateNaissance('2000-01-01', aujourdhui)).toBeNull();
-    expect(erreurDateNaissance('2016-11-11', aujourdhui)).toBeNull();
+    expect(erreurDateNaissance('2012-11-11', aujourdhui)).toBeNull();
+  });
+  it('âge minimum : 14 ans en ligne, 10 ans sur un poste d’école', () => {
+    // 14 ans pile le jour même : accepté ; un jour de moins : refusé.
+    expect(erreurDateNaissance('2012-11-11', aujourdhui)).toBeNull();
+    expect(erreurDateNaissance('2012-11-12', aujourdhui)).toMatch(/au moins 14 ans.*école/);
+    expect(erreurDateNaissance('2016-11-11', aujourdhui)).toMatch(/au moins 14 ans/);
+    // Poste d'école hors ligne : 10 ans.
+    expect(erreurDateNaissance('2016-11-11', aujourdhui, 10)).toBeNull();
+    expect(erreurDateNaissance('2016-11-12', aujourdhui, 10)).toMatch(/au moins 10 ans/);
   });
   it('date de naissance : obligatoire, format strict, jour qui existe', () => {
     expect(erreurDateNaissance('', aujourdhui)).toMatch(/obligatoire/);

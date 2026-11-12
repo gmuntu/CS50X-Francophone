@@ -8,7 +8,7 @@ import { adresseIP } from '@/lib/securite';
 import { sendEmail } from '@/lib/email';
 import { LEGAL } from '@/lib/legal';
 import { compteDepuisDossier, courrielDeConfirmation, menageDossiersExpires, mettreDeCote, MOT_DE_PASSE_LONGUEUR_MAX, type DossierInscription } from '@/lib/inscription-confirmation';
-import { erreurDateNaissance, erreurTelephone, lireDateNaissance, salutationCourriel, telephonePropre } from '@/lib/controle-inscription';
+import { AGE_MINIMUM_ECOLE, AGE_MINIMUM_EN_LIGNE, erreurDateNaissance, erreurTelephone, lireDateNaissance, salutationCourriel, telephonePropre } from '@/lib/controle-inscription';
 
 // Poste d'école sans Internet : aucun email ne peut partir, l'inscription crée donc le compte tout de suite.
 const HORS_LIGNE = process.env.SAVOIRIA_LOCAL === '1';
@@ -144,7 +144,7 @@ export async function POST(request: Request) {
 
     // 7. Date de naissance : obligatoire, au format AAAA-MM-JJ ; la date enregistrée est exactement celle contrôlée.
     let parsedBirthDate: Date | null = null;
-    const erreurDate = erreurDateNaissance(birthDate);
+    const erreurDate = erreurDateNaissance(birthDate, new Date(), HORS_LIGNE ? AGE_MINIMUM_ECOLE : AGE_MINIMUM_EN_LIGNE);
     if (erreurDate) {
       causes.push(`Date de naissance : ${erreurDate}`);
       if (!errorField) errorField = 'birthDate';

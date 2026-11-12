@@ -14,7 +14,10 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import GoogleAuthModal from '@/components/google-auth-modal';
-import { erreurDateNaissance, erreurTelephone } from '@/lib/controle-inscription';
+import { AGE_MINIMUM_ECOLE, AGE_MINIMUM_EN_LIGNE, erreurDateNaissance, erreurTelephone } from '@/lib/controle-inscription';
+
+// Poste d'école hors ligne : l'âge minimum y est plus bas qu'en ligne (l'élève est encadré).
+const POSTE_ECOLE = process.env.NEXT_PUBLIC_SAVOIRIA_LOCAL === '1';
 import {
   AFRICAN_COUNTRIES, CountryOption, generateDossierNumber,
   PARTNER_UNIVERSITIES
@@ -154,7 +157,7 @@ export default function SignupPage() {
         stepCauses.push("Date de naissance manquante : Veuillez indiquer votre date de naissance.");
         localFieldErrors.birthDate = "La date de naissance est obligatoire.";
       } else {
-        const erreurDate = erreurDateNaissance(formData.birthDate);
+        const erreurDate = erreurDateNaissance(formData.birthDate, new Date(), POSTE_ECOLE ? AGE_MINIMUM_ECOLE : AGE_MINIMUM_EN_LIGNE);
         if (erreurDate) {
           stepCauses.push(`Date de naissance : ${erreurDate}`);
           localFieldErrors.birthDate = erreurDate;

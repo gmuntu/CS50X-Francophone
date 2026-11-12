@@ -3,8 +3,10 @@
  * Chaque fonction « erreur… » renvoie un message en français, ou null si la valeur est acceptable.
  */
 
-/** Âge minimal accepté à l'inscription (les mineurs passent ensuite par l'accord parental). */
-export const AGE_MINIMUM = 10;
+/** Âge minimal pour s'inscrire soi-même en ligne. Les plus jeunes passent par une école. */
+export const AGE_MINIMUM_EN_LIGNE = 14;
+/** Âge minimal sur un poste d'école hors ligne (l'élève est encadré par son établissement). */
+export const AGE_MINIMUM_ECOLE = 10;
 
 /** Longueur maximale d'un numéro tel qu'il est saisi (chiffres et séparateurs compris). */
 const TELEPHONE_LONGUEUR_MAX = 30;
@@ -23,15 +25,17 @@ export function lireDateNaissance(valeur: unknown): Date | null {
   return d;
 }
 
-export function erreurDateNaissance(valeur: unknown, maintenant: Date = new Date()): string | null {
+export function erreurDateNaissance(valeur: unknown, maintenant: Date = new Date(), ageMinimum: number = AGE_MINIMUM_EN_LIGNE): string | null {
   if (valeur === null || valeur === undefined || valeur === '') return 'La date de naissance est obligatoire.';
   const d = lireDateNaissance(valeur);
   if (!d) return 'La date de naissance est invalide.';
   if (d.getTime() > maintenant.getTime()) return 'La date de naissance ne peut pas être dans le futur.';
   if (d.getUTCFullYear() < 1900) return 'La date de naissance est invalide.';
   const limite = new Date(maintenant);
-  limite.setUTCFullYear(limite.getUTCFullYear() - AGE_MINIMUM);
-  if (d.getTime() > limite.getTime()) return `Il faut avoir au moins ${AGE_MINIMUM} ans pour s'inscrire.`;
+  limite.setUTCFullYear(limite.getUTCFullYear() - ageMinimum);
+  if (d.getTime() > limite.getTime()) return ageMinimum >= AGE_MINIMUM_EN_LIGNE
+    ? `Il faut avoir au moins ${ageMinimum} ans pour s'inscrire en ligne. Les plus jeunes s'inscrivent par leur école.`
+    : `Il faut avoir au moins ${ageMinimum} ans pour s'inscrire.`;
   return null;
 }
 
