@@ -10,6 +10,9 @@ import { prisma } from '@/lib/prisma';
 
 export const DUREE_LIEN_MS = 24 * 3600_000;
 
+/** Longueur maximale d'un mot de passe, la même à l'inscription et à la confirmation. */
+export const MOT_DE_PASSE_LONGUEUR_MAX = 200;
+
 /** Dossier d'inscription déjà contrôlé par le serveur, tel qu'il sera enregistré dans le compte. */
 export interface DossierInscription {
   email: string;
@@ -104,19 +107,28 @@ export async function confirmerInscription(jeton: string, motDePasse: string, ma
     return 'expire';
   }
   const dossier = attente.donnees as unknown as DossierInscription;
-  if (typeof motDePasse !== 'string' || !motDePasse || motDePasse.length > 200) return 'motdepasse';
+  if (typeof motDePasse !== 'string' || !motDePasse || motDePasse.length > MOT_DE_PASSE_LONGUEUR_MAX) return 'motdepasse';
   if (!(await bcrypt.compare(motDePasse, dossier.password))) return 'motdepasse';
 
   // Un compte existe déjà avec cette adresse (autre lien confirmé entre-temps) : on ne crée rien de plus.
   const existant = await prisma.user.findUnique({ where: { email: dossier.email }, select: { id: true } });
   if (!existant) {
-    const pris = await prisma.user.findUnique({ where: { dossierNumber: dossier.dossierNumber }, select: { id: true } });
-    const donnees = compteDepuisDossier(pris ? { ...dossier, dossierNumber: nouveauNumeroDossier(dossier) } : dossier);
-    try {
-      await prisma.user.create({ data: donnees });
-    } catch (e: any) {
-      // Deux clics en même temps : le premier a créé le compte, le second n'a plus rien à faire.
-      if (e?.code !== 'P2002') throw e;
+    // Le numéro de dossier a pu être pris entre-temps : on en tire un autre, 5 essais au plus.
+    let numero = dossier.dossierNumber;
+    for (let essai = 1; ; essai++) {
+      const pris = await prisma.user.findUnique({ where: { dossierNumber: numero }, select: { id: true } });
+      if (pris) { numero = nouveauNumeroDossier(dossier); if (essai >= 5) throw new Error('Aucun numéro de dossier libre'); continue; }
+      try {
+        await prisma.user.create({ data: compteDepuisDossier({ ...dossier, dossierNumber: numero }) });
+        break;
+      } catch (e: any) {
+        if (e?.code !== 'P2002') throw e;
+        // Deux clics en même temps sur le même lien : le premier a créé le compte, le second n'a plus rien à faire.
+        if (await prisma.user.findUnique({ where: { email: dossier.email }, select: { id: true } })) break;
+        // Sinon c'est le numéro de dossier qui vient d'être pris par un autre élève : nouveau numéro et nouvel essai.
+        if (essai >= 5) throw e;
+        numero = nouveauNumeroDossier(dossier);
+      }
     }
   }
   // L'adresse est confirmée : tous les dossiers en attente pour cette adresse (autres liens) sont effacés.

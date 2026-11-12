@@ -27,7 +27,7 @@ const { base, fausseBase } = vi.hoisted(() => {
 });
 vi.mock('@/lib/prisma', () => ({ prisma: fausseBase }));
 
-import { confirmerInscription, courrielDeConfirmation, hacherJeton, menageDossiersExpires, mettreDeCote, DUREE_LIEN_MS, type DossierInscription } from '@/lib/inscription-confirmation';
+import { confirmerInscription, courrielDeConfirmation, hacherJeton, menageDossiersExpires, mettreDeCote, DUREE_LIEN_MS, MOT_DE_PASSE_LONGUEUR_MAX, type DossierInscription } from '@/lib/inscription-confirmation';
 
 const MDP = 'MotDePasse-Awa-2026';
 const HACHE = bcrypt.hashSync(MDP, 4);
@@ -113,8 +113,27 @@ describe('Confirmation de l’adresse à l’inscription', () => {
 
   it('deux clics en même temps : le second ne provoque pas d’erreur', async () => {
     const jeton = await mettreDeCote(dossier());
-    base.erreurCreation = Object.assign(new Error('unique'), { code: 'P2002' });
+    // Le premier clic crée le compte juste avant que le second n'essaie : erreur « déjà pris » sur l'adresse.
+    fausseBase.user.create.mockImplementationOnce(async ({ data }: any) => {
+      base.comptes.push({ id: 'u-premier-clic', ...data });
+      throw Object.assign(new Error('unique'), { code: 'P2002' });
+    });
     expect(await confirmerInscription(jeton, MDP)).toBe('ok');
+    expect(base.comptes).toHaveLength(1);
+  });
+
+  it('numéro de dossier pris au même instant par un autre élève : nouveau numéro, le compte est bien créé', async () => {
+    const jeton = await mettreDeCote(dossier());
+    fausseBase.user.create.mockImplementationOnce(async () => { throw Object.assign(new Error('unique'), { code: 'P2002' }); });
+    expect(await confirmerInscription(jeton, MDP)).toBe('ok');
+    expect(base.comptes).toHaveLength(1);
+    expect(base.comptes[0].email).toBe('eleve@test.local');
+    expect(base.comptes[0].dossierNumber).not.toBe('243-26-10001');
+  });
+
+  it('mot de passe démesuré : refusé sans calcul', async () => {
+    const jeton = await mettreDeCote(dossier());
+    expect(await confirmerInscription(jeton, 'x'.repeat(MOT_DE_PASSE_LONGUEUR_MAX + 1))).toBe('motdepasse');
   });
 
   it('numéro de dossier pris entre-temps : un nouveau numéro est attribué', async () => {

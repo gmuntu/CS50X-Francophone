@@ -6,7 +6,8 @@ import bcrypt from 'bcryptjs';
 import { tropDEssais, tropAujourdhui } from '@/lib/quota';
 import { adresseIP } from '@/lib/securite';
 import { sendEmail } from '@/lib/email';
-import { compteDepuisDossier, courrielDeConfirmation, menageDossiersExpires, mettreDeCote, type DossierInscription } from '@/lib/inscription-confirmation';
+import { LEGAL } from '@/lib/legal';
+import { compteDepuisDossier, courrielDeConfirmation, menageDossiersExpires, mettreDeCote, MOT_DE_PASSE_LONGUEUR_MAX, type DossierInscription } from '@/lib/inscription-confirmation';
 import { erreurDateNaissance, erreurTelephone, lireDateNaissance, telephonePropre } from '@/lib/controle-inscription';
 
 // Poste d'école sans Internet : aucun email ne peut partir, l'inscription crée donc le compte tout de suite.
@@ -78,6 +79,9 @@ export async function POST(request: Request) {
       if (!errorField) errorField = 'password';
     } else if (rawPassword.length < 10) {
       causes.push("Mot de passe trop court : Le mot de passe doit comporter au moins 10 caractères.");
+      if (!errorField) errorField = 'password';
+    } else if (rawPassword.length > MOT_DE_PASSE_LONGUEUR_MAX) {
+      causes.push(`Mot de passe trop long : ${MOT_DE_PASSE_LONGUEUR_MAX} caractères au plus.`);
       if (!errorField) errorField = 'password';
     }
 
@@ -213,18 +217,33 @@ export async function POST(request: Request) {
     }
 
     // En ligne : aucun compte n'est créé maintenant. Le dossier est mis de côté et un lien de confirmation part par email.
-    // La réponse est la même que pour une adresse déjà inscrite. Trois garde-fous contre les abus :
+    // La réponse est la même que pour une adresse déjà inscrite. Garde-fous contre les abus, du plus étroit au plus large
+    // (une demande arrêtée par un garde-fou ne consomme pas les suivants) :
+    //  - 15 liens par jour depuis une même connexion (une seule machine ne peut pas épuiser le plafond du site) ;
     //  - 3 liens par jour pour une même adresse depuis une même connexion (un tiers ne bloque pas le vrai élève) ;
     //  - 8 liens par jour pour une même adresse, toutes connexions confondues (la boîte de l'élève n'est pas inondée) ;
     //  - un plafond quotidien pour tout le site (le site ne sert pas à envoyer des emails en masse).
+    const ip = adresseIP(request);
     const plafondSite = Number(process.env.CONFIRMATIONS_MAX_PAR_JOUR || 500);
-    const bloque =
-      (await tropAujourdhui('inscription-confirmation', `${trimmedEmail}|${adresseIP(request)}`, 3)) ||
-      (await tropAujourdhui('inscription-confirmation-adresse', trimmedEmail, 8)) ||
-      (await tropAujourdhui('inscription-confirmation-site', 'total', plafondSite));
-    if (bloque) {
-      console.error('[inscription] Limite de liens de confirmation atteinte : aucun email envoyé pour cette demande.');
-    } else {
+    const bloqueAvantPlafond =
+      (await tropAujourdhui('inscription-confirmation-connexion', ip, 15)) ||
+      (await tropAujourdhui('inscription-confirmation', `${trimmedEmail}|${ip}`, 3)) ||
+      (await tropAujourdhui('inscription-confirmation-adresse', trimmedEmail, 8));
+    const plafondAtteint = !bloqueAvantPlafond && (await tropAujourdhui('inscription-confirmation-site', 'total', plafondSite));
+    if (plafondAtteint) {
+      console.error('[inscription] Plafond quotidien de liens de confirmation atteint : plus aucun email envoyé aujourd\'hui.');
+      // Une seule alerte par jour à l'administration : de vrais élèves n'ont peut-être pas reçu leur lien.
+      if (!(await tropAujourdhui('inscription-confirmation-alerte', 'site', 1))) {
+        after(() =>
+          sendEmail({
+            to: process.env.ALERTE_ADMIN_EMAIL || LEGAL.contactEmail,
+            subject: 'SavoirIA : plafond des inscriptions atteint aujourd\'hui',
+            text: `Le plafond de ${plafondSite} liens de confirmation par jour vient d'être atteint. Jusqu'à minuit (heure universelle), les nouvelles inscriptions ne reçoivent plus de lien : les élèves concernés devront recommencer demain. Si ce n'est pas une vraie affluence, il s'agit peut-être d'un abus du formulaire d'inscription.`,
+            html: `<p>Le plafond de <strong>${plafondSite}</strong> liens de confirmation par jour vient d'être atteint.</p><p>Jusqu'à minuit (heure universelle), les nouvelles inscriptions ne reçoivent plus de lien : les élèves concernés devront recommencer demain.</p><p>Si ce n'est pas une vraie affluence, il s'agit peut-être d'un abus du formulaire d'inscription.</p>`,
+          })
+        );
+      }
+    } else if (!bloqueAvantPlafond) {
       const jeton = await mettreDeCote(dossier);
       after(async () => {
         await sendEmail({ to: trimmedEmail, ...courrielDeConfirmation(jeton) });
