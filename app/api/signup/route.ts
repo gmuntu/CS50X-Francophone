@@ -1,10 +1,11 @@
 export const dynamic = 'force-dynamic';
 
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
-import { tropDEssais } from '@/lib/quota';
+import { tropDEssais, tropAujourdhui } from '@/lib/quota';
 import { adresseIP } from '@/lib/securite';
+import { sendEmail } from '@/lib/email';
 import { erreurDateNaissance, erreurTelephone, lireDateNaissance, telephonePropre } from '@/lib/controle-inscription';
 
 export async function POST(request: Request) {
@@ -34,6 +35,7 @@ export async function POST(request: Request) {
 
     const causes: string[] = [];
     let errorField: string | null = null;
+    let dejaInscrit = false;
 
     // 1. Validation du prénom et du nom
     const trimmedFirst = String(firstName || '').trim();
@@ -54,11 +56,10 @@ export async function POST(request: Request) {
       causes.push(`Format d'email invalide ("${trimmedEmail}") : Veuillez entrer une adresse email valide (ex: etudiant@gmail.com).`);
       if (!errorField) errorField = 'email';
     } else {
-      const existing = await prisma.user.findUnique({ where: { email: trimmedEmail } });
-      if (existing) {
-        causes.push(`Email déjà utilisé : Un compte existe déjà avec l'adresse "${trimmedEmail}". Connectez-vous directement ou réinitialisez votre mot de passe.`);
-        if (!errorField) errorField = 'email';
-      }
+      // Adresse déjà inscrite : on ne le dit PAS à l'écran (sinon n'importe qui peut savoir qui a un compte).
+      // La réponse sera la même que pour une nouvelle inscription, et le vrai propriétaire est prévenu par email.
+      const existing = await prisma.user.findUnique({ where: { email: trimmedEmail }, select: { id: true } });
+      dejaInscrit = !!existing;
     }
 
     // 3. Validation du mot de passe
@@ -146,7 +147,7 @@ export async function POST(request: Request) {
     if (causes.length > 0) {
       return NextResponse.json(
         {
-          error: `Inscription rejetée : ${causes.length} anomalie${causes.length > 1 ? 's' : ''} à corriger.`,
+          error: causes.length > 1 ? `${causes.length} points à corriger avant de continuer.` : 'Un point à corriger avant de continuer.',
           causes,
           field: errorField,
         },
@@ -155,11 +156,27 @@ export async function POST(request: Request) {
     }
 
     const hashedPassword = await bcrypt.hash(rawPassword, 12);
+
+    if (dejaInscrit) {
+      // Aucun compte créé ni modifié. Un seul email d'avertissement par jour pour une même adresse (pas de harcèlement possible).
+      if (!(await tropAujourdhui('inscription-existant', trimmedEmail, 1))) {
+        // Pas de lien dans l'email : l'adresse du site ne doit jamais venir de la requête (elle pourrait être falsifiée).
+        after(() =>
+          sendEmail({
+            to: trimmedEmail,
+            subject: 'Vous avez déjà un compte SavoirIA',
+            text: "Bonjour,\n\nUne inscription vient d'être tentée avec votre adresse, mais vous avez déjà un compte SavoirIA.\n\nPour y accéder, ouvrez la page de connexion de SavoirIA. Si vous avez oublié votre mot de passe, utilisez « Mot de passe oublié ? » sur cette page.\n\nSi ce n'était pas vous, ignorez cet email : votre compte n'a pas été modifié.",
+            html: "<p>Bonjour,</p><p>Une inscription vient d'être tentée avec votre adresse, mais vous avez déjà un compte SavoirIA.</p><p>Pour y accéder, ouvrez la page de connexion de SavoirIA. Si vous avez oublié votre mot de passe, utilisez « Mot de passe oublié ? » sur cette page.</p><p style=\"color:#666\">Si ce n'était pas vous, ignorez cet email : votre compte n'a pas été modifié.</p>",
+          })
+        );
+      }
+      return NextResponse.json({ success: true });
+    }
     const resolvedPaymentStatus = resolvedType === 'UNIVERSITAIRE' ? 'EXEMPTED' : 'PENDING';
     // Montant fixé par le serveur, jamais par le navigateur
     const resolvedPaymentAmount = resolvedType === 'UNIVERSITAIRE' ? 0 : Number(process.env.COURSE_PRICE_USD || 500);
 
-    const user = await prisma.user.create({
+    await prisma.user.create({
       data: {
         email: trimmedEmail,
         password: hashedPassword,
@@ -186,16 +203,8 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({
-      success: true,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        dossierNumber: user.dossierNumber,
-        studentType: user.studentType,
-      },
-    });
+    // Même réponse que pour une adresse déjà inscrite : rien ne permet de distinguer les deux cas.
+    return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error('Signup error:', error);
 

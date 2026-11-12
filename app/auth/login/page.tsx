@@ -16,7 +16,7 @@ function LoginForm() {
   const [error, setError] = useState('');
   // Arrivée juste après l'inscription : on rassure l'élève, son compte attend la validation.
   const info = searchParams?.get('registered') === 'true'
-    ? "Votre dossier est bien enregistré. Il doit maintenant être validé par l'administration : vous pourrez vous connecter dès que ce sera fait."
+    ? "Si cette adresse n'avait pas encore de compte, votre dossier est enregistré : il doit maintenant être validé par l'administration avant votre première connexion. Consultez aussi vos courriels."
     : '';
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
@@ -101,7 +101,7 @@ function LoginForm() {
     if (providersStatus.hasGithubOAuth) {
       signIn('github', { redirectTo: '/dashboard' });
     } else {
-      setError('GitHub OAuth n\'est pas encore configuré dans votre fichier .env.');
+      setError("La connexion avec GitHub n'est pas disponible pour le moment.");
     }
   };
 
@@ -132,9 +132,10 @@ function LoginForm() {
             <p className="text-sm text-muted-foreground mt-1">Accédez à votre espace de formation</p>
           </div>
 
-          {/* Boutons OAuth Google & GitHub */}
-          <div className="grid grid-cols-2 gap-3 mb-6">
-            <button
+          {/* Boutons Google & GitHub : affichés seulement quand ils sont réellement configurés sur le serveur */}
+          {(providersStatus.hasGoogleOAuth || providersStatus.hasGithubOAuth) && (<>
+          <div className={`grid gap-3 mb-6 ${providersStatus.hasGoogleOAuth && providersStatus.hasGithubOAuth ? 'grid-cols-2' : 'grid-cols-1'}`}>
+            {providersStatus.hasGoogleOAuth && (<button
               type="button"
               onClick={handleGoogleClick}
               className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-muted hover:bg-muted/80 text-foreground text-sm font-semibold border border-border transition relative group"
@@ -159,15 +160,15 @@ function LoginForm() {
                 />
               </svg>
               <span>Google</span>
-            </button>
-            <button
+            </button>)}
+            {providersStatus.hasGithubOAuth && (<button
               type="button"
               onClick={handleGithubClick}
               className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-muted hover:bg-muted/80 text-foreground text-sm font-semibold border border-border transition"
             >
               <Github className="w-4 h-4" />
               <span>GitHub</span>
-            </button>
+            </button>)}
           </div>
 
           <div className="relative mb-6">
@@ -178,6 +179,7 @@ function LoginForm() {
               <span className="bg-card px-3 text-muted-foreground">Ou avec votre email</span>
             </div>
           </div>
+          </>)}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {info && !error && (

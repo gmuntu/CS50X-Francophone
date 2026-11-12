@@ -1,7 +1,7 @@
 'use client';
 
 import PasswordInput from '@/components/password-input';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useSyncExternalStore } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -20,7 +20,16 @@ import {
   PARTNER_UNIVERSITIES
 } from '@/config/african-countries';
 
+// Vrai seulement une fois la page active dans le navigateur (faux pendant le rendu du serveur).
+const abonnementVide = () => () => {};
+function useEstDansLeNavigateur(): boolean {
+  return useSyncExternalStore(abonnementVide, () => true, () => false);
+}
+
 export default function SignupPage() {
+  // Le numéro de dossier est tiré au hasard dans le navigateur : on ne l'affiche qu'une fois la page active,
+  // sinon le serveur et le navigateur montrent deux numéros différents (erreur d'affichage au chargement).
+  const dansLeNavigateur = useEstDansLeNavigateur();
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
   const [loading, setLoading] = useState(false);
@@ -391,7 +400,7 @@ export default function SignupPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 font-bold text-xs text-rose-400">
                 <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0" />
-                <span>Admission suspendue : {causes.length} anomalie{causes.length > 1 ? 's' : ''} à corriger</span>
+                <span>{causes.length > 1 ? `${causes.length} points à corriger avant de continuer` : 'Un point à corriger avant de continuer'}</span>
               </div>
               <button
                 type="button"
@@ -457,7 +466,7 @@ export default function SignupPage() {
                         </span>
                       </div>
                       <p className="text-sm font-mono font-black text-primary tracking-wider mt-0.5">
-                        {formData.dossierNumber}
+                        {dansLeNavigateur ? formData.dossierNumber : '…'}
                       </p>
                     </div>
                   </div>
@@ -996,7 +1005,7 @@ export default function SignupPage() {
 
         {/* Connexion alternative & Lien compte existant */}
         <div className="mt-8 text-center space-y-4">
-          <div className="flex items-center justify-center gap-3">
+          {providersStatus.hasGoogleOAuth && (<div className="flex items-center justify-center gap-3">
             <button
               type="button"
               onClick={handleGoogleClick}
@@ -1008,9 +1017,9 @@ export default function SignupPage() {
                 <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
                 <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
               </svg>
-              Liaison Google SSO
+              Continuer avec Google
             </button>
-          </div>
+          </div>)}
 
           <p className="text-xs text-muted-foreground">
             Vous disposez déjà d'un compte ou d'un dossier étudiant ?{' '}
