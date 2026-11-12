@@ -177,7 +177,7 @@ export default function DashboardClient({ user }: Props) {
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
-            { icon: BookOpen, label: 'Modules complétés', value: `${completedCount}/${totalModules}`, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-500/10' },
+            { icon: BookOpen, label: 'Modules complétés (11 semaines + module IA)', value: `${completedCount}/${totalModules}`, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-500/10' },
             { icon: TrendingUp, label: 'Progression', value: `${Math.round((completedCount / totalModules) * 100)}%`, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500/10' },
             { icon: Award, label: 'Score moyen', value: `${avgScore}%`, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-500/10' },
             { icon: Brain, label: 'Quiz passés', value: `${quizAttempts?.length ?? 0}`, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-500/10' },
