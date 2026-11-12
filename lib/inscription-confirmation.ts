@@ -7,7 +7,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
-import { salutationCourriel } from '@/lib/controle-inscription';
+import { AGE_MINIMUM_EN_LIGNE, erreurDateNaissance, salutationCourriel } from '@/lib/controle-inscription';
 
 export const DUREE_LIEN_MS = 24 * 3600_000;
 
@@ -86,7 +86,7 @@ export async function mettreDeCote(dossier: DossierInscription, maintenant: Date
   return jeton;
 }
 
-export type ResultatConfirmation = 'ok' | 'expire' | 'invalide' | 'motdepasse';
+export type ResultatConfirmation = 'ok' | 'expire' | 'invalide' | 'motdepasse' | 'age';
 
 function nouveauNumeroDossier(dossier: DossierInscription): string {
   const prefixe = String(dossier.dialCode || '+243').replace(/[^0-9]/g, '') || '243';
@@ -110,6 +110,12 @@ export async function confirmerInscription(jeton: string, motDePasse: string, ma
   const dossier = attente.donnees as unknown as DossierInscription;
   if (typeof motDePasse !== 'string' || !motDePasse || motDePasse.length > MOT_DE_PASSE_LONGUEUR_MAX) return 'motdepasse';
   if (!(await bcrypt.compare(motDePasse, dossier.password))) return 'motdepasse';
+
+  // L'âge minimum en ligne est recontrôlé ici : un dossier déposé avant un changement de règle ne passe pas.
+  if (dossier.birthDate && erreurDateNaissance(String(dossier.birthDate).slice(0, 10), maintenant, AGE_MINIMUM_EN_LIGNE)) {
+    await prisma.inscriptionEnAttente.deleteMany({ where: { email: dossier.email } }).catch(() => {});
+    return 'age';
+  }
 
   // Un compte existe déjà avec cette adresse (autre lien confirmé entre-temps) : on ne crée rien de plus.
   const existant = await prisma.user.findUnique({ where: { email: dossier.email }, select: { id: true } });

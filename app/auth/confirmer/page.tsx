@@ -8,7 +8,7 @@ import { BrandMark, BrandName } from '@/components/brand-logo';
 import PasswordInput from '@/components/password-input';
 import { LEGAL } from '@/lib/legal';
 
-type Etat = 'attente' | 'envoi' | 'ok' | 'expire' | 'invalide' | 'motdepasse' | 'trop' | 'erreur';
+type Etat = 'attente' | 'envoi' | 'ok' | 'expire' | 'invalide' | 'motdepasse' | 'age' | 'trop' | 'erreur';
 
 function Confirmer() {
   const params = useSearchParams();
@@ -28,7 +28,7 @@ function Confirmer() {
         body: JSON.stringify({ jeton, motDePasse }),
       });
       const data = await res.json().catch(() => ({}));
-      const connus: Etat[] = ['ok', 'expire', 'invalide', 'motdepasse', 'trop'];
+      const connus: Etat[] = ['ok', 'expire', 'invalide', 'motdepasse', 'age', 'trop'];
       setEtat(connus.includes(data?.resultat) ? data.resultat : 'erreur');
     } catch {
       setEtat('erreur');
@@ -68,6 +68,19 @@ function Confirmer() {
           Votre dossier est enregistré. Il doit maintenant être validé par l&apos;administration : vous pourrez vous connecter dès que ce sera fait.
         </p>
         <Link href="/auth/login" className={`${bouton} mt-6`}>Aller à la page de connexion</Link>
+      </>
+    );
+  }
+
+  if (etat === 'age') {
+    return (
+      <>
+        <Clock className="mx-auto h-12 w-12 text-amber-500" />
+        <h1 className="mt-4 text-2xl font-extrabold text-foreground">Inscription en ligne impossible</h1>
+        <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+          Il faut avoir au moins 14 ans pour s&apos;inscrire en ligne. Les plus jeunes s&apos;inscrivent par leur école. Aucun compte n&apos;a été créé.
+        </p>
+        <Link href="/" className={`${bouton} mt-6`}>Retour à l&apos;accueil</Link>
       </>
     );
   }
