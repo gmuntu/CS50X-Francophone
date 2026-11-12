@@ -3,6 +3,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { Mic, MicOff, Loader2, Volume2, AlertTriangle } from 'lucide-react';
 import { useGeminiLive } from '@/hooks/useGeminiLive';
+
+// Bureau du prof hors ligne (Gemma) : même règle des deux langues qu'en ligne.
+const BILINGUE = "(Réponds en français ; donne le terme anglais de CS50 entre parenthèses quand c'est utile, ex. « boucle (loop) » ; si l'élève demande l'anglais, explique en anglais puis reviens au français ; guide par des questions.) ";
 import { detecterMode, demanderSocrateLocal, demanderSocrateSite, pcm16VersWav, prechaufferTuteur, ORDINATEUR_LOCAL, type ModeSocrate } from '@/lib/socrate-local';
 
 interface Props {
@@ -75,7 +78,7 @@ export default function VoiceTutor({ moduleId, onActive, context: given, systemP
     : status === 'error' ? 'bg-amber-600 hover:bg-amber-700'
     : 'bg-primary hover:bg-primary/90';
 
-  if (mode !== 'en-ligne') return <SocrateLocal mode={mode} context={context} moduleId={moduleId} onActive={onActive} />;
+  if (mode !== 'en-ligne') return <SocrateLocal mode={mode} context={context} moduleId={moduleId} onActive={onActive} bilingue={!systemPrompt} />;
 
   return (
     <div className="flex flex-col gap-2 p-4 rounded-2xl border border-border/80 bg-card">
@@ -105,7 +108,7 @@ export default function VoiceTutor({ moduleId, onActive, context: given, systemP
 // ---------------------------------------------------------------------------
 // Socrate vocal sur l'ordinateur SavoirIA (sans Internet) : appuyer pour parler,
 // appuyer encore pour envoyer ; Socrate répond phrase par phrase, à voix haute.
-function SocrateLocal({ mode, context, moduleId, onActive }: { mode: ModeSocrate; context: string; moduleId: number; onActive?: () => void }) {
+function SocrateLocal({ mode, context, moduleId, onActive, bilingue }: { mode: ModeSocrate; context: string; moduleId: number; onActive?: () => void; bilingue?: boolean }) {
   const [etat, setEtat] = useState<'idle' | 'listening' | 'thinking' | 'speaking'>('idle');
   const [question, setQuestion] = useState('');
   const [reponse, setReponse] = useState('');
@@ -145,7 +148,7 @@ function SocrateLocal({ mode, context, moduleId, onActive }: { mode: ModeSocrate
     try {
       // Sur l'ordinateur SavoirIA : le site lui-même (Whisper + Gemma + voix) ; sinon le petit serveur vocal local.
       await (ORDINATEUR_LOCAL ? demanderSocrateSite : demanderSocrateLocal)(
-        { audio: audioWav, contexte: context, moduleId },
+        { audio: audioWav, contexte: bilingue ? BILINGUE + context : context, moduleId },
         (q) => setQuestion(q),
         (phrase, audio) => {
           setReponse((r) => (r ? `${r} ${phrase}` : phrase));
