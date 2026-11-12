@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { tropDEssais } from '@/lib/quota';
 import { adresseIP } from '@/lib/securite';
+import { erreurDateNaissance, erreurTelephone, lireDateNaissance, telephonePropre } from '@/lib/controle-inscription';
 
 export async function POST(request: Request) {
   try {
@@ -125,13 +126,21 @@ export async function POST(request: Request) {
       if (!errorField) errorField = 'academicHonorCode';
     }
 
-    // 7. Date de naissance
+    // 7. Date de naissance : obligatoire, au format AAAA-MM-JJ ; la date enregistrée est exactement celle contrôlée.
     let parsedBirthDate: Date | null = null;
-    if (birthDate) {
-      const d = new Date(birthDate);
-      if (!isNaN(d.getTime())) {
-        parsedBirthDate = d;
-      }
+    const erreurDate = erreurDateNaissance(birthDate);
+    if (erreurDate) {
+      causes.push(`Date de naissance : ${erreurDate}`);
+      if (!errorField) errorField = 'birthDate';
+    } else {
+      parsedBirthDate = lireDateNaissance(birthDate);
+    }
+
+    // 8. Téléphone : obligatoire, chiffres seulement (avec indicatif)
+    const erreurTel = erreurTelephone(phone);
+    if (erreurTel) {
+      causes.push(`Téléphone : ${erreurTel}`);
+      if (!errorField) errorField = 'phone';
     }
 
     if (causes.length > 0) {
@@ -166,7 +175,7 @@ export async function POST(request: Request) {
         birthDate: parsedBirthDate,
         countryCode: countryCode ? String(countryCode) : null,
         dialCode: dialCode ? String(dialCode) : null,
-        phone: phone ? String(phone).trim() : null,
+        phone: telephonePropre(String(phone)),
         dossierNumber: validDossier,
         // Plus de photo à l'inscription : le visage « témoin » est pris dans l'empreinte SavoirIA (stockage privé).
         studentType: resolvedType,

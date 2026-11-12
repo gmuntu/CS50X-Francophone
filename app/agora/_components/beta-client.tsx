@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react';
 import BilingualVideo from '@/components/pwa/bilingual-video';
 import Link from 'next/link';
 import Header from '@/components/header';
+import Footer from '@/components/footer';
 import { CS50_MODULES } from '@/config/course-modules';
 import VoiceTutor from '@/components/voice-tutor/voice-tutor';
 import VoiceErrorBoundary from '@/components/voice-tutor/error-boundary';
@@ -18,9 +19,9 @@ export default function BetaClient() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Header />
-      <main className="max-w-5xl mx-auto px-4 py-8 flex flex-col gap-5">
+      <main className="flex-1 w-full max-w-5xl mx-auto px-4 py-8 flex flex-col gap-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-extrabold">🙋🏿 Demande au prof</h1>
@@ -50,6 +51,7 @@ export default function BetaClient() {
           <VoiceTutor key={moduleId} moduleId={moduleId} onActive={pauseVideo} />
         </VoiceErrorBoundary>
       </main>
+      <Footer />
     </div>
   );
 }

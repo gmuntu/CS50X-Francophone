@@ -4,12 +4,16 @@ import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { BookOpen, Award, CheckCircle, Star, ArrowRight, Code2, Brain, Shield, GraduationCap } from 'lucide-react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 import AnimatedCounter from '@/components/animated-counter';
 import { CS50_MODULES } from '@/config/course-modules';
 
 export default function CS50xLanding() {
+  // Élève déjà connecté : on lui propose de continuer, pas de s'inscrire.
+  const { status } = useSession();
+  const connecte = status === 'authenticated';
   const [heroRef, heroInView] = useInView({ triggerOnce: true, threshold: 0.1 });
   const [statsRef, statsInView] = useInView({ triggerOnce: true, threshold: 0.1 });
   const [featuresRef, featuresInView] = useInView({ triggerOnce: true, threshold: 0.1 });
@@ -79,17 +83,17 @@ export default function CS50xLanding() {
             className="flex flex-col sm:flex-row gap-4 justify-center items-center"
           >
             <Link
-              href="/auth/signup"
+              href={connecte ? '/tuteur' : '/auth/signup'}
               className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-4 px-8 rounded-2xl transition-all duration-200 shadow-lg shadow-primary/25 hover:shadow-primary/35 transform hover:-translate-y-0.5 flex items-center justify-center gap-2.5"
             >
               <BookOpen className="w-5 h-5" />
-              S'inscrire Maintenant
+              {connecte ? 'Continuer mon cours' : "S'inscrire Maintenant"}
             </Link>
             <Link
-              href="/auth/login"
+              href={connecte ? '/dashboard' : '/auth/login'}
               className="w-full sm:w-auto bg-card hover:bg-muted text-foreground font-bold py-4 px-8 rounded-2xl transition-all duration-200 border border-border/80 shadow-sm flex items-center justify-center"
             >
-              Connexion Membres
+              {connecte ? 'Mon espace' : 'Connexion Membres'}
             </Link>
           </motion.div>
         </div>
@@ -270,10 +274,10 @@ export default function CS50xLanding() {
             ))}
           </div>
           <Link
-            href="/auth/signup"
+            href={connecte ? '/tuteur' : '/auth/signup'}
             className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl bg-primary text-primary-foreground font-bold text-base sm:text-lg hover:bg-primary/90 transition-all shadow-xl shadow-primary/25 hover:-translate-y-0.5"
           >
-            Commencer Maintenant
+            {connecte ? 'Continuer mon cours' : 'Commencer Maintenant'}
             <ArrowRight className="w-5 h-5" />
           </Link>
         </div>
