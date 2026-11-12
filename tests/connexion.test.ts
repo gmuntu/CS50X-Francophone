@@ -71,9 +71,14 @@ describe('Connexion', () => {
     expect(await verifier('eleve@test.local', 'BonMotDePasse-2026')).toBeNull();
   });
 
-  it('candidat libre en attente de paiement : refusé', async () => {
+  it('candidat libre en attente de paiement : refusé, avec un message dédié', async () => {
     fausseBase.user.findFirst.mockResolvedValue(compte({ status: 'PENDING' }));
-    expect(await verifier('eleve@test.local', 'BonMotDePasse-2026')).toBeNull();
+    await expect(verifier('eleve@test.local', 'BonMotDePasse-2026')).rejects.toMatchObject({ code: 'en_attente' });
+  });
+
+  it('compte en attente et mauvais mot de passe : refus ordinaire, rien n’est révélé', async () => {
+    fausseBase.user.findFirst.mockResolvedValue(compte({ status: 'PENDING' }));
+    expect(await verifier('eleve@test.local', 'MauvaisMotDePasse')).toBeNull();
   });
 
   it('accès testeur expiré : message dédié', async () => {

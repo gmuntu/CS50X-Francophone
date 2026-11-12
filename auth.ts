@@ -22,6 +22,11 @@ class AccessExpired extends CredentialsSignin {
   code = 'acces_expire';
 }
 
+/** Compte inscrit mais pas encore validé par l'administration (code « en_attente »). Levée seulement après un mot de passe correct. */
+class EnAttente extends CredentialsSignin {
+  code = 'en_attente';
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   // Aucune clé par défaut : AUTH_SECRET doit être défini dans Vercel.
   secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
@@ -79,7 +84,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!isValid) return null;
         if (user.status === 'SUSPENDED') return null;
         // Candidat libre : accès seulement après validation du paiement par l'administration
-        if (user.status === 'PENDING' && user.role !== 'ADMIN') return null;
+        if (user.status === 'PENDING' && user.role !== 'ADMIN') throw new EnAttente();
         // Accès testeur arrivé à expiration
         if (user.accessExpiresAt && new Date(user.accessExpiresAt).getTime() <= Date.now()) {
           throw new AccessExpired();

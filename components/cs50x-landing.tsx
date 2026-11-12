@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
-import { BookOpen, Users, Award, TrendingUp, CheckCircle, Star, ArrowRight, Code2, Brain, Shield, GraduationCap } from 'lucide-react';
+import { BookOpen, Award, CheckCircle, Star, ArrowRight, Code2, Brain, Shield, GraduationCap } from 'lucide-react';
 import Link from 'next/link';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
@@ -104,12 +104,12 @@ export default function CS50xLanding() {
         className="py-16 border-y border-border/80 bg-card/40 backdrop-blur-sm"
       >
         <div className="max-w-6xl mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             {[
-              { icon: Users, value: 5000, label: 'Étudiants Inscrits', suffix: '+' },
+              // Uniquement des faits vérifiables : aucun chiffre d'audience ou de satisfaction inventé.
               { icon: BookOpen, value: 11, label: 'Semaines de Cours', suffix: '' },
-              { icon: Award, value: 98, label: 'Taux de Satisfaction', suffix: '%' },
-              { icon: TrendingUp, value: 85, label: 'Taux de Complétion', suffix: '%' },
+              { icon: Code2, value: 35, label: 'Exercices officiels CS50', suffix: '' },
+              { icon: Award, value: 100, label: 'En français', suffix: ' %' },
             ]?.map?.((stat: any, i: number) => (
               <motion.div
                 key={i}

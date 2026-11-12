@@ -14,6 +14,10 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  // Arrivée juste après l'inscription : on rassure l'élève, son compte attend la validation.
+  const info = searchParams?.get('registered') === 'true'
+    ? "Votre dossier est bien enregistré. Il doit maintenant être validé par l'administration : vous pourrez vous connecter dès que ce sera fait."
+    : '';
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
   const [providersStatus, setProvidersStatus] = useState<{ hasGoogleOAuth: boolean; hasGithubOAuth: boolean }>({
@@ -67,6 +71,8 @@ function LoginForm() {
         console.error('Erreur authentification:', result.error);
         if ((result as any).code === 'acces_expire') {
           setError("Votre accès testeur est terminé. Merci pour votre participation ! Contactez l'équipe SavoirIA si vous souhaitez le prolonger.");
+        } else if ((result as any).code === 'en_attente') {
+          setError("Votre inscription est en cours de validation par l'administration. Vous pourrez vous connecter dès qu'elle sera validée.");
         } else if (result.error === 'Configuration') {
           setError('Erreur de configuration réseau. Veuillez actualiser la page et réessayer.');
         } else {
@@ -174,6 +180,11 @@ function LoginForm() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {info && !error && (
+              <div role="status" className="p-3 text-sm text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                {info}
+              </div>
+            )}
             {error && (
               <div className="p-3 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
