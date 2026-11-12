@@ -17,6 +17,7 @@ import {
 import Link from 'next/link';
 import { enregistrementVersPcm16 as toPcm16 } from '@/lib/audio-pcm';
 import { sanitizeForVoice } from '@/lib/voix-texte';
+import { formulesLisibles } from '@/lib/formules';
 
 type DayType = 'MONDAY' | 'WEDNESDAY' | 'FRIDAY';
 
@@ -88,7 +89,7 @@ const MessageMarkdown = React.memo(function MessageMarkdown({ content }: { conte
         },
       }}
     >
-      {content}
+      {formulesLisibles(content)}
     </ReactMarkdown>  );
 });
 

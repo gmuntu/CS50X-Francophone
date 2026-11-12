@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import GoogleAuthModal from '@/components/google-auth-modal';
+import { erreurDateNaissance, erreurTelephone } from '@/lib/controle-inscription';
 import {
   AFRICAN_COUNTRIES, CountryOption, generateDossierNumber,
   PARTNER_UNIVERSITIES
@@ -133,10 +134,22 @@ export default function SignupPage() {
       if (!formData.phone.trim()) {
         stepCauses.push("Téléphone manquant : Le numéro de téléphone avec indicatif est requis.");
         localFieldErrors.phone = "Le téléphone est obligatoire.";
+      } else {
+        const erreurTel = erreurTelephone(formData.phone);
+        if (erreurTel) {
+          stepCauses.push(`Téléphone : ${erreurTel}`);
+          localFieldErrors.phone = erreurTel;
+        }
       }
       if (!formData.birthDate) {
         stepCauses.push("Date de naissance manquante : Veuillez indiquer votre date de naissance.");
         localFieldErrors.birthDate = "La date de naissance est obligatoire.";
+      } else {
+        const erreurDate = erreurDateNaissance(formData.birthDate);
+        if (erreurDate) {
+          stepCauses.push(`Date de naissance : ${erreurDate}`);
+          localFieldErrors.birthDate = erreurDate;
+        }
       }
     }
 

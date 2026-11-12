@@ -254,7 +254,7 @@ export default function SalleApprofondir({ moduleId, prepare, libelleSemaine }: 
         ) : (
           <>
             <div className="mb-2 flex flex-wrap items-start gap-3">
-              <div className="min-w-0 flex-1">
+              <div className="w-full min-w-0 sm:w-auto sm:flex-1">
                 <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: AMBRE }}>
                   Notion {index + 1} sur {contenu.notions.length} · {LIBELLE_TYPE[vue.type]}{notion.page ? ` · ${notion.page}` : ''}
                 </p>
@@ -285,7 +285,7 @@ export default function SalleApprofondir({ moduleId, prepare, libelleSemaine }: 
                 </button>
               </div>
               {etapeActive && (
-                <p key={actif} className="classe-apparait min-w-0 flex-1 text-sm leading-snug text-white">
+                <p key={actif} className="classe-apparait w-full min-w-0 text-sm leading-snug text-white sm:w-auto sm:flex-1">
                   <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full text-xs font-extrabold" style={{ background: AMBRE, color: ENCRE }}>{actif + 1}</span>
                   {etapeActive.label && <strong style={{ color: BLEU }}>{etapeActive.label}</strong>}
                   {etapeActive.label ? ` — ${etapeActive.detail}` : etapeActive.detail}

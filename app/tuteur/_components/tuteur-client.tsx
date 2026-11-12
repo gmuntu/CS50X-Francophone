@@ -10,6 +10,8 @@ import CourseAssistant from '@/components/course-assistant';
 import BilingualVideo from '@/components/pwa/bilingual-video';
 import TutorMessageCard from '@/components/tutor-message-card';
 import { CS50_MODULES } from '@/config/course-modules';
+import Footer from '@/components/footer';
+import { formulesLisibles } from '@/lib/formules';
 import {
   BarChart3, BookOpen, Lightbulb, Clock, Code2, Search, Zap, Loader2,
   CheckCircle2, GraduationCap,
@@ -291,7 +293,7 @@ export default function TuteurClient({ role, contentByModule }: Props) {
                         },
                       }}
                     >
-                      {videoSummary.fullMarkdown || videoSummary.overview}
+                      {formulesLisibles(videoSummary.fullMarkdown || videoSummary.overview)}
                     </ReactMarkdown>
                   </div>
                 </div>
@@ -391,6 +393,7 @@ export default function TuteurClient({ role, contentByModule }: Props) {
           </aside>
         )}
       </div>
+      <Footer />
     </div>
   );
 }

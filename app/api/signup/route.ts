@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { tropDEssais } from '@/lib/quota';
 import { adresseIP } from '@/lib/securite';
+import { erreurDateNaissance, erreurTelephone } from '@/lib/controle-inscription';
 
 export async function POST(request: Request) {
   try {
@@ -128,10 +129,20 @@ export async function POST(request: Request) {
     // 7. Date de naissance
     let parsedBirthDate: Date | null = null;
     if (birthDate) {
-      const d = new Date(birthDate);
-      if (!isNaN(d.getTime())) {
-        parsedBirthDate = d;
+      const erreurDate = erreurDateNaissance(String(birthDate));
+      if (erreurDate) {
+        causes.push(`Date de naissance : ${erreurDate}`);
+        if (!errorField) errorField = 'birthDate';
+      } else {
+        parsedBirthDate = new Date(birthDate);
       }
+    }
+
+    // 8. Téléphone : chiffres seulement (avec indicatif)
+    const erreurTel = erreurTelephone(phone ? String(phone) : '');
+    if (erreurTel) {
+      causes.push(`Téléphone : ${erreurTel}`);
+      if (!errorField) errorField = 'phone';
     }
 
     if (causes.length > 0) {

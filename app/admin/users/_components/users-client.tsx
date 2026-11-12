@@ -556,7 +556,7 @@ export default function UsersClient({ users: initialUsers }: Props) {
                           {u.birthDate && (
                             <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
                               <Calendar className="w-3 h-3" />
-                              {new Date(u.birthDate).toLocaleDateString('fr-FR')}
+                              {new Date(u.birthDate).toLocaleDateString('fr-FR', { timeZone: 'UTC' })}
                             </p>
                           )}
                         </td>
@@ -1359,7 +1359,7 @@ export default function UsersClient({ users: initialUsers }: Props) {
                   <div className="flex justify-between py-1.5 border-b border-border">
                     <span className="text-muted-foreground">Date de naissance :</span>
                     <span className="font-bold text-foreground">
-                      {new Date(detailUser.birthDate).toLocaleDateString('fr-FR')}
+                      {new Date(detailUser.birthDate).toLocaleDateString('fr-FR', { timeZone: 'UTC' })}
                     </span>
                   </div>
                 )}
