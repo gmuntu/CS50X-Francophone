@@ -7,6 +7,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
+import { premiereInscription } from '@/lib/inscriptions';
 import { AGE_MINIMUM_EN_LIGNE, erreurDateNaissance, salutationCourriel } from '@/lib/controle-inscription';
 
 export const DUREE_LIEN_MS = 24 * 3600_000;
@@ -32,7 +33,9 @@ export interface DossierInscription {
   university: string | null;
   paymentStatus: string;
   paymentMethod: string;
-  paymentAmount: number;
+  paymentAmount: number | null; // null = prix à convenir
+  /** Formation demandée ; absente dans les dossiers déposés avant les formations multiples (CS50x). */
+  formation?: string;
 }
 
 export function hacherJeton(jeton: string): string {
@@ -69,6 +72,13 @@ export function compteDepuisDossier(d: DossierInscription) {
     paymentStatus: d.paymentStatus,
     paymentMethod: d.paymentMethod,
     paymentAmount: d.paymentAmount,
+    // L'inscription à la formation demandée est créée avec le compte, en attente comme lui.
+    inscriptions: {
+      create: premiereInscription({
+        formation: d.formation, statutCompte: 'PENDING', studentType: d.studentType, university: d.university,
+        paymentStatus: d.paymentStatus, paymentMethod: d.paymentMethod, paymentAmount: d.paymentAmount, courseSessionId: d.courseSessionId,
+      }),
+    },
   };
 }
 

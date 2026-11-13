@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { generateDossierNumber } from '@/config/african-countries';
 import { moyenPaiementConnu, statutPaiementConnu } from '@/lib/paiement';
+import { premiereInscription, refleterCompteSurInscription } from '@/lib/inscriptions';
 
 const SUPER_ADMIN_EMAILS = ['gmuntusip@gmail.com', 'admin@cs50x-francophone.com'];
 const isSuperAdminEmail = (email: string | null | undefined) => !!email && SUPER_ADMIN_EMAILS.includes(email.toLowerCase().trim());
@@ -164,6 +165,8 @@ export async function POST(request: NextRequest) {
     // 9. Hachage du mot de passe
     const hashedPassword = await bcrypt.hash(rawPassword, 10);
 
+    const roleFinal = ['STUDENT', 'INSTRUCTOR', 'ADMIN'].includes(role) ? role : 'STUDENT';
+    const statutFinal = ['ACTIVE', 'SUSPENDED', 'PENDING'].includes(status) ? status : 'ACTIVE';
     const created = await prisma.user.create({
       data: {
         name: finalFullName,
@@ -171,8 +174,8 @@ export async function POST(request: NextRequest) {
         lastName: finalLastName || null,
         email: normalizedEmail,
         password: hashedPassword,
-        role: ['STUDENT', 'INSTRUCTOR', 'ADMIN'].includes(role) ? role : 'STUDENT',
-        status: ['ACTIVE', 'SUSPENDED', 'PENDING'].includes(status) ? status : 'ACTIVE',
+        role: roleFinal,
+        status: statutFinal,
         phone: phone ? String(phone).trim() : null,
         countryCode: countryCode ? String(countryCode).trim() : null,
         dialCode: dialCode ? String(dialCode).trim() : null,
@@ -183,6 +186,8 @@ export async function POST(request: NextRequest) {
         paymentStatus: finalPaymentStatus,
         paymentMethod: finalPaymentMethod || null,
         paymentAmount: finalAmount,
+        // Un élève créé par l'admin est inscrit à CS50x (le personnel n'a pas d'inscription).
+        ...(roleFinal === 'STUDENT' ? { inscriptions: { create: premiereInscription({ statutCompte: statutFinal, studentType: finalStudentType, university: isUniversitaire ? String(university).trim() : null, paymentStatus: finalPaymentStatus, paymentMethod: finalPaymentMethod || null, paymentAmount: finalAmount }) } } : {}),
       },
       select: {
         id: true,
@@ -412,6 +417,9 @@ export async function PUT(request: NextRequest) {
         updatedAt: true,
       },
     });
+
+    // Transition : l'inscription unique de l'élève suit son compte (validation, paiement).
+    await refleterCompteSurInscription(userId).catch((e) => console.error('Inscription non mise à jour :', e));
 
     return NextResponse.json({ success: true, user: JSON.parse(JSON.stringify(updated)) });
   } catch (error: any) {

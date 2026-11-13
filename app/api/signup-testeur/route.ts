@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma';
 import { normalizeCode, formatDateFr } from '@/lib/tester-codes';
 import { tropDEssais } from '@/lib/quota';
 import { adresseIP } from '@/lib/securite';
+import { premiereInscription } from '@/lib/inscriptions';
 
 /**
  * Inscription express d'un testeur avec un code TEST-XXXX-XXXX.
@@ -75,6 +76,8 @@ export async function POST(request: Request) {
         phone: local || null,
         testerCodeId: tc.id,
         accessExpiresAt: tc.expiresAt,
+        // Les testeurs sont rattachés à CS50x, comme les comptes d'avant les formations multiples.
+        inscriptions: { create: premiereInscription({ statutCompte: 'ACTIVE', studentType: 'TESTEUR', paymentStatus: 'EXEMPTED', paymentMethod: 'TESTEUR', paymentAmount: 0 }) },
       },
     });
 

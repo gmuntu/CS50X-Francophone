@@ -15,6 +15,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import GoogleAuthModal from '@/components/google-auth-modal';
 import { AGE_MINIMUM_ECOLE, AGE_MINIMUM_EN_LIGNE, erreurDateNaissance, erreurTelephone } from '@/lib/controle-inscription';
+import { conventionPossible, FORMATION_PAR_DEFAUT, FORMATIONS_OUVERTES, formationOuverte, libellePrix } from '@/lib/formations';
 
 // Poste d'école hors ligne : l'âge minimum y est plus bas qu'en ligne (l'élève est encadré).
 const POSTE_ECOLE = process.env.NEXT_PUBLIC_SAVOIRIA_LOCAL === '1';
@@ -57,6 +58,7 @@ export default function SignupPage() {
     dialCode: defaultCountry.dialCode,
     phone: '',
     dossierNumber: generateDossierNumber(defaultCountry.prefixDossier),
+    formation: FORMATION_PAR_DEFAUT,
     studentType: 'LIBRE' as 'LIBRE' | 'UNIVERSITAIRE',
     university: PARTNER_UNIVERSITIES[0],
     customUniversity: '',
@@ -98,6 +100,17 @@ export default function SignupPage() {
       .then((d) => { if (d?.ageMinimum === AGE_MINIMUM_ECOLE || d?.ageMinimum === AGE_MINIMUM_EN_LIGNE) setAgeMinimum(d.ageMinimum); })
       .catch(() => {});
   }, []);
+
+  // Formation choisie : celle de l'adresse (/auth/signup?formation=…) si elle est ouverte, sinon CS50x.
+  useEffect(() => {
+    const demandee = formationOuverte(new URLSearchParams(window.location.search).get('formation'));
+    if (demandee) queueMicrotask(() => setFormData((prev) => ({ ...prev, formation: demandee.id, studentType: conventionPossible(demandee.id) ? prev.studentType : 'LIBRE' })));
+  }, []);
+  const formation = formationOuverte(formData.formation) ?? FORMATIONS_OUVERTES[0];
+  const convention = conventionPossible(formation.id);
+  const prixLibre = libellePrix(formation.prixUsd);
+  const choisirFormation = (id: string) =>
+    setFormData((prev) => ({ ...prev, formation: id, studentType: conventionPossible(id) ? prev.studentType : 'LIBRE' }));
 
   useEffect(() => {
     fetch('/api/auth/providers-status')
@@ -272,9 +285,9 @@ export default function SignupPage() {
           dossierNumber: formData.dossierNumber,
           partnerCode: formData.studentType === 'UNIVERSITAIRE' ? formData.partnerCode.trim() : undefined,
           studentType: formData.studentType,
+          formation: formData.formation,
           university: resolvedUniversity,
           paymentMethod: formData.studentType === 'UNIVERSITAIRE' ? 'EXEMPT_UNIVERSITY' : 'A_CONVENIR',
-          paymentAmount: formData.studentType === 'UNIVERSITAIRE' ? 0 : 500,
           academicHonorCodeAccepted: formData.academicHonorCodeAccepted,
         }),
       });
@@ -358,7 +371,7 @@ export default function SignupPage() {
 
           <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold border border-primary/20">
             <GraduationCap className="w-3.5 h-3.5" />
-            Accompagnement vers le certificat CS50x
+            Accompagnement vers le certificat {formation.certificat}
           </div>
         </div>
       </header>
@@ -645,7 +658,7 @@ export default function SignupPage() {
 
                   <div className="p-3.5 rounded-xl bg-muted/40 border border-border/60 text-xs text-muted-foreground space-y-2 leading-relaxed">
                     <p>
-                      <strong className="text-foreground">1. Travaux Originaux :</strong> Tout code soumis sur CS50x doit être rédigé personnellement par l'étudiant.
+                      <strong className="text-foreground">1. Travaux Originaux :</strong> Tout travail remis sur SavoirIA doit être réalisé personnellement par l'étudiant.
                     </p>
                     <p>
                       <strong className="text-foreground">2. Règle Anti-Plagiat :</strong> L'emprunt ou la copie de code tiers disponible en ligne ou produit par autrui est formellement interdit et sanctionné par l'exclusion.
@@ -697,8 +710,35 @@ export default function SignupPage() {
                   </p>
                 </div>
 
+                {/* Choix de la formation */}
+                <div className="space-y-2">
+                  <h3 className="text-xs font-bold text-foreground uppercase tracking-wider">Votre formation</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3" role="radiogroup" aria-label="Formation choisie">
+                    {FORMATIONS_OUVERTES.map((f) => {
+                      const choisie = f.id === formation.id;
+                      return (
+                        <button
+                          key={f.id}
+                          type="button"
+                          role="radio"
+                          aria-checked={choisie}
+                          onClick={() => choisirFormation(f.id)}
+                          className={`p-4 rounded-2xl border-2 text-left transition-all ${choisie ? 'border-primary bg-primary/5 shadow-md shadow-primary/10' : 'border-border/80 hover:border-primary/40 bg-card'}`}
+                        >
+                          <span className="flex items-start justify-between gap-2">
+                            <span className="font-bold text-sm text-foreground">{f.titre}</span>
+                            <span className="text-sm font-black text-foreground whitespace-nowrap">{libellePrix(f.prixUsd)}</span>
+                          </span>
+                          <span className="block text-xs text-muted-foreground mt-1">Prépare au certificat {f.certificat} · {f.note}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">Vous pourrez demander une autre formation plus tard, depuis votre espace.</p>
+                </div>
+
                 {/* Sélecteur de typologie d'étudiant */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className={`grid grid-cols-1 ${convention ? 'sm:grid-cols-2' : ''} gap-4`}>
                   {/* Option 1 : Candidat Libre (500 USD) */}
                   <div
                     onClick={() => updateField('studentType', 'LIBRE')}
@@ -713,11 +753,13 @@ export default function SignupPage() {
                         <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
                           Autonome
                         </span>
-                        <span className="text-lg font-black text-foreground">500 USD</span>
+                        <span className="text-lg font-black text-foreground">{prixLibre}</span>
                       </div>
                       <h3 className="font-bold text-sm text-foreground">Candidat Libre</h3>
                       <p className="text-xs text-muted-foreground leading-relaxed">
-                        Accès permanent aux 11 modules CS50, tuteur Socrate IA illimité, correction de devoirs et accompagnement jusqu'au certificat CS50x (délivré gratuitement par CS50).
+                        {formation.id === 'cs50x'
+                          ? "Accès permanent aux 11 modules CS50, tuteur Socrate IA illimité, correction de devoirs et accompagnement jusqu'au certificat CS50x (délivré gratuitement par CS50)."
+                          : `Accès à la formation « ${formation.titre} » (${formation.note}) et accompagnement vers le certificat ${formation.certificat}.`}
                       </p>
                     </div>
 
@@ -729,8 +771,8 @@ export default function SignupPage() {
                     </div>
                   </div>
 
-                  {/* Option 2 : Étudiant Universitaire Partenaire (0 USD) */}
-                  <div
+                  {/* Option 2 : Étudiant Universitaire Partenaire (0 USD) — seulement pour la formation couverte par les conventions */}
+                  {convention && <div
                     onClick={() => updateField('studentType', 'UNIVERSITAIRE')}
                     className={`p-5 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between ${
                       formData.studentType === 'UNIVERSITAIRE'
@@ -757,7 +799,7 @@ export default function SignupPage() {
                         {formData.studentType === 'UNIVERSITAIRE' && <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />}
                       </span>
                     </div>
-                  </div>
+                  </div>}
                 </div>
 
                 {/* Détails pour Étudiant Universitaire */}
@@ -835,7 +877,7 @@ export default function SignupPage() {
                     className="p-5 rounded-2xl bg-card border border-border/80 space-y-4 shadow-sm"
                   >
                     <h3 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
-                      <CreditCard className="w-4 h-4 text-primary" /> Règlement des frais (500 USD)
+                      <CreditCard className="w-4 h-4 text-primary" /> Règlement des frais ({prixLibre})
                     </h3>
                     <p className="text-sm text-muted-foreground leading-relaxed">
                       Aucun paiement n'est demandé maintenant. Après votre inscription, l'administration vous contacte pour le règlement ; votre accès aux cours est ouvert une fois le paiement confirmé.
@@ -883,9 +925,9 @@ export default function SignupPage() {
                         Dossier : {formData.dossierNumber}
                       </p>
                       <p className="text-[11px] text-muted-foreground">
-                        {formData.studentType === 'UNIVERSITAIRE'
+                        {formation.titre} · {formData.studentType === 'UNIVERSITAIRE'
                           ? `Partenariat : ${formData.university}`
-                          : 'Candidat Libre'}
+                          : `Candidat Libre (${prixLibre})`}
                       </p>
                     </div>
                   </div>

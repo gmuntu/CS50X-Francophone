@@ -14,7 +14,7 @@ export default async function IaCoursePage() {
   const passed = session?.user?.id ? await passedWeeks(session.user.id, IA_SLUG) : new Set<number>();
   // Admin et formateurs : toutes les semaines ouvertes (pour tester et corriger).
   const staff = ['ADMIN', 'INSTRUCTOR'].includes((session?.user as any)?.role);
-  const startHref = session ? '/formations/ia-essentiels/semaine/1' : '/auth/signup';
+  const startHref = session ? '/formations/ia-essentiels/semaine/1' : '/auth/signup?formation=ia-essentiels';
 
   return (
     <div className="min-h-screen bg-background">
@@ -97,7 +97,7 @@ export default async function IaCoursePage() {
                     {done ? (
                       <Link href={`/formations/ia-essentiels/semaine/${w.n}`} className="text-sm font-bold text-green-700 dark:text-green-400">✓ Réussie · revoir</Link>
                     ) : open ? (
-                      <Link href={session ? `/formations/ia-essentiels/semaine/${w.n}` : '/auth/signup'} className="rounded-lg bg-blue-600 px-3.5 py-1.5 text-sm font-bold text-white">Commencer</Link>
+                      <Link href={session ? `/formations/ia-essentiels/semaine/${w.n}` : '/auth/signup?formation=ia-essentiels'} className="rounded-lg bg-blue-600 px-3.5 py-1.5 text-sm font-bold text-white">Commencer</Link>
                     ) : (
                       <span className="text-sm font-semibold text-muted-foreground">{w.ready ? `🔒 Après la semaine ${w.n - 1}` : '⏳ En préparation'}</span>
                     )}
