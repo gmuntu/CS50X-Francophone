@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
+import { formationDuCours, refusSiPasInscrit } from '@/lib/acces-formation';
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,6 +11,8 @@ export async function POST(request: NextRequest) {
     const userId = session?.user?.id;
     const body = await request.json();
     const { quizId, answers, takenAt, queued, eleve } = body ?? {};
+    // Quiz de CS50x : réservés aux élèves inscrits (un quiz sans compte n'est de toute façon pas enregistré).
+    if (userId) { const refus = await refusSiPasInscrit(userId, 'cs50x'); if (refus) return refus; }
 
     // Résultat fait hors ligne puis synchronisé : il doit être rattaché à un élève connecté.
     if (queued && !userId) return NextResponse.json({ error: 'Session expirée' }, { status: 401 });

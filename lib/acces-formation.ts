@@ -51,3 +51,8 @@ export async function refusSiPasInscrit(userId: string | undefined, formation: s
     status: 403, headers: { 'Content-Type': 'application/json' },
   });
 }
+
+/** Formation d'un identifiant de cours (projet final, quiz…) : « ia-essentiels », sinon CS50x. */
+export function formationDuCours(course: unknown): string {
+  return course === 'ia-essentiels' ? 'ia-essentiels' : 'cs50x';
+}

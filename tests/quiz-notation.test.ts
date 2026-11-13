@@ -10,6 +10,8 @@ const { fausseBase, session } = vi.hoisted(() => ({
 }));
 vi.mock('@/lib/prisma', () => ({ prisma: fausseBase }));
 vi.mock('@/auth', () => ({ auth: async () => session.valeur }));
+// L'accès par formation a ses propres tests (formations-menu-acces) : ici, l'élève est inscrit à CS50x.
+vi.mock('@/lib/acces-formation', () => ({ refusSiPasInscrit: async () => null }));
 
 import { POST } from '@/app/api/quiz/submit/route';
 import { noter } from '@/lib/poste-ecole';

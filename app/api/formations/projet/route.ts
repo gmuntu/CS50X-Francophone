@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { passedWeeks, isWeekOpen } from '@/lib/courses/progress';
 import { FINAL_WEEK, projectText, CS50_SLUG } from '@/lib/courses/final-project';
 import { similarity } from '@/lib/courses/similarity';
+import { formationDuCours, refusSiPasInscrit } from '@/lib/acces-formation';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,6 +25,8 @@ export async function POST(req: Request) {
   if (!userId) return NextResponse.json({ error: 'Non connecté' }, { status: 401 });
   const body = await req.json().catch(() => ({}));
   const course = String(body?.course || '');
+  // Réservé aux élèves dont l'inscription à cette formation est validée.
+  { const refus = await refusSiPasInscrit(session?.user?.id, formationDuCours(course)); if (refus) return refus; }
   const week = FINAL_WEEK[course];
   if (!week) return NextResponse.json({ error: 'Formation inconnue' }, { status: 400 });
 

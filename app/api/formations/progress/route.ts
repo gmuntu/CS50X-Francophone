@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { IA_SLUG, IA_PASS_SCORE, getIaWeek } from '@/lib/courses/ia-essentiels';
 import { passedWeeks, isWeekOpen } from '@/lib/courses/progress';
 import { quizFor } from '@/lib/courses/shuffle';
+import { formationDuCours, refusSiPasInscrit } from '@/lib/acces-formation';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,6 +19,8 @@ export async function POST(req: Request) {
   // Réponses : { indice d'origine de la question : indice d'origine de la réponse }
   const answers: Record<string, number> = body?.answers && typeof body.answers === 'object' ? body.answers : {};
   if (body?.course !== IA_SLUG) return NextResponse.json({ error: 'Formation inconnue' }, { status: 400 });
+  // Réservé aux élèves dont l'inscription à cette formation est validée.
+  { const refus = await refusSiPasInscrit(session?.user?.id, 'ia-essentiels'); if (refus) return refus; }
 
   const w = getIaWeek(week);
   if (!w?.quiz?.length) return NextResponse.json({ error: 'Quiz introuvable' }, { status: 404 });
