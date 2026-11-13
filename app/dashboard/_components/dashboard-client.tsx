@@ -12,7 +12,7 @@ import { CS50_MODULES, CS50_PROGRAMME, numeroModule } from '@/config/course-modu
 import { motion } from 'framer-motion';
 import TutorMessageCard from '@/components/tutor-message-card';
 import EncadreVersionTest from '@/components/version-test';
-import MyTrainingsCard from '@/components/home/my-trainings-card';
+import MesInscriptions from '@/components/formations/mes-inscriptions';
 import IdentityReminder from '@/components/identity/identity-reminder';
 import OfflineBanner from '@/components/home/offline-banner';
 import PaquetsPerimes from '@/components/pwa/paquets-perimes';
@@ -208,7 +208,7 @@ export default function DashboardClient({ user }: Props) {
         <OfflineBanner />
 
         <IdentityReminder />
-        <MyTrainingsCard />
+        <MesInscriptions />
 
         <TutorMessageCard />
 

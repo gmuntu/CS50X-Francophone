@@ -8,6 +8,7 @@ import { adresseIP } from '@/lib/securite';
 import { sendEmail } from '@/lib/email';
 import { LEGAL } from '@/lib/legal';
 import { compteDepuisDossier, courrielDeConfirmation, menageDossiersExpires, mettreDeCote, MOT_DE_PASSE_LONGUEUR_MAX, type DossierInscription } from '@/lib/inscription-confirmation';
+import { conventionPossible, FORMATION_PAR_DEFAUT, formationOuverte, prixInscription } from '@/lib/formations';
 import { AGE_MINIMUM_ECOLE, AGE_MINIMUM_EN_LIGNE, erreurDateNaissance, erreurTelephone, lireDateNaissance, salutationCourriel, telephonePropre } from '@/lib/controle-inscription';
 
 // Poste d'école sans Internet : aucun email ne peut partir, l'inscription crée donc le compte tout de suite.
@@ -37,6 +38,7 @@ export async function POST(request: Request) {
       phone,
       dossierNumber,
       studentType,
+      formation,
       university,
       paymentMethod,
       partnerCode,
@@ -109,8 +111,17 @@ export async function POST(request: Request) {
       }
     }
 
-    // 5. Validation du type d'étudiant et de l'université partenaire
+    // 5. Formation demandée (CS50x si rien n'est précisé), puis type d'étudiant et université partenaire
+    const formationChoisie = formationOuverte(formation ?? FORMATION_PAR_DEFAUT);
+    if (!formationChoisie) {
+      causes.push("Formation inconnue : choisissez une formation ouverte aux inscriptions.");
+      if (!errorField) errorField = 'formation';
+    }
     const resolvedType = studentType === 'UNIVERSITAIRE' ? 'UNIVERSITAIRE' : 'LIBRE';
+    if (resolvedType === 'UNIVERSITAIRE' && formationChoisie && !conventionPossible(formationChoisie.id)) {
+      causes.push("Bourse universitaire non disponible : elle n'est pas proposée pour cette formation. Inscrivez-vous comme candidat libre.");
+      if (!errorField) errorField = 'studentType';
+    }
     let resolvedUniversity = university ? String(university).trim() : null;
     if (resolvedType === 'UNIVERSITAIRE' && !resolvedUniversity) {
       causes.push("Université partenaire obligatoire : Pour un étudiant sous convention de partenariat, veuillez spécifier votre université.");
@@ -196,7 +207,7 @@ export async function POST(request: Request) {
     }
     const resolvedPaymentStatus = resolvedType === 'UNIVERSITAIRE' ? 'EXEMPTED' : 'PENDING';
     // Montant fixé par le serveur, jamais par le navigateur
-    const resolvedPaymentAmount = resolvedType === 'UNIVERSITAIRE' ? 0 : Number(process.env.COURSE_PRICE_USD || 500);
+    const resolvedPaymentAmount = prixInscription(formationChoisie!, resolvedType, process.env.COURSE_PRICE_USD);
 
     const dossier: DossierInscription = {
       email: trimmedEmail,
@@ -217,6 +228,7 @@ export async function POST(request: Request) {
       paymentStatus: resolvedPaymentStatus,
       paymentMethod: paymentMethod ? String(paymentMethod) : (resolvedType === 'UNIVERSITAIRE' ? 'EXEMPT_UNIVERSITY' : 'MPESA'),
       paymentAmount: resolvedPaymentAmount,
+      formation: formationChoisie!.id,
     };
 
     if (HORS_LIGNE) {

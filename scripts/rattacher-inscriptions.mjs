@@ -2,12 +2,17 @@
 // - N'écrit QUE dans InscriptionFormation : la table des comptes (User) n'est jamais modifiée.
 // - Peut être relancé sans risque : il n'ajoute que ce qui manque.
 // - Règle : un élève sans aucune inscription est un élève d'avant les formations multiples, donc un élève de CS50x.
-// - Pendant la transition (tant que l'admin écrit encore sur le compte), l'inscription CS50x est recopiée du compte
-//   à chaque déploiement. À couper (RECOPIER_DEPUIS_LE_COMPTE = false) quand l'admin validera par formation.
+// - Pendant la transition (tant que l'admin écrit encore sur le compte), l'inscription d'un élève qui n'en a QU'UNE
+//   est recopiée du compte à chaque déploiement. Un élève qui a plusieurs inscriptions n'est jamais touché : une
+//   formation ajoutée depuis son espace ne doit pas être validée toute seule.
+//   À couper (RECOPIER_DEPUIS_LE_COMPTE = false) quand l'admin validera par formation.
 import { PrismaClient } from '@prisma/client';
 
 export const FORMATION_HISTORIQUE = 'cs50x';
 const RECOPIER_DEPUIS_LE_COMPTE = true;
+
+// Élève qui n'a qu'une seule inscription (celle de son compte).
+const UNE_SEULE = `(SELECT count(*) FROM "InscriptionFormation" x WHERE x."userId" = u.id) = 1`;
 
 // Statut du compte -> statut de l'inscription.
 const STATUT = `CASE u.status::text WHEN 'ACTIVE' THEN 'VALIDEE' WHEN 'SUSPENDED' THEN 'SUSPENDUE' ELSE 'EN_ATTENTE' END`;
@@ -25,7 +30,7 @@ export async function rattacherInscriptions(prisma) {
       AND NOT EXISTS (SELECT 1 FROM "InscriptionFormation" i WHERE i."userId" = u.id)
     ON CONFLICT ("userId", "formation") DO NOTHING`);
 
-  // 2. Transition : l'inscription CS50x suit le compte (validation ou paiement modifiés dans l'admin depuis le dernier déploiement).
+  // 2. Transition : l'inscription unique suit le compte (validation ou paiement modifiés dans l'admin depuis le dernier déploiement).
   let recopiees = 0;
   if (RECOPIER_DEPUIS_LE_COMPTE) {
     recopiees = await prisma.$executeRawUnsafe(`
@@ -36,7 +41,7 @@ export async function rattacherInscriptions(prisma) {
         "valideeLe" = CASE WHEN u.status::text = 'ACTIVE' THEN COALESCE(i."valideeLe", now()) END,
         "updatedAt" = now()
       FROM "User" u
-      WHERE u.id = i."userId" AND i."formation" = '${FORMATION_HISTORIQUE}' AND u.role::text = 'STUDENT'
+      WHERE u.id = i."userId" AND u.role::text = 'STUDENT' AND ${UNE_SEULE}
         AND (i."statut", i."studentType", i.university, i."paymentStatus", i."paymentMethod", i."paymentAmount", i."courseSessionId")
             IS DISTINCT FROM (${STATUT}, u."studentType", u.university, u."paymentStatus", u."paymentMethod", u."paymentAmount", u."courseSessionId")`);
   }
@@ -46,15 +51,15 @@ export async function rattacherInscriptions(prisma) {
 const nombres = (lignes) => Object.fromEntries(lignes.map((l) => [String(l.cle), Number(l.n)]));
 
 /**
- * Compare les comptes et les inscriptions : aucun élève sans inscription, et pour les élèves de CS50x,
- * même nombre, mêmes statuts, mêmes paiements que sur leur compte.
- * (Un élève inscrit seulement à une autre formation n'a pas d'inscription CS50x : c'est normal.)
+ * Compare les comptes et les inscriptions : aucun élève sans inscription, et pour les élèves qui n'ont
+ * qu'une inscription, même nombre, mêmes statuts, mêmes paiements que sur leur compte.
+ * (Un élève à plusieurs inscriptions est validé formation par formation : son compte n'est plus la référence.)
  */
 export async function verifierInscriptions(prisma) {
   const eleves = `FROM "User" u WHERE u.role::text = 'STUDENT'`;
-  const inscrits = `FROM "InscriptionFormation" i JOIN "User" u ON u.id = i."userId" WHERE u.role::text = 'STUDENT' AND i."formation" = '${FORMATION_HISTORIQUE}'`;
-  // Comptes des élèves de CS50x (ceux qui ont une inscription CS50x).
-  const elevesCs50x = `${eleves} AND EXISTS (SELECT 1 FROM "InscriptionFormation" c WHERE c."userId" = u.id AND c."formation" = '${FORMATION_HISTORIQUE}')`;
+  const inscrits = `FROM "InscriptionFormation" i JOIN "User" u ON u.id = i."userId" WHERE u.role::text = 'STUDENT' AND ${UNE_SEULE}`;
+  // Comptes des élèves qui n'ont qu'une inscription : elle doit être la copie exacte de leur compte.
+  const elevesCs50x = `${eleves} AND ${UNE_SEULE}`;
   const q = (sql) => prisma.$queryRawUnsafe(sql);
   const total = Number((await q(`SELECT count(*)::int AS n ${eleves}`))[0].n);
   const totalCs50x = Number((await q(`SELECT count(*)::int AS n ${elevesCs50x}`))[0].n);
@@ -62,8 +67,10 @@ export async function verifierInscriptions(prisma) {
   const rapport = {
     eleves: total,
     elevesSansInscription: sansInscription,
-    elevesCs50x: totalCs50x,
-    inscriptionsCs50x: Number((await q(`SELECT count(*)::int AS n ${inscrits}`))[0].n),
+    elevesAUneInscription: totalCs50x,
+    elevesAPlusieursInscriptions: total - sansInscription - totalCs50x,
+    parFormation: nombres(await q(`SELECT i."formation" AS cle, count(*)::int AS n FROM "InscriptionFormation" i GROUP BY 1`)),
+    inscriptionsUniques: Number((await q(`SELECT count(*)::int AS n ${inscrits}`))[0].n),
     statutsComptes: nombres(await q(`SELECT ${STATUT} AS cle, count(*)::int AS n ${elevesCs50x} GROUP BY 1`)),
     statutsInscriptions: nombres(await q(`SELECT i."statut" AS cle, count(*)::int AS n ${inscrits} GROUP BY 1`)),
     paiementsComptes: nombres(await q(`SELECT u."paymentStatus" AS cle, count(*)::int AS n ${elevesCs50x} GROUP BY 1`)),
@@ -79,7 +86,7 @@ export async function verifierInscriptions(prisma) {
   const erreurs = [];
   if (rapport.elevesSansInscription !== 0) erreurs.push(`${rapport.elevesSansInscription} élève(s) sans inscription`);
   if (RECOPIER_DEPUIS_LE_COMPTE) {
-    if (rapport.inscriptionsCs50x !== totalCs50x) erreurs.push(`${totalCs50x} élèves de CS50x mais ${rapport.inscriptionsCs50x} inscriptions CS50x`);
+    if (rapport.inscriptionsUniques !== totalCs50x) erreurs.push(`${totalCs50x} élèves à une inscription mais ${rapport.inscriptionsUniques} inscriptions`);
     if (!pareil(rapport.statutsComptes, rapport.statutsInscriptions)) erreurs.push('les statuts ne correspondent pas');
     if (!pareil(rapport.paiementsComptes, rapport.paiementsInscriptions)) erreurs.push('les statuts de paiement ne correspondent pas');
     if (Math.abs(rapport.montantComptes - rapport.montantInscriptions) > 0.01) erreurs.push('les montants ne correspondent pas');
@@ -103,7 +110,7 @@ export async function rattacherEtVerifier() {
       ajoutees += encore.ajoutees; recopiees += encore.recopiees;
       ({ rapport, erreurs } = await verifierInscriptions(prisma));
     }
-    console.log(`[inscriptions] ${ajoutees} inscription(s) CS50x ajoutée(s), ${recopiees} mise(s) à jour depuis le compte.`);
+    console.log(`[inscriptions] ${ajoutees} inscription(s) CS50x ajoutée(s) pour des élèves sans inscription, ${recopiees} mise(s) à jour depuis le compte.`);
     console.log(`[inscriptions] Comptes : ${comptesAvant[0].n} avant, ${comptesApres[0].n} après (table des comptes non modifiée : ${String(comptesAvant[0].maj) === String(comptesApres[0].maj) ? 'oui' : 'NON'}).`);
     console.log('[inscriptions] Vérification :', JSON.stringify(rapport));
     if (erreurs.length) { console.error('[inscriptions] ÉCART : ' + erreurs.join(' ; ')); return false; }

@@ -14,6 +14,21 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import EditUserModal from './edit-user-modal';
 import { moyenPaiementFr, resumePaiement, type TonPaiement } from '@/lib/paiement';
+import { libellePrix, statutInscriptionFr, titreFormation } from '@/lib/formations';
+
+/** Formations demandées par un élève, avec le statut et le montant de chacune (avant de valider un compte). */
+function ListeFormations({ inscriptions }: { inscriptions?: { formation: string; statut: string; paymentAmount: number | null }[] }) {
+  if (!inscriptions?.length) return null;
+  return (
+    <span className="mt-1 flex flex-col gap-0.5">
+      {inscriptions.map((i) => (
+        <span key={i.formation} className="text-[11px] font-semibold text-foreground">
+          {titreFormation(i.formation)} · {libellePrix(i.paymentAmount)} · <span className="text-muted-foreground font-normal">{statutInscriptionFr(i.statut)}</span>
+        </span>
+      ))}
+    </span>
+  );
+}
 
 const TON_PAIEMENT: Record<TonPaiement, string> = {
   ok: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800',
@@ -48,6 +63,7 @@ interface UserItem {
   paymentStatus?: string;
   paymentMethod?: string | null;
   paymentAmount?: number | null;
+  inscriptions?: { formation: string; statut: string; paymentAmount: number | null }[];
   createdAt: string;
 }
 
@@ -601,7 +617,7 @@ export default function UsersClient({ users: initialUsers }: Props) {
                           ) : (
                             <div>
                               <span className="inline-flex items-center gap-1 text-xs font-bold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 px-2 py-0.5 rounded-full">
-                                <CreditCard className="w-3 h-3" /> Étudiant Libre (500$)
+                                <CreditCard className="w-3 h-3" /> Étudiant Libre ({libellePrix(u.paymentAmount)})
                               </span>
                               {u.paymentMethod && (
                                 <p className="text-[11px] text-muted-foreground mt-0.5">
@@ -612,11 +628,12 @@ export default function UsersClient({ users: initialUsers }: Props) {
                           )}
                         </td>
 
-                        {/* Paiement */}
+                        {/* Paiement et formations demandées */}
                         <td className="py-3 px-4">
                           <span className={`text-xs font-bold px-2 py-0.5 rounded-lg border ${TON_PAIEMENT[resumePaiement(u).ton]}`}>
                             {resumePaiement(u).texte}
                           </span>
+                          <ListeFormations inscriptions={u.inscriptions} />
                         </td>
 
                         {/* Actions */}
@@ -1353,6 +1370,10 @@ export default function UsersClient({ users: initialUsers }: Props) {
                     </span>
                   </div>
                 )}
+                <div className="flex justify-between gap-3 py-1.5 border-b border-border">
+                  <span className="text-muted-foreground">Formations :</span>
+                  <span className="text-right"><ListeFormations inscriptions={detailUser.inscriptions} /></span>
+                </div>
                 <div className="flex justify-between py-1.5 border-b border-border">
                   <span className="text-muted-foreground">Paiement :</span>
                   <span className="font-bold text-foreground">
