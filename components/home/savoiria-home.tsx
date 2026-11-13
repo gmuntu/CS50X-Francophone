@@ -1,17 +1,9 @@
 import Link from 'next/link';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
-import NotifyButton from '@/components/home/notify-button';
 import OfflineBanner from '@/components/home/offline-banner';
 import ReadyCourses from '@/components/home/ready-courses';
-import { TRACKS, DISCLAIMER } from '@/lib/catalog';
-
-const FEATURES = [
-  { title: 'Tuteur Socrate', desc: 'Écrit et vocal · WhatsApp à venir' },
-  { title: 'Hors ligne', desc: 'Résumés, podcasts et quiz sans Internet' },
-  { title: 'Voix africaines', desc: "Podcasts Socrate et l'étudiante" },
-  { title: 'Un seul compte', desc: 'Toutes vos formations au même endroit' },
-];
+import Catalogue from '@/components/formations/catalogue';
 
 export default function SavoirIAHome() {
   return (
@@ -44,16 +36,7 @@ export default function SavoirIAHome() {
         </div>
       </section>
 
-      <section className="max-w-7xl mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        {FEATURES.map((f) => (
-          <div key={f.title} className="rounded-xl border border-border bg-card p-4">
-            <p className="font-bold text-foreground">{f.title}</p>
-            <p className="text-sm text-muted-foreground">{f.desc}</p>
-          </div>
-        ))}
-      </section>
-
-      <section className="max-w-7xl mx-auto px-4 pt-10 space-y-10">
+      <section className="max-w-7xl mx-auto px-4 space-y-10">
         <OfflineBanner />
         <ReadyCourses />
       </section>
@@ -62,41 +45,9 @@ export default function SavoirIAHome() {
         <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground">Toutes les formations, par parcours</h2>
         <p className="text-muted-foreground">Choisissez un métier ; chaque formation vous prépare à un certificat officiel.</p>
 
-        {TRACKS.map((track, i) => (
-          <div key={track.id} className="mt-9">
-            <div className="flex items-start gap-3 mb-3">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-sm font-bold text-white">{i + 1}</span>
-              <div>
-                <h3 className="text-lg sm:text-xl font-bold text-foreground">{track.title}</h3>
-                <p className="text-sm text-muted-foreground">{track.subtitle}</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {track.courses.map((c) => {
-                const open = c.status === 'disponible';
-                return (
-                  <div key={c.slug} className={`flex flex-col gap-1 rounded-xl border bg-card p-4 ${open ? 'border-2 border-blue-600 shadow-md' : 'border-border'}`}>
-                    <span className={`self-start rounded-full px-2 py-0.5 text-[11px] font-bold ${open ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' : 'bg-muted text-muted-foreground'}`}>
-                      {open ? 'Disponible' : 'Bientôt'}
-                    </span>
-                    <p className="mt-1 font-bold text-foreground">{c.title}</p>
-                    <p className="text-xs text-muted-foreground">Prépare au certificat · {c.certificate}</p>
-                    <p className="text-xs text-muted-foreground/70 mb-3">{c.note}</p>
-                    {open && c.href ? (
-                      <Link href={c.href} className="mt-auto rounded-lg bg-blue-600 py-2 text-center text-xs font-bold text-white hover:bg-blue-700">
-                        Commencer
-                      </Link>
-                    ) : (
-                      <NotifyButton slug={c.slug} />
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-
-        <p className="mt-12 text-xs text-muted-foreground">{DISCLAIMER}</p>
+        <div className="mt-9">
+          <Catalogue niveauTitre="h3" />
+        </div>
       </section>
 
       <Footer />

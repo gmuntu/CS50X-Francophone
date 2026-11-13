@@ -18,13 +18,12 @@ export default function Header() {
 
   const navItems = session ? [
     { label: 'Mon espace', href: '/dashboard', icon: LayoutDashboard },
-    { label: 'Mes formations', href: '/formations', icon: GraduationCap },
-    { label: 'Catalogue', href: '/#formations', icon: BookOpen },
+    { label: 'Formations', href: '/formations', icon: GraduationCap },
     { label: 'Hors ligne', href: '/hors-ligne', icon: CloudDownload, offline: true },
     ...(role === 'ADMIN' || role === 'INSTRUCTOR' ? [{ label: 'Admin', href: '/admin', icon: Shield }] : []),
   ] : [
     { label: 'Accueil', href: '/', icon: BookOpen },
-    { label: 'Catalogue', href: '/#formations', icon: GraduationCap },
+    { label: 'Formations', href: '/formations', icon: GraduationCap },
     { label: 'Hors ligne', href: '/hors-ligne', icon: CloudDownload, offline: true },
   ];
 

@@ -3,6 +3,9 @@
 
 export type CourseStatus = 'disponible' | 'bientot';
 
+/** Statut affiché sur la carte d'une formation. */
+export const LIBELLE_STATUT: Record<CourseStatus, string> = { disponible: 'Disponible', bientot: 'Bientôt disponible' };
+
 export interface CatalogCourse {
   slug: string;
   title: string;
@@ -10,6 +13,10 @@ export interface CatalogCourse {
   note: string;
   status: CourseStatus;
   href?: string;
+  /** Identifiant de la formation dans les inscriptions (table InscriptionFormation), pour les formations ouvertes. */
+  formation?: string;
+  /** Prix en dollars pour un étudiant libre ; null ou absent = à convenir. */
+  prixUsd?: number | null;
 }
 
 export interface Track {
@@ -25,7 +32,7 @@ export const TRACKS: Track[] = [
     title: "Fondamentaux de l'informatique",
     subtitle: 'Les bases solides pour tout métier du numérique.',
     courses: [
-      { slug: 'cs50x', title: 'CS50x Francophone', certificate: 'Harvard / CS50', note: '11 semaines · tuteur Socrate · hors ligne', status: 'disponible', href: '/cs50x' },
+      { slug: 'cs50x', title: 'CS50x Francophone', certificate: 'Harvard / CS50', note: '11 semaines · tuteur Socrate · hors ligne', status: 'disponible', href: '/cs50x', formation: 'cs50x', prixUsd: 500 },
       { slug: 'google-it-support', title: 'Support informatique', certificate: 'Google IT Support', note: '3 à 6 mois', status: 'bientot' },
       { slug: 'comptia-a-plus', title: 'CompTIA A+', certificate: 'CompTIA', note: '2 examens', status: 'bientot' },
       { slug: 'comptia-network-plus', title: 'CompTIA Network+', certificate: 'CompTIA', note: 'Réseaux', status: 'bientot' },
@@ -46,7 +53,7 @@ export const TRACKS: Track[] = [
     title: 'Données et intelligence artificielle',
     subtitle: "Analyser, visualiser et utiliser l'IA au travail.",
     courses: [
-      { slug: 'google-ai-essentials', title: "L'essentiel de l'IA", certificate: 'Google AI Essentials', note: '5 semaines · tuteur Socrate · hors ligne', status: 'disponible', href: '/formations/ia-essentiels' },
+      { slug: 'google-ai-essentials', title: "L'essentiel de l'IA", certificate: 'Google AI Essentials', note: '5 semaines · tuteur Socrate · hors ligne', status: 'disponible', href: '/formations/ia-essentiels', formation: 'ia-essentiels', prixUsd: null },
       { slug: 'google-data-analytics', title: 'Analyse de données', certificate: 'Google Data Analytics', note: '3 à 6 mois', status: 'bientot' },
       { slug: 'google-cloud-data', title: 'Données dans le cloud', certificate: 'Google Cloud', note: 'Intermédiaire', status: 'bientot' },
       { slug: 'power-bi', title: 'Power BI', certificate: 'Microsoft (PL-300)', note: 'Tableaux de bord', status: 'bientot' },
