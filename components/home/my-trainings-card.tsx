@@ -14,7 +14,7 @@ export default function MyTrainingsCard() {
       </div>
       <div className="flex gap-2">
         <Link href="/courses" className="rounded-lg bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700">Continuer</Link>
-        <Link href="/#formations" className="rounded-lg border border-border px-4 py-2 text-xs font-bold text-blue-700 dark:text-blue-300 hover:bg-muted">Voir le catalogue</Link>
+        <Link href="/formations" className="rounded-lg border border-border px-4 py-2 text-xs font-bold text-blue-700 dark:text-blue-300 hover:bg-muted">Voir le catalogue</Link>
       </div>
     </div>
   );

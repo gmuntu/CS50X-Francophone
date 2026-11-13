@@ -21,7 +21,7 @@ export default async function IaCoursePage() {
       <Header />
       <main className="max-w-6xl mx-auto px-4 py-6">
         <p className="text-xs text-muted-foreground mb-3">
-          <Link href="/#formations" className="hover:underline">Formations</Link> › Données et intelligence artificielle › {IA_TITLE}
+          <Link href="/formations" className="hover:underline">Formations</Link> › Données et intelligence artificielle › {IA_TITLE}
         </p>
 
         <section className="rounded-3xl border border-blue-100 dark:border-blue-900 bg-gradient-to-br from-blue-50 to-sky-50/40 dark:from-blue-950/40 dark:to-transparent p-6 sm:p-8 grid lg:grid-cols-[1fr_auto] gap-6 items-center">
