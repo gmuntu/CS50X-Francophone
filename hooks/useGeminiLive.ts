@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { CONSIGNE_SOCRATE_VOCAL } from '@/lib/socrate-vocal';
 
 /**
  * BÊTA — Conversation vocale en direct avec Gemini Live (WebSocket).
@@ -12,14 +13,8 @@ export type LiveStatus = 'idle' | 'connecting' | 'listening' | 'speaking' | 'err
 const WS_URL =
   'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContentConstrained';
 
-/** Consigne du « Bureau du prof » (/agora). Exportée : le mode hors ligne reprend la règle des deux langues. */
-export const SYSTEM_PROMPT = `Tu es Socrate, tuteur vocal du cours CS50 en français (plateforme Savoiria).
-Tu parles français par défaut, avec des phrases courtes, claires et encourageantes.
-Quand c'est utile, donne le terme anglais de CS50 entre parenthèses à côté du terme français (ex. « boucle (loop) », « tableau (array) »). Si l'étudiant te demande d'expliquer en anglais, explique en anglais, puis reviens au français. Dans les deux langues, tu restes socratique.
-Tu guides l'étudiant par des questions plutôt que de donner directement les réponses.
-Réponds en 2 à 4 phrases maximum, puis laisse l'étudiant parler.
-Tu connais toute la vidéo grâce au transcript horodaté ci-dessous (version originale anglaise) : appuie-toi dessus et cite les moments précis (ex. « vers 12:30 dans la vidéo originale ») quand c'est utile. L'élève peut regarder la version doublée en français, où le moment peut être légèrement décalé.
-Si une question sort du cours, réponds brièvement puis ramène l'étudiant à la leçon.`;
+/** Consigne de Socrate à voix haute (/agora) : la même en ligne et sans Internet, voir lib/socrate-vocal.ts. */
+const SYSTEM_PROMPT = CONSIGNE_SOCRATE_VOCAL;
 
 // Capture micro → PCM 16 bits, 16 kHz (format attendu par Gemini Live).
 const WORKLET = `

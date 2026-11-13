@@ -52,7 +52,7 @@ export function pcm16VersWav(pcmB64: string, taux = 16000): string {
  * Ordinateur d'école : Gemma lit le contexte du tuteur en arrière-plan dès l'ouverture de la page,
  * pour que la première question soit rapide. Ne fait rien en ligne.
  */
-export function prechaufferTuteur(corps: { moduleId?: number; course?: string; week?: number; voix?: boolean }): () => void {
+export function prechaufferTuteur(corps: { moduleId?: number; course?: string; week?: number; voix?: boolean; bureau?: boolean }): () => void {
   if (!ORDINATEUR_LOCAL) return () => {};
   // Petit délai : un élève qui ne fait que passer sur la page ne lance rien.
   const t = setTimeout(() => {
@@ -67,7 +67,13 @@ export function prechaufferTuteur(corps: { moduleId?: number; course?: string; w
  * Marche aussi depuis un autre appareil relié au poste par le Wi-Fi.
  */
 export async function demanderSocrateSite(
-  corps: { audio: string; contexte?: string; moduleId?: number },
+  corps: {
+    audio: string; contexte?: string; moduleId?: number;
+    /** « Demande au prof » : même Socrate qu'en ligne sur /agora, avec la mémoire de la conversation. */
+    bureau?: boolean;
+    historique?: { role: 'user' | 'assistant'; content: string }[];
+    signal?: AbortSignal;
+  },
   surQuestion: (texte: string) => void,
   surPhrase: (texte: string, audioB64: string) => void,
 ): Promise<void> {
@@ -75,6 +81,7 @@ export async function demanderSocrateSite(
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ audio: corps.audio, format: 'pcm16' }),
+    signal: corps.signal,
   });
   const question = String((await stt.json().catch(() => ({})))?.transcript ?? '').trim();
   if (!stt.ok) throw new Error('Reconnaissance vocale indisponible');
@@ -86,7 +93,14 @@ export async function demanderSocrateSite(
   const r = await fetch('/api/tutor', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+    signal: corps.signal,
+    body: JSON.stringify(corps.bureau ? {
+      // La consigne et le contenu de la leçon sont ajoutés par le serveur ; ici, seulement la conversation.
+      moduleId: corps.moduleId,
+      voix: true,
+      bureau: true,
+      messages: [...(corps.historique ?? []), { role: 'user', content: question }],
+    } : {
       moduleId: corps.moduleId,
       voix: true, // contexte court sur le poste : réponse orale de 2 à 4 phrases
       messages: [{ role: 'user', content: contexte

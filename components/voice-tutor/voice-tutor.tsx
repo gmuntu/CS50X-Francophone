@@ -4,9 +4,11 @@ import { useEffect, useRef, useState } from 'react';
 import { Mic, MicOff, Loader2, Volume2, AlertTriangle } from 'lucide-react';
 import { useGeminiLive } from '@/hooks/useGeminiLive';
 
-// Bureau du prof hors ligne (Gemma) : même règle des deux langues qu'en ligne.
+// Petit serveur vocal séparé (appareil sans Internet relié à un Socrate local) : sa consigne est fixe,
+// la règle des deux langues lui est donc rappelée avec le contexte. Sur l'ordinateur SavoirIA, elle vient du serveur.
 const BILINGUE = "(Réponds en français ; donne le terme anglais de CS50 entre parenthèses quand c'est utile, ex. « boucle (loop) » ; si l'élève demande l'anglais, explique en anglais puis reviens au français ; guide par des questions.) ";
-import { detecterMode, demanderSocrateLocal, demanderSocrateSite, pcm16VersWav, prechaufferTuteur, ORDINATEUR_LOCAL, type ModeSocrate } from '@/lib/socrate-local';
+import { detecterMode, demanderSocrateLocal, demanderSocrateSite, prechaufferTuteur, ORDINATEUR_LOCAL, type ModeSocrate } from '@/lib/socrate-local';
+import { creerConversation, type Conversation, type EtatConversation } from '@/lib/conversation-locale';
 
 interface Props {
   moduleId: number;
@@ -78,7 +80,7 @@ export default function VoiceTutor({ moduleId, onActive, context: given, systemP
     : status === 'error' ? 'bg-amber-600 hover:bg-amber-700'
     : 'bg-primary hover:bg-primary/90';
 
-  if (mode !== 'en-ligne') return <SocrateLocal mode={mode} context={context} moduleId={moduleId} onActive={onActive} bilingue={!systemPrompt} />;
+  if (mode !== 'en-ligne') return <SocrateLocal mode={mode} context={context} moduleId={moduleId} onActive={onActive} bureau={!systemPrompt} />;
 
   return (
     <div className="flex flex-col gap-2 p-4 rounded-2xl border border-border/80 bg-card">
@@ -108,80 +110,42 @@ export default function VoiceTutor({ moduleId, onActive, context: given, systemP
 // ---------------------------------------------------------------------------
 // Socrate vocal sur l'ordinateur SavoirIA (sans Internet) : appuyer pour parler,
 // appuyer encore pour envoyer ; Socrate répond phrase par phrase, à voix haute.
-function SocrateLocal({ mode, context, moduleId, onActive, bilingue }: { mode: ModeSocrate; context: string; moduleId: number; onActive?: () => void; bilingue?: boolean }) {
-  const [etat, setEtat] = useState<'idle' | 'listening' | 'thinking' | 'speaking'>('idle');
+function SocrateLocal({ mode, context, moduleId, onActive, bureau }: { mode: ModeSocrate; context: string; moduleId: number; onActive?: () => void; bureau?: boolean }) {
+  // « Demande au prof » sur un ordinateur SavoirIA : conversation suivie, comme en ligne sur /agora.
+  const suivi = !!bureau && ORDINATEUR_LOCAL;
+  const [etat, setEtat] = useState<EtatConversation>('idle');
   const [question, setQuestion] = useState('');
   const [reponse, setReponse] = useState('');
-  const rec = useRef<MediaRecorder | null>(null);
-  const ctxAudio = useRef<AudioContext | null>(null);
-  useEffect(() => prechaufferTuteur({ moduleId, voix: true }), [moduleId]);
+  const conversation = useRef<Conversation | null>(null);
+  // Toujours les dernières valeurs (le contenu de la leçon arrive après l'affichage).
+  const donnees = useRef({ context, moduleId, onActive, bureau });
+  useEffect(() => { donnees.current = { context, moduleId, onActive, bureau }; });
+  useEffect(() => prechaufferTuteur({ moduleId, voix: true, bureau: suivi }), [moduleId, suivi]);
+  // Quitter la page ferme le micro et fait taire Socrate.
+  useEffect(() => () => { conversation.current?.terminer(); }, []);
 
-  const jouer = async (b64: string) => {
-    const AC: any = (window as any).AudioContext || (window as any).webkitAudioContext;
-    ctxAudio.current = ctxAudio.current ?? new AC();
-    const ctx = ctxAudio.current!;
-    if (ctx.state !== 'running') await ctx.resume().catch(() => {});
-    const octets = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
-    const buf: AudioBuffer = await new Promise((ok, ko) => ctx.decodeAudioData(octets.buffer, ok, ko));
-    await new Promise<void>((fin) => { const src = ctx.createBufferSource(); src.buffer = buf; src.connect(ctx.destination); src.onended = () => fin(); src.start(0); });
-  };
-
-  const versPcm16 = async (blob: Blob): Promise<string> => {
-    const AC: any = (window as any).AudioContext || (window as any).webkitAudioContext;
-    const ctx = new AC();
-    try {
-      const donnees = await blob.arrayBuffer();
-      const decode: AudioBuffer = await new Promise((ok, ko) => ctx.decodeAudioData(donnees, ok, ko));
-      const off = new OfflineAudioContext(1, Math.ceil(decode.duration * 16000), 16000);
-      const src = off.createBufferSource(); src.buffer = decode; src.connect(off.destination); src.start();
-      const out = (await off.startRendering()).getChannelData(0);
-      const b = new Uint8Array(out.length * 2); const v = new DataView(b.buffer);
-      for (let i = 0; i < out.length; i++) v.setInt16(i * 2, Math.max(-1, Math.min(1, out[i])) * 0x7fff, true);
-      let bin = ''; for (let i = 0; i < b.length; i += 0x8000) bin += String.fromCharCode(...b.subarray(i, i + 0x8000));
-      return btoa(bin);
-    } finally { ctx.close?.(); }
-  };
-
-  const envoyer = async (audioWav: string) => {
-    setEtat('thinking'); setQuestion(''); setReponse('');
-    let file = Promise.resolve();
-    try {
-      // Sur l'ordinateur SavoirIA : le site lui-même (Whisper + Gemma + voix) ; sinon le petit serveur vocal local.
-      await (ORDINATEUR_LOCAL ? demanderSocrateSite : demanderSocrateLocal)(
-        { audio: audioWav, contexte: bilingue ? BILINGUE + context : context, moduleId },
-        (q) => setQuestion(q),
-        (phrase, audio) => {
-          setReponse((r) => (r ? `${r} ${phrase}` : phrase));
-          if (audio) file = file.then(() => { setEtat('speaking'); return jouer(audio).catch(() => {}); });
-        },
-      );
-      await file;
-    } catch {
-      setReponse("Socrate ne répond pas sur cet ordinateur. Ferme puis rouvre SavoirIA.");
-    }
-    setEtat('idle');
-  };
-
-  const basculer = async () => {
-    if (mode !== 'local' || etat === 'thinking' || etat === 'speaking') return;
-    if (rec.current) { rec.current.stop(); return; }
-    try {
-      const flux = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const r = new MediaRecorder(flux);
-      const morceaux: Blob[] = [];
-      r.ondataavailable = (e) => e.data.size && morceaux.push(e.data);
-      r.onstop = async () => {
-        flux.getTracks().forEach((t) => t.stop()); rec.current = null;
-        try { await envoyer(pcm16VersWav(await versPcm16(new Blob(morceaux, { type: r.mimeType })))); }
-        catch { setReponse("Je n'ai pas bien entendu. Réessaie."); setEtat('idle'); }
-      };
-      rec.current = r; r.start(); setEtat('listening'); onActive?.();
+  const obtenir = (): Conversation => {
+    conversation.current ??= creerConversation({
+      suivi,
       // 20 s au plus sur le poste : la route /api/stt refuse les enregistrements plus longs.
-      setTimeout(() => rec.current === r && r.stop(), ORDINATEUR_LOCAL ? 20000 : 30000);
-    } catch {
-      setReponse("Impossible d'accéder au micro de cet ordinateur.");
-    }
+      dureeMaxMs: ORDINATEUR_LOCAL ? 20000 : 30000,
+      demander: (audio, historique, surQuestion, surPhrase, signal) => {
+        const d = donnees.current;
+        // Sur l'ordinateur SavoirIA : le site lui-même (Whisper + Gemma + voix) ; sinon le petit serveur vocal local.
+        if (!ORDINATEUR_LOCAL) return demanderSocrateLocal({ audio, contexte: d.bureau ? BILINGUE + d.context : d.context }, surQuestion, surPhrase);
+        return demanderSocrateSite(
+          suivi ? { audio, moduleId: d.moduleId, bureau: true, historique, signal } : { audio, contexte: d.context, moduleId: d.moduleId },
+          surQuestion, surPhrase,
+        );
+      },
+      surEtat: setEtat,
+      surQuestion: setQuestion,
+      surReponse: setReponse,
+      surEcoute: () => donnees.current.onActive?.(),
+    });
+    return conversation.current;
   };
+  const basculer = () => { if (mode === 'local') obtenir().basculer(); };
 
   if (mode === 'pause') {
     return (
@@ -192,18 +156,31 @@ function SocrateLocal({ mode, context, moduleId, onActive, bilingue }: { mode: M
     );
   }
 
-  const libelle = { idle: 'Poser ma question à voix haute', listening: 'Je t\'écoute… (appuie pour envoyer)', thinking: 'Le tuteur réfléchit…', speaking: 'Le tuteur répond…' }[etat];
+  const libelle = suivi
+    ? { idle: 'Poser ma question à voix haute', listening: 'Je vous écoute…', thinking: 'Le tuteur réfléchit…', speaking: 'Le tuteur répond…' }[etat]
+    : { idle: 'Poser ma question à voix haute', listening: 'Je t\'écoute… (appuie pour envoyer)', thinking: 'Le tuteur réfléchit…', speaking: 'Le tuteur répond…' }[etat];
   const couleur = etat === 'listening' ? 'bg-rose-600 animate-pulse' : etat === 'speaking' ? 'bg-[#7c3aed]' : etat === 'thinking' ? 'bg-slate-400' : 'bg-primary hover:bg-primary/90';
   return (
     <div className="flex flex-col gap-2 p-4 rounded-2xl border border-amber-200 bg-card">
       <span className="self-start text-[10px] font-bold text-amber-700 bg-amber-500/15 px-2 py-0.5 rounded-full">✈ Socrate local · sans Internet</span>
-      <button type="button" onClick={basculer} className={`self-start px-5 py-3 rounded-xl text-sm font-bold text-white flex items-center gap-2 transition-all ${couleur}`}>
-        {etat === 'thinking' ? <Loader2 className="w-4 h-4 animate-spin" /> : etat === 'speaking' ? <Volume2 className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-        {libelle}
-      </button>
+      <div className="flex items-center gap-3">
+        <button type="button" onClick={basculer} aria-pressed={etat !== 'idle'} className={`px-5 py-3 rounded-xl text-sm font-bold text-white flex items-center gap-2 transition-all ${couleur}`}>
+          {etat === 'thinking' ? <Loader2 className="w-4 h-4 animate-spin" /> : etat === 'speaking' ? <Volume2 className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+          {libelle}
+        </button>
+        {suivi && etat !== 'idle' && (
+          <button type="button" onClick={() => conversation.current?.terminer()} className="text-xs underline text-muted-foreground">
+            Terminer
+          </button>
+        )}
+      </div>
       {question && <p className="text-xs"><span className="font-bold">Toi :</span> {question}</p>}
       {reponse && <p className="text-sm bg-muted/40 rounded-xl p-3"><span className="font-bold">Socrate :</span> {reponse}</p>}
-      <p className="text-xs text-muted-foreground">Pas d&apos;Internet : Socrate t&apos;aide grâce à cet ordinateur. Appuie pour parler, appuie encore quand tu as fini.</p>
+      <p className="text-xs text-muted-foreground">
+        {suivi
+          ? 'Conversation vocale sur cet ordinateur. Parlez naturellement : Socrate répond quand vous vous taisez, puis vous écoute à nouveau. Appuyez sur le bouton pour envoyer tout de suite ou pour l’interrompre.'
+          : <>Pas d&apos;Internet : Socrate t&apos;aide grâce à cet ordinateur. Appuie pour parler, appuie encore quand tu as fini.</>}
+      </p>
     </div>
   );
 }
