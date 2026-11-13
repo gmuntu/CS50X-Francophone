@@ -19,7 +19,7 @@ export async function POST(request: Request) {
 
   const body = await request.json().catch(() => ({}));
   const systeme = await systemeTuteur({
-    moduleId: body?.moduleId, course: body?.course, week: body?.week, voix: body?.voix === true,
+    moduleId: body?.moduleId, course: body?.course, week: body?.week, voix: body?.voix === true, bureau: body?.bureau === true,
   });
 
   const G = globalThis as any;

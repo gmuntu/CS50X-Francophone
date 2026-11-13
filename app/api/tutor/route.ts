@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
       ...m, content: String(m?.content ?? '').slice(0, 4000),
     }));
 
-    let systeme = await systemeTuteur({ moduleId, course, week, voix: body?.voix === true });
+    let systeme = await systemeTuteur({ moduleId, course, week, voix: body?.voix === true, bureau: body?.bureau === true });
     // « Approfondir le sujet » : même tuteur, avec seulement le résumé du document et la notion affichée.
     // Cours préparé : le serveur reconstruit lui-même le contexte (le navigateur n'envoie que semaine + notion).
     // Document de l'élève : il est placé dans la conversation comme simple donnée, jamais dans les consignes.

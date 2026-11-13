@@ -5,6 +5,7 @@ import { CS50_MODULES } from '@/config/course-modules';
 import { prisma } from '@/lib/prisma';
 import { readCourseSource } from '@/lib/content-generator';
 import { IA_SLUG, IA_SYSTEM_PROMPT, iaWeekContext } from '@/lib/courses/ia-essentiels';
+import { leconVocale, systemeSocrateVocalLocal } from '@/lib/socrate-vocal';
 
 const LOCAL = process.env.SAVOIRIA_LOCAL === '1';
 // Sur un ordinateur d'école, Gemma lit le texte envoyé à environ 60 jetons par seconde :
@@ -26,13 +27,27 @@ Règles :
 - Adapte ton niveau au contexte de la question et du module actuel`;
 
 /** Consigne complète du tuteur pour une leçon (CS50x) ou une semaine de « L'essentiel de l'IA ». */
-export async function systemeTuteur({ moduleId, course, week, voix }: {
+export async function systemeTuteur({ moduleId, course, week, voix, bureau }: {
   moduleId?: unknown; course?: unknown; week?: unknown; voix?: boolean;
+  /** Vrai pour « Demande au prof » (/agora) : même Socrate qu'en ligne. */
+  bureau?: boolean;
 }): Promise<string> {
   const isIa = course === IA_SLUG;
   // Contexte court pour la voix, seulement sur un ordinateur d'école (en ligne, rien ne change).
   const court = LOCAL && voix === true;
   const mod = CS50_MODULES?.find?.((m: any) => m?.id === moduleId);
+
+  // « Demande au prof » sur un ordinateur SavoirIA : même Socrate qu'en ligne sur /agora
+  // (même consigne, même contenu de leçon : titre, aperçu, chronologie de la vidéo).
+  if (court && bureau === true && !isIa && mod) {
+    let lecon = '';
+    try {
+      lecon = leconVocale(await prisma.videoSummary.findUnique({ where: { lessonId: mod.id } }));
+    } catch (e) {
+      console.error('Tutor context enrichment error:', e);
+    }
+    return systemeSocrateVocalLocal(lecon || `Titre : ${mod.title}\nSujets : ${mod.topics?.join?.(', ')}\nDescription : ${mod.description}`);
+  }
   let moduleContext = mod
     ? `\nModule actuel : ${mod.title}\nSujets : ${mod.topics?.join?.(', ')}\nDescription : ${mod.description}`
     : '';
