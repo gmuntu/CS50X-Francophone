@@ -26,6 +26,8 @@ export async function GET() {
   });
   const prises = new Set(inscriptions.map((i) => i.formation));
   return NextResponse.json({
+    // Personnel (admin, formateurs) : pas d'inscription, mais accès à toutes les formations.
+    personnel: eleve.role !== 'STUDENT',
     inscriptions: inscriptions.map((i) => ({ ...i, titre: titreFormation(i.formation), href: FORMATIONS_OUVERTES.find((f) => f.id === i.formation)?.href ?? null })),
     disponibles: eleve.role === 'STUDENT' ? FORMATIONS_OUVERTES.filter((f) => !prises.has(f.id)).map((f) => ({ id: f.id, titre: f.titre, certificat: f.certificat, prixUsd: f.prixUsd })) : [],
   });

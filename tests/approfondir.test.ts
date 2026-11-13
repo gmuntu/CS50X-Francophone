@@ -14,6 +14,8 @@ vi.mock('@/lib/poste-ecole', () => ({
   posteDeLaRequete: async (r: Request) => (r.headers.get('x-savoiria-poste') === 'poste_ok' ? { id: 'p1' } : null),
 }));
 vi.mock('@/lib/tuteur-contexte', () => ({ systemeTuteur: async () => 'CONSIGNES DU TUTEUR' }));
+// L'accès par formation a ses propres tests (formations-menu-acces) : ici, l'élève est inscrit.
+vi.mock('@/lib/acces-formation', () => ({ refusSiPasInscrit: async () => null }));
 
 import { contexteTuteur, validerContenu } from '@/lib/approfondir/types';
 import { contenuSemaine } from '@/lib/approfondir/contenus';

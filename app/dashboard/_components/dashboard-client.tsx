@@ -30,9 +30,13 @@ interface Props {
     university?: string | null;
     role?: string | null;
   };
+  /** Formations ouvertes pour l'élève (inscription validée). */
+  formations?: { id: string; titre: string }[];
 }
 
-export default function DashboardClient({ user }: Props) {
+export default function DashboardClient({ user, formations = [] }: Props) {
+  // Formations ouvertes pour cet élève : les blocs propres à CS50x n'apparaissent que pour ses élèves.
+  const suitCs50x = formations.some((x) => x.id === 'cs50x');
   const [progress, setProgress] = useState<any[]>([]);
   const [quizAttempts, setQuizAttempts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -116,7 +120,7 @@ export default function DashboardClient({ user }: Props) {
                   {user.university ? <span className="text-muted-foreground font-normal">• {user.university}</span> : ''}
                 </p>
               ) : (
-                <p className="text-xs text-muted-foreground">Votre tableau de bord d'apprentissage CS50</p>
+                <p className="text-xs text-muted-foreground">Votre tableau de bord SavoirIA</p>
               )}
 
               <div className="flex items-center gap-3 pt-1 text-[11px] text-muted-foreground flex-wrap">
@@ -128,13 +132,13 @@ export default function DashboardClient({ user }: Props) {
           <div className="flex items-center gap-2 self-start sm:self-auto">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold border border-primary/20">
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              Parcours CS50x
+              {formations.length ? formations.map((x) => x.titre).join(' · ') : 'SavoirIA'}
             </div>
           </div>
         </motion.div>
 
         {/* Hero Next Action Card */}
-        {nextModule && (
+        {suitCs50x && nextModule && (
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
@@ -175,9 +179,10 @@ export default function DashboardClient({ user }: Props) {
         )}
 
         {/* Stats Cards */}
+        {suitCs50x && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
-            { icon: BookOpen, label: 'Modules complétés (11 semaines + module IA)', value: `${completedCount}/${totalModules}`, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-500/10' },
+            { icon: BookOpen, label: 'CS50x : modules complétés (11 semaines + module IA)', value: `${completedCount}/${totalModules}`, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-500/10' },
             { icon: TrendingUp, label: 'Progression', value: `${Math.round((completedCount / totalModules) * 100)}%`, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500/10' },
             { icon: Award, label: 'Score moyen', value: `${avgScore}%`, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-500/10' },
             { icon: Brain, label: 'Quiz passés', value: `${quizAttempts?.length ?? 0}`, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-500/10' },
@@ -201,6 +206,7 @@ export default function DashboardClient({ user }: Props) {
             </motion.div>
           ))}
         </div>
+        )}
 
         {/* Main Content Layout */}
         {(user?.studentType === 'TESTEUR' || user?.role === 'ADMIN') && <EncadreVersionTest />}
@@ -212,11 +218,12 @@ export default function DashboardClient({ user }: Props) {
 
         <TutorMessageCard />
 
+        {suitCs50x && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           {/* Course Track Modules */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg sm:text-xl font-bold text-foreground">Programme des cours</h2>
+              <h2 className="text-lg sm:text-xl font-bold text-foreground">Programme de CS50x</h2>
               <Link href="/courses" className="inline-flex items-center gap-1.5 text-xs text-primary font-bold hover:underline">
                 Voir tous les cours <ArrowRight className="w-3.5 h-3.5" />
               </Link>
@@ -328,6 +335,7 @@ export default function DashboardClient({ user }: Props) {
             </div>
           </div>
         </div>
+        )}
       </main>
       <Footer />
     </div>

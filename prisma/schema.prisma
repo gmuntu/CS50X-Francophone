@@ -343,6 +343,8 @@ model PosteEcole {
   cleHash         String      @unique
   active          Boolean     @default(true)
   derniereSynchro DateTime?
+  // Formations installées sur ce poste (3 au plus), décidées dans l'admin ; ajoutées ou retirées à la synchronisation
+  formations      String[]    @default(["cs50x"])
   createdAt       DateTime    @default(now())
   @@index([institutionId])
 }

@@ -14,7 +14,7 @@ const ETAT = process.env.SYNCHRO_ETAT || '/var/lib/savoiria/synchro-ecole.json';
 const PAQUET = 500;
 const MARGE_MS = 2 * 86_400_000; // on renvoie 2 jours de plus : le site ignore les doublons
 
-type Etat = { derniereSynchro?: string; institutionId?: string };
+type Etat = { derniereSynchro?: string; institutionId?: string; formations?: string[] };
 class PosteRefuse extends Error {}
 
 async function lireEtat(): Promise<Etat> {
@@ -88,7 +88,7 @@ async function bloquerLEcole(institutionId?: string) {
   console.log(`Poste désactivé par l'administration : ${r.count} compte(s) d'élève bloqué(s) sur cet ordinateur.`);
 }
 
-async function recevoir(): Promise<string> {
+async function recevoir(): Promise<{ institutionId: string; formations?: string[] }> {
   const d = await appel('/api/poste/eleves');
   const inst = d.institution;
   const dejaInst = await prisma.institution.findUnique({ where: { id: inst.id } });
@@ -109,6 +109,20 @@ async function recevoir(): Promise<string> {
     };
     await prisma.user.upsert({ where: { id: u.id }, update: infos, create: { id: u.id, ...infos } });
     recus.add(u.id);
+    // Formations de l'élève sur ce poste (site récent seulement) : celles validées en ligne, parmi celles du poste.
+    // Une formation retirée en ligne (ou du poste) disparaît ici à cette synchronisation.
+    if (Array.isArray(u.inscriptions)) {
+      const garder = (u.inscriptions as any[]).filter((i) => typeof i?.formation === 'string');
+      await prisma.inscriptionFormation.deleteMany({ where: { userId: u.id, formation: { notIn: garder.map((i) => i.formation) } } });
+      for (const i of garder) {
+        const donnees = { statut: 'VALIDEE', studentType: String(i.studentType ?? u.studentType ?? 'LIBRE'), paymentStatus: String(i.paymentStatus ?? u.paymentStatus ?? 'PENDING') };
+        await prisma.inscriptionFormation.upsert({
+          where: { userId_formation: { userId: u.id, formation: i.formation } },
+          update: donnees,
+          create: { userId: u.id, formation: i.formation, ...donnees, valideeLe: new Date() },
+        });
+      }
+    }
   }
   // Élèves retirés de l'école, suspendus ou arrivés en fin d'accès : plus de connexion sur ce poste
   const suspendus = await prisma.user.updateMany({
@@ -139,8 +153,10 @@ async function recevoir(): Promise<string> {
       create: { userId: s.userId, courseSlug: s.courseSlug, week: s.week, bestScore: s.bestScore, passedAt },
     });
   }
+  const formations: string[] | undefined = Array.isArray(d.formations) ? d.formations.filter((x: unknown) => typeof x === 'string') : undefined;
   console.log(`   réception : ${recus.size} élève(s) de « ${inst.name} », ${suspendus.count} suspendu(s), ${ajoutes} quiz du site`);
-  return inst.id;
+  if (formations) console.log(`   formations de ce poste : ${formations.join(', ')}`);
+  return { institutionId: inst.id as string, formations };
 }
 
 async function main() {
@@ -149,12 +165,12 @@ async function main() {
   const etat = await lireEtat();
   try {
     const refuses = await envoyer(etat); // d'abord l'envoi : rien de ce qui a été fait ici ne se perd
-    const institutionId = await recevoir();
+    const { institutionId, formations } = await recevoir();
     // Des lignes refusées (souvent l'horloge du poste) : on ne fait pas avancer la date,
     // elles seront renvoyées au prochain passage une fois l'heure corrigée.
     const derniereSynchro = refuses > 0 ? etat.derniereSynchro : debut;
     if (refuses > 0) console.log(`ATTENTION : ${refuses} ligne(s) refusée(s) par le site. Vérifiez la date et l'heure de cet ordinateur.`);
-    await writeFile(ETAT, JSON.stringify({ derniereSynchro, institutionId }), { mode: 0o600 });
+    await writeFile(ETAT, JSON.stringify({ derniereSynchro, institutionId, formations: formations ?? etat.formations }), { mode: 0o600 });
     console.log('Synchronisation de l’école terminée.');
   } catch (e) {
     if (e instanceof PosteRefuse) {

@@ -3,6 +3,8 @@ export const dynamic = 'force-dynamic';
 import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { quotaIA } from '@/lib/quota';
+import { refusSiPasInscrit } from '@/lib/acces-formation';
+import { IA_SLUG } from '@/lib/courses/ia-essentiels';
 import { systemeTuteur } from '@/lib/tuteur-contexte';
 import { contenuSemaine } from '@/lib/approfondir/contenus';
 import { contexteTuteur } from '@/lib/approfondir/types';
@@ -21,6 +23,8 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const { moduleId, course, week } = body ?? {};
+    // Le tuteur d'une formation est réservé aux élèves dont l'inscription à cette formation est validée.
+    { const refus = await refusSiPasInscrit((session.user as any).id, course === IA_SLUG || (typeof moduleId === 'number' && moduleId >= 1000 && moduleId < 3000) ? 'ia-essentiels' : 'cs50x'); if (refus) return refus; }
     // Garde-fou coût : 30 derniers messages, 4 000 caractères chacun au maximum.
     const messages = (Array.isArray(body?.messages) ? body.messages : []).slice(-30).map((m: any) => ({
       ...m, content: String(m?.content ?? '').slice(0, 4000),

@@ -10,6 +10,7 @@ import { CS50_MODULES, numeroModule, type CourseModuleConfig } from '@/config/co
 import { CS50_PROBLEM_WEEKS } from '@/config/cs50-problems';
 import InteractiveQuizModal from '@/components/interactive-quiz-modal';
 import CourseAssistant from '@/components/course-assistant';
+import BoutonDemanderSocrate from '@/components/formations/bouton-demander-socrate';
 import OfflineLessonButton from '@/components/pwa/offline-lesson-button';
 import IdentityReminder from '@/components/identity/identity-reminder';
 import FinalProject from '@/components/formations/ia/final-project';
@@ -132,6 +133,8 @@ export default function LessonClient({ moduleConfig, lesson, userId }: Props) {
                   </button>
                 );
               })}
+              {/* À côté des exercices : le tuteur de la page, déjà au courant de cette leçon */}
+              <BoutonDemanderSocrate className="flex-1" />
             </div>
 
             {/* Video Tab */}
@@ -313,7 +316,7 @@ export default function LessonClient({ moduleConfig, lesson, userId }: Props) {
           </div>
 
           {/* Sticky Assistant Socratique Column */}
-          <div className="lg:col-span-1 lg:sticky lg:top-20">
+          <div id="socrate" className="lg:col-span-1 lg:sticky lg:top-20 scroll-mt-28">
             <CourseAssistant moduleConfig={moduleConfig} audioScripts={audioScripts} quizzes={quizzes} />
           </div>
         </div>

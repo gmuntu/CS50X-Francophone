@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
-import { auth } from '@/auth';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 import PodcastPlayer from '@/components/formations/ia/podcast-player';
@@ -14,12 +13,14 @@ import { IA_SLUG, IA_TITLE, IA_WEEKS, IA_SYSTEM_PROMPT, getIaWeek, iaWeekContext
 import { passedWeeks, isWeekOpen } from '@/lib/courses/progress';
 import { quizFor } from '@/lib/courses/shuffle';
 import FinalProject from '@/components/formations/ia/final-project';
+import BoutonDemanderSocrate from '@/components/formations/bouton-demander-socrate';
+import { exigerFormation } from '@/lib/acces-formation';
 
 export const dynamic = 'force-dynamic';
 
 export default async function IaWeekPage({ params }: { params: Promise<{ n: string }> }) {
-  const session = await auth();
-  if (!session?.user?.id) redirect('/auth/login');
+  const session = await exigerFormation('ia-essentiels');
+  if (!session.user?.id) redirect('/auth/login');
   const n = parseInt((await params).n, 10);
   const w = getIaWeek(n);
   if (!w) redirect('/formations/ia-essentiels');
@@ -40,7 +41,8 @@ export default async function IaWeekPage({ params }: { params: Promise<{ n: stri
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold">Semaine {n} : {w.title}</h1>
           <p className="text-muted-foreground">{w.intro}</p>
-          <div className="mt-3">
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <BoutonDemanderSocrate />
             <OfflineLessonButton lessonId={1000 + n} title={`${IA_TITLE} — Semaine ${n} : ${w.title}`} audioUrls={[]} />
           </div>
         </div>
@@ -83,8 +85,10 @@ export default async function IaWeekPage({ params }: { params: Promise<{ n: stri
 
         {n === 5 && <FinalProject course={IA_SLUG} />}
 
+        <div id="socrate" className="scroll-mt-28">
         <SocrateChat course={IA_SLUG} week={n}
           starter={`Bonjour ! Je suis Socrate. Qu'est-ce qui t'a le plus surpris dans « ${w.title} » ?`} />
+        </div>
 
         {w.quiz && (
           <WeekQuiz course={IA_SLUG} week={n} questions={quizFor(w.quiz, `${session.user.id}:${IA_SLUG}:${n}`)}

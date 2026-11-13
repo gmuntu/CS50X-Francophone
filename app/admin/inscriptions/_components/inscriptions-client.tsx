@@ -13,7 +13,7 @@ interface Ligne {
   paymentStatus: string; paymentMethod: string | null; paymentAmount: number | null; valideeLe: string | null; createdAt: string;
   user: { id: string; name: string | null; email: string; dossierNumber: string | null; status: string; accessExpiresAt: string | null };
 }
-interface Reglage { formation: string; titre: string; bourseUniversitaire: boolean }
+interface Reglage { formation: string; titre: string; bourseUniversitaire: boolean; profWhatsApp: boolean }
 
 const STATUTS = ['EN_ATTENTE', 'VALIDEE', 'SUSPENDUE', 'REFUSEE'] as const;
 const COULEUR: Record<string, string> = {
@@ -72,12 +72,12 @@ export default function InscriptionsClient() {
     setOccupe(null);
   };
 
-  const basculerBourse = async (r: Reglage) => {
-    const res = await fetch('/api/admin/reglages-formations', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ formation: r.formation, bourseUniversitaire: !r.bourseUniversitaire }) });
+  const basculer = async (r: Reglage, champ: 'bourseUniversitaire' | 'profWhatsApp') => {
+    const res = await fetch('/api/admin/reglages-formations', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ formation: r.formation, [champ]: !r[champ] }) });
     const d = await res.json().catch(() => ({}));
     if (!res.ok) { toast.error(d?.error || 'Réglage non enregistré.'); return; }
     setReglages(d.reglages ?? []);
-    toast.success(`Bourse universitaire ${!r.bourseUniversitaire ? 'activée' : 'désactivée'} pour « ${r.titre} ».`);
+    toast.success(`${champ === 'bourseUniversitaire' ? 'Bourse universitaire' : 'Prof WhatsApp'} ${!r[champ] ? 'activé' : 'désactivé'} pour « ${r.titre} ».`);
   };
 
   const onglet = (actif: boolean) => `rounded-full px-3 py-1.5 text-xs font-bold border transition ${actif ? 'bg-blue-600 text-white border-blue-600' : 'bg-card text-foreground border-border hover:border-blue-400'}`;
@@ -101,9 +101,23 @@ export default function InscriptionsClient() {
           <div className="flex flex-wrap gap-3">
             {reglages.map((r) => (
               <label key={r.formation} className="flex items-center gap-3 rounded-xl border border-border px-3 py-2 cursor-pointer">
-                <input type="checkbox" role="switch" className="h-4 w-4 accent-blue-600" checked={r.bourseUniversitaire} onChange={() => basculerBourse(r)} aria-label={`Bourse universitaire pour ${r.titre}`} />
+                <input type="checkbox" role="switch" className="h-4 w-4 accent-blue-600" checked={r.bourseUniversitaire} onChange={() => basculer(r, 'bourseUniversitaire')} aria-label={`Bourse universitaire pour ${r.titre}`} />
                 <span className="text-sm font-semibold text-foreground">{r.titre}</span>
                 <span className={`text-[11px] font-bold ${r.bourseUniversitaire ? 'text-green-700 dark:text-green-300' : 'text-muted-foreground'}`}>{r.bourseUniversitaire ? 'Activée' : 'Désactivée'}</span>
+              </label>
+            ))}
+          </div>
+        </section>
+
+        <section className="rounded-2xl border border-border bg-card p-4 space-y-3">
+          <h2 className="text-sm font-bold uppercase tracking-wide text-foreground">💬 Prof WhatsApp</h2>
+          <p className="text-xs text-muted-foreground">Éteint : l&apos;onglet affiche « Bientôt » et « En attente d&apos;approbation par Meta ». Allumé : il s&apos;ouvre pour les élèves inscrits à la formation.</p>
+          <div className="flex flex-wrap gap-3">
+            {reglages.map((r) => (
+              <label key={r.formation} className="flex items-center gap-3 rounded-xl border border-border px-3 py-2 cursor-pointer">
+                <input type="checkbox" role="switch" className="h-4 w-4 accent-blue-600" checked={r.profWhatsApp} onChange={() => basculer(r, 'profWhatsApp')} aria-label={`Prof WhatsApp pour ${r.titre}`} />
+                <span className="text-sm font-semibold text-foreground">{r.titre}</span>
+                <span className={`text-[11px] font-bold ${r.profWhatsApp ? 'text-green-700 dark:text-green-300' : 'text-muted-foreground'}`}>{r.profWhatsApp ? 'Allumé' : 'Éteint'}</span>
               </label>
             ))}
           </div>
