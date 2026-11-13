@@ -9,7 +9,8 @@
 import { PrismaClient } from '@prisma/client';
 
 export const FORMATION_HISTORIQUE = 'cs50x';
-const RECOPIER_DEPUIS_LE_COMPTE = true;
+// Arrêté à l'étape 4 : l'admin valide désormais formation par formation (/admin/inscriptions), l'inscription fait foi.
+const RECOPIER_DEPUIS_LE_COMPTE = false;
 
 // Élève qui n'a qu'une seule inscription (celle de son compte).
 const UNE_SEULE = `(SELECT count(*) FROM "InscriptionFormation" x WHERE x."userId" = u.id) = 1`;
@@ -114,7 +115,9 @@ export async function rattacherEtVerifier() {
     console.log(`[inscriptions] Comptes : ${comptesAvant[0].n} avant, ${comptesApres[0].n} après (table des comptes non modifiée : ${String(comptesAvant[0].maj) === String(comptesApres[0].maj) ? 'oui' : 'NON'}).`);
     console.log('[inscriptions] Vérification :', JSON.stringify(rapport));
     if (erreurs.length) { console.error('[inscriptions] ÉCART : ' + erreurs.join(' ; ')); return false; }
-    console.log('[inscriptions] Tout correspond : même nombre d\'élèves, mêmes statuts, mêmes paiements.');
+    console.log(RECOPIER_DEPUIS_LE_COMPTE
+      ? '[inscriptions] Tout correspond : même nombre d\'élèves, mêmes statuts, mêmes paiements.'
+      : '[inscriptions] Tout correspond : chaque élève a au moins une inscription.');
     return true;
   } finally {
     await prisma.$disconnect();

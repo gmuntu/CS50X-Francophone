@@ -1,18 +1,16 @@
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
 import { ArrowRight, Puzzle } from 'lucide-react';
-import { auth } from '@/auth';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 import { CS50_MODULES } from '@/config/course-modules';
 import { CS50_PROBLEM_WEEKS, CS50_PROBLEMS_DEADLINE } from '@/config/cs50-problems';
 import Cs50Credit from './_components/cs50-credit';
+import { exigerFormation } from '@/lib/acces-formation';
 
 export const metadata = { title: 'Problèmes CS50x — SavoirIA' };
 
 export default async function ProblemesPage() {
-  const session = await auth();
-  if (!session) redirect('/auth/login');
+  await exigerFormation('cs50x');
 
   return (
     <div className="min-h-screen bg-background flex flex-col">

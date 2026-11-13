@@ -4,7 +4,8 @@
  * première formation de l'élève ; l'admin validera formation par formation à l'étape suivante.
  */
 import { prisma } from '@/lib/prisma';
-import { FORMATION_PAR_DEFAUT, formationOuverte, prixInscription, statutDepuisCompte } from '@/lib/formations';
+import { FORMATION_PAR_DEFAUT, formationOuverte, prixInscription, statutDepuisCompte, STATUTS_INSCRIPTION } from '@/lib/formations';
+import { moyenPaiementConnu, statutPaiementConnu } from '@/lib/paiement';
 
 interface PremiereInscription {
   formation?: string | null;
@@ -97,4 +98,60 @@ export async function refleterCompteSurInscription(userId: string): Promise<void
       valideeLe: statut === 'VALIDEE' ? seule.valideeLe ?? new Date() : null,
     },
   });
+}
+
+export interface ChangementInscription {
+  statut?: unknown;
+  paymentStatus?: unknown;
+  paymentMethod?: unknown;
+  paymentAmount?: unknown;
+}
+
+export type ResultatChangement = { ok: true; compteActive: boolean } | { ok: false; erreur: string; code: number };
+
+/**
+ * L'admin change une inscription (validation, paiement). Le compte devient actif dès sa première
+ * inscription validée. Refuser ou suspendre une formation ne touche pas au compte (l'élève peut en
+ * suivre une autre) : pour bloquer tout le compte, l'admin passe par « Utilisateurs ».
+ * Élève à une seule inscription : le compte reprend le paiement, pour que les anciens écrans restent justes.
+ */
+export async function changerInscription(id: unknown, c: ChangementInscription): Promise<ResultatChangement> {
+  if (typeof id !== 'string' || !id) return { ok: false, erreur: 'Inscription inconnue.', code: 400 };
+  const inscription = await prisma.inscriptionFormation.findUnique({
+    where: { id },
+    include: { user: { select: { id: true, role: true, status: true, _count: { select: { inscriptions: true } } } } },
+  });
+  if (!inscription || inscription.user.role !== 'STUDENT') return { ok: false, erreur: 'Inscription introuvable.', code: 404 };
+
+  const data: Record<string, unknown> = {};
+  if (c.statut !== undefined) {
+    if (!(STATUTS_INSCRIPTION as readonly string[]).includes(c.statut as string)) return { ok: false, erreur: 'Statut inconnu.', code: 400 };
+    data.statut = c.statut;
+    data.valideeLe = c.statut === 'VALIDEE' ? inscription.valideeLe ?? new Date() : null;
+  }
+  if (c.paymentStatus !== undefined) {
+    if (!statutPaiementConnu(c.paymentStatus)) return { ok: false, erreur: 'Statut de paiement inconnu.', code: 400 };
+    data.paymentStatus = c.paymentStatus;
+  }
+  if (c.paymentMethod !== undefined) {
+    if (c.paymentMethod !== null && c.paymentMethod !== '' && !moyenPaiementConnu(c.paymentMethod)) return { ok: false, erreur: 'Moyen de paiement inconnu.', code: 400 };
+    data.paymentMethod = c.paymentMethod ? String(c.paymentMethod) : null;
+  }
+  if (c.paymentAmount !== undefined) {
+    const m = c.paymentAmount === null || c.paymentAmount === '' ? null : Number(c.paymentAmount);
+    if (m !== null && (!Number.isFinite(m) || m < 0 || m > 100_000)) return { ok: false, erreur: 'Montant invalide.', code: 400 };
+    data.paymentAmount = m;
+  }
+  if (!Object.keys(data).length) return { ok: false, erreur: 'Rien à modifier.', code: 400 };
+
+  await prisma.inscriptionFormation.update({ where: { id }, data });
+
+  const compte: Record<string, unknown> = {};
+  const compteActive = data.statut === 'VALIDEE' && inscription.user.status === 'PENDING';
+  if (compteActive) compte.status = 'ACTIVE';
+  if (inscription.user._count.inscriptions === 1) {
+    for (const k of ['paymentStatus', 'paymentMethod', 'paymentAmount'] as const) if (k in data) compte[k] = data[k];
+  }
+  if (Object.keys(compte).length) await prisma.user.update({ where: { id: inscription.user.id }, data: compte });
+  return { ok: true, compteActive };
 }

@@ -343,6 +343,8 @@ model PosteEcole {
   cleHash         String      @unique
   active          Boolean     @default(true)
   derniereSynchro DateTime?
+  // Formations installées sur ce poste (3 au plus), décidées dans l'admin ; ajoutées ou retirées à la synchronisation
+  formations      String[]    @default(["cs50x"])
   createdAt       DateTime    @default(now())
   @@index([institutionId])
 }
@@ -502,4 +504,13 @@ model InscriptionFormation {
 
   @@unique([userId, formation])
   @@index([formation, statut])
+}
+
+// Réglages d'une formation modifiables dans l'admin (une ligne par formation, créée au premier changement).
+// Sans ligne, les valeurs par défaut du catalogue (lib/catalog.ts) s'appliquent.
+model ReglageFormation {
+  formation           String   @id // 'cs50x', 'ia-essentiels'…
+  bourseUniversitaire Boolean  // bourse universitaire (convention) proposée à l'inscription
+  profWhatsApp        Boolean  @default(false) // onglet « Prof WhatsApp » actif (étape 5 ; « Bientôt » tant qu'il est éteint)
+  updatedAt           DateTime @updatedAt
 }

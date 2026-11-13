@@ -78,7 +78,7 @@ export async function handleIncoming(opts: { from: string; body: string; channel
 
   let answer: string;
   try {
-    answer = await tutorReply({ question: body.slice(0, 1000), week: conv?.lessonId ?? null, history, channel, maxChars: max - 100 });
+    answer = await tutorReply({ question: body.slice(0, 1000), week: conv?.lessonId ?? null, history, channel, maxChars: max - 100, formation: 'cs50x' });
     if (!answer) throw new Error('vide');
   } catch (e) {
     console.error('Tuteur message error:', e);

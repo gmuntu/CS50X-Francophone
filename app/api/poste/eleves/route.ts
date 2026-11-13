@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { elevesDeLEcole, posteDeLaRequete } from '@/lib/poste-ecole';
+import { formationsAInstaller, formationsDuPoste } from '@/lib/formations-poste';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,7 +15,24 @@ export async function GET(req: Request) {
   const poste = await posteDeLaRequete(req);
   if (!poste) return NextResponse.json({ error: 'Poste inconnu ou désactivé' }, { status: 401 });
 
-  const eleves = await elevesDeLEcole(poste.institutionId);
+  // Formations du poste (3 au plus, décidées dans l'admin) ; un élève n'y reçoit que ses formations validées parmi elles.
+  const formations = formationsDuPoste(poste.formations) ?? ['cs50x'];
+  const tous = await elevesDeLEcole(poste.institutionId);
+  const inscriptions = tous.length
+    ? await prisma.inscriptionFormation.findMany({ where: { userId: { in: tous.map((u) => u.id) } }, select: { userId: true, formation: true, statut: true, studentType: true, paymentStatus: true } })
+    : [];
+  const eleves = tous.flatMap((u) => {
+    const siennes = inscriptions.filter((i) => i.userId === u.id);
+    const aInstaller = formationsAInstaller(siennes, formations);
+    if (!aInstaller.length) return []; // aucune formation de ce poste n'est ouverte pour cet élève
+    return [{
+      ...u,
+      inscriptions: aInstaller.map((f) => {
+        const i = siennes.find((x) => x.formation === f);
+        return { formation: f, statut: 'VALIDEE', studentType: i?.studentType ?? u.studentType, paymentStatus: i?.paymentStatus ?? u.paymentStatus };
+      }),
+    }];
+  });
   const ids = eleves.map((u) => u.id);
   const depuisUnAn = new Date(Date.now() - 365 * 86_400_000);
 
@@ -53,6 +71,7 @@ export async function GET(req: Request) {
       id: poste.institution.id, name: poste.institution.name, acronym: poste.institution.acronym,
       country: poste.institution.country, type: poste.institution.type,
     },
+    formations,
     eleves,
     quizAttempts,
     courseProgress: semaines,

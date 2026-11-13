@@ -130,7 +130,7 @@ chmod 750 "$SITE_DIR"
 
 # ---------------------------------------------------------------------
 etape "5/7  Construction du site (5 à 15 minutes)"
-sudo -u savoiria bash -c "cd '$SITE_DIR' && npm ci --no-audit --no-fund && npx prisma generate && npx prisma db push --skip-generate && npx tsx --require dotenv/config scripts/importer-contenu.ts; npm run build"
+sudo -u savoiria bash -c "cd '$SITE_DIR' && npm ci --no-audit --no-fund && npx prisma generate && npx prisma db push --skip-generate && (node --env-file=.env scripts/rattacher-inscriptions.mjs || true) && npx tsx --require dotenv/config scripts/importer-contenu.ts; npm run build"
 
 # Compte étudiant local (actif tout de suite) : mot de passe propre à cet ordinateur
 # head lit 512 octets puis s'arrête, tr lit jusqu'au bout : pas de « tube cassé » (code 141) avec pipefail
@@ -192,7 +192,7 @@ G fetch --tags --force origin || true
 VERSION=\$(G tag -l '$ETIQUETTES' --sort=-v:refname | head -1)
 [ -n "\$VERSION" ] && G checkout -q --force "\$VERSION"
 AUDIO_AVANT=\$(ls public/hors-ligne-audio 2>/dev/null | wc -l)
-sudo -u savoiria bash -c "npm ci --no-audit --no-fund && npx prisma generate && npx prisma db push --skip-generate && npx tsx --require dotenv/config scripts/importer-contenu.ts"
+sudo -u savoiria bash -c "npm ci --no-audit --no-fund && npx prisma generate && npx prisma db push --skip-generate && (node --env-file=.env scripts/rattacher-inscriptions.mjs || true) && npx tsx --require dotenv/config scripts/importer-contenu.ts"
 AUDIO_APRES=\$(ls public/hors-ligne-audio 2>/dev/null | wc -l)
 if [ "\$(G rev-parse HEAD)" != "\$AVANT" ] || [ "\$AUDIO_APRES" != "\$AUDIO_AVANT" ] || [ ! -d .next ]; then
   sudo -u savoiria bash -c "npm run build" && systemctl restart savoiria-site

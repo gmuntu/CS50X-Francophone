@@ -1,12 +1,11 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
-import { auth } from '@/auth';
-import { redirect } from 'next/navigation';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 import { CS50_MODULES, numeroModule } from '@/config/course-modules';
 import { contenuSemaine } from '@/lib/approfondir/contenus';
 import SalleEtudeClient, { type SemaineEtude } from './_components/salle-etude-client';
+import { exigerFormation } from '@/lib/acces-formation';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Salle d’étude · SavoirIA' };
@@ -17,8 +16,7 @@ export const metadata: Metadata = { title: 'Salle d’étude · SavoirIA' };
  * chaque semaine s'ouvre sans Internet (le choix de la semaine ne recharge pas la page).
  */
 export default async function SalleEtudePage() {
-  const session = await auth();
-  if (!session?.user) redirect('/auth/login');
+  await exigerFormation('cs50x');
 
   const semaines: SemaineEtude[] = CS50_MODULES.map((m) => {
     const numero = numeroModule(m);

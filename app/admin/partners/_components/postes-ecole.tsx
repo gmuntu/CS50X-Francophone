@@ -3,8 +3,10 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { Monitor, Plus, Power, Copy } from 'lucide-react';
+import { FORMATIONS_OUVERTES } from '@/lib/formations';
+import { FORMATIONS_PAR_POSTE_MAX } from '@/lib/formations-poste';
 
-export type Poste = { id: string; nom: string; active: boolean; derniereSynchro: string | null; createdAt: string; institutionId: string };
+export type Poste = { id: string; nom: string; active: boolean; derniereSynchro: string | null; createdAt: string; institutionId: string; formations?: string[] };
 
 const quand = (d: string | null) =>
   d ? new Date(d).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'jamais';
@@ -27,6 +29,28 @@ export default function PostesEcole({ institutionId, postes, onChange }: { insti
       if (!r.ok) return toast.error(j?.error || 'Erreur');
       setCle({ nom: j.poste.nom, cle: j.cle });
       setNom('');
+      onChange();
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Formations installées sur le poste (3 au plus) : ajoutées ou retirées à sa prochaine synchronisation.
+  const changerFormations = async (p: Poste, id: string) => {
+    const actuelles = p.formations?.length ? p.formations : ['cs50x'];
+    const suivantes = actuelles.includes(id) ? actuelles.filter((x) => x !== id) : [...actuelles, id];
+    if (suivantes.length === 0) return toast.error('Un poste garde au moins une formation.');
+    if (suivantes.length > FORMATIONS_PAR_POSTE_MAX) return toast.error(`${FORMATIONS_PAR_POSTE_MAX} formations au maximum par poste.`);
+    setBusy(true);
+    try {
+      const r = await fetch('/api/admin/postes', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: p.id, formations: suivantes }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) return toast.error(j?.error || 'Erreur');
+      toast.success('Formations du poste enregistrées : elles changeront à sa prochaine synchronisation.');
       onChange();
     } finally {
       setBusy(false);
@@ -90,6 +114,17 @@ export default function PostesEcole({ institutionId, postes, onChange }: { insti
           <button type="button" disabled={busy} onClick={() => basculer(p)} className="p-1.5 rounded hover:bg-muted" title={p.active ? 'Désactiver' : 'Réactiver'}>
             <Power className="w-4 h-4" />
           </button>
+          <span className="basis-full flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+            Formations installées ({FORMATIONS_PAR_POSTE_MAX} au plus) :
+            {FORMATIONS_OUVERTES.map((f) => (
+              <label key={f.id} className="flex items-center gap-1.5 font-semibold text-foreground">
+                <input type="checkbox" disabled={busy} className="accent-blue-600"
+                  checked={(p.formations?.length ? p.formations : ['cs50x']).includes(f.id)}
+                  onChange={() => changerFormations(p, f.id)} />
+                {f.titre}
+              </label>
+            ))}
+          </span>
         </div>
       ))}
 

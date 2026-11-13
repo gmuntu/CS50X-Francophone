@@ -1,11 +1,10 @@
-import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import ExerciseClient from './_components/exercise-client';
+import { exigerFormation } from '@/lib/acces-formation';
 
 export default async function ExercisePage({ params }: { params: Promise<{ id: string; exerciseId: string }> }) {
-  const session = await auth();
-  if (!session?.user) redirect('/auth/login');
+  const session = await exigerFormation('cs50x');
 
   const { id, exerciseId } = await params;
 

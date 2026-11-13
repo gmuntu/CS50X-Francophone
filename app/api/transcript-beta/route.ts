@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
+import { refusSiPasInscrit } from '@/lib/acces-formation';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,6 +29,7 @@ async function loadTranscript(moduleId: number): Promise<string> {
 export async function GET(req: Request) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: 'Non connecté' }, { status: 401 });
+  { const refus = await refusSiPasInscrit((session.user as any).id, 'cs50x'); if (refus) return refus; }
 
   const moduleId = Number(new URL(req.url).searchParams.get('module') ?? '0');
   if (!Number.isInteger(moduleId) || moduleId < 0 || moduleId > 20) {

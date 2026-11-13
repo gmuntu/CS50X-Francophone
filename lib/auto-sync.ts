@@ -9,7 +9,8 @@
 //   (application installée, ordinateur SavoirIA ou podcasts déjà enregistrés).
 // Le travail reprend là où il s'était arrêté si la connexion se coupe.
 
-import { saveLesson, savePage, listSavedLessons, offlineSupported, effacementsFaits, type SavedLesson } from '@/lib/offline';
+import { saveLesson, savePage, listSavedLessons, removeLesson, offlineSupported, effacementsFaits, type SavedLesson } from '@/lib/offline';
+import { formationDeLaLecon, formationsAInstaller, FORMATIONS_PAR_POSTE_MAX } from '@/lib/formations-poste';
 import { flushQueue } from '@/lib/sync-queue';
 
 export const FORMATIONS = [
@@ -112,9 +113,25 @@ export async function synchroniser(auto = false): Promise<void> {
   try {
     await flushQueue().catch(() => 0);
 
+    // Formations de cet élève : ses inscriptions validées, 3 au plus (sans réponse du site : on garde ce qui est déjà là).
+    const ri = await fetch('/api/inscriptions', { cache: 'no-store' }).catch(() => null);
+    if (ri?.status === 401) {
+      publier({ enCours: false, etape: '', erreur: auto ? undefined : 'Connecte-toi une fois avec Internet pour activer la synchronisation.' });
+      return;
+    }
+    const reponse = ri?.ok ? await ri.json().catch(() => null) : null;
+    if (!Array.isArray(reponse?.inscriptions)) { publier({ enCours: false, etape: '' }); return; }
+    const mesFormations = reponse.personnel
+      ? FORMATIONS.map((x) => x.slug as string).slice(0, FORMATIONS_PAR_POSTE_MAX)
+      : formationsAInstaller(reponse.inscriptions);
+    // Retrait : une formation qui n'est plus ouverte pour l'élève quitte l'appareil.
+    for (const l of await listSavedLessons().catch(() => [] as SavedLesson[])) {
+      if (!mesFormations.includes(formationDeLaLecon(l.id))) await removeLesson(l.id).catch(() => {});
+    }
+
     // Ce qu'il faut avoir sur l'appareil
     const aFaire: { formation: string; lecon: { id: number; title: string; path: string; audio: string[]; version?: string } }[] = [];
-    for (const f of FORMATIONS) {
+    for (const f of FORMATIONS.filter((x) => mesFormations.includes(x.slug))) {
       const r = await fetch(`/api/offline/manifest?course=${f.slug}`, { cache: 'no-store' }).catch(() => null);
       if (!r || r.status === 401) {
         publier({ enCours: false, etape: '', erreur: auto ? undefined : 'Connecte-toi une fois avec Internet pour activer la synchronisation.' });

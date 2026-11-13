@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { uploadBlob, deleteBlob } from '@/lib/blob';
+import { formationDuCours, refusSiPasInscrit } from '@/lib/acces-formation';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -18,6 +19,8 @@ export async function POST(req: Request) {
 
   const form = await req.formData().catch(() => null);
   const course = String(form?.get('course') || '');
+  // Réservé aux élèves dont l'inscription à cette formation est validée.
+  { const refus = await refusSiPasInscrit(session?.user?.id, formationDuCours(course)); if (refus) return refus; }
   const kind = String(form?.get('kind') || '');
   const audio = form?.get('audio');
   if (!['reference', 'defense'].includes(kind) || !(audio instanceof Blob)) return NextResponse.json({ error: 'Requête invalide' }, { status: 400 });

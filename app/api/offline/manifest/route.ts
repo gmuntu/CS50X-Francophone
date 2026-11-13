@@ -5,6 +5,7 @@ import { CS50_MODULES } from '@/config/course-modules';
 import { IA_SLUG, IA_TITLE, IA_WEEKS } from '@/lib/courses/ia-essentiels';
 import { passedWeeks, isWeekOpen } from '@/lib/courses/progress';
 import { versionsCs50x } from '@/lib/offline-versions';
+import { formationDuCours, refusSiPasInscrit } from '@/lib/acces-formation';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,6 +16,7 @@ export async function GET(req: Request) {
   if (!userId) return NextResponse.json({ error: 'Non connecté' }, { status: 401 });
   const params = new URL(req.url).searchParams;
   const course = params.get('course');
+  if (course === 'cs50x' || course === 'ia-essentiels') { const refus = await refusSiPasInscrit(session?.user?.id, course); if (refus) return refus; }
 
   // Seulement les empreintes des quiz : pour savoir si un paquet enregistré est périmé.
   if (course === 'cs50x' && params.get('versions') === '1') {

@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
-import { auth } from '@/auth';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 import { CS50_MODULES } from '@/config/course-modules';
@@ -9,10 +8,10 @@ import { getProblemWeek } from '@/config/cs50-problems';
 import { getExplication } from '@/config/cs50-explications';
 import Cs50Credit from '../_components/cs50-credit';
 import NiveauBadge from '../_components/niveau-badge';
+import { exigerFormation } from '@/lib/acces-formation';
 
 export default async function ProblemesSemainePage({ params }: { params: Promise<{ semaine: string }> }) {
-  const session = await auth();
-  if (!session) redirect('/auth/login');
+  const session = await exigerFormation('cs50x');
 
   const { semaine } = await params;
   const n = Number(semaine);

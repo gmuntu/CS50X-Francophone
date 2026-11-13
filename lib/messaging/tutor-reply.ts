@@ -1,8 +1,7 @@
-import { CS50_MODULES } from '@/config/course-modules';
-import { prisma } from '@/lib/prisma';
+import { contexteLecon } from '@/lib/contexte-lecon';
 
 // Le tuteur Socrate, version message (SMS / WhatsApp).
-const BASE = `Tu es Socrate, tuteur socratique bienveillant du cours CS50x (Harvard) pour des étudiants francophones (Afrique, Haïti, etc.).
+const BASE = `Tu es Socrate, tuteur socratique bienveillant de SavoirIA pour des étudiants francophones (Afrique, Haïti, etc.) : CS50x (Harvard), L'essentiel de l'IA, et les autres formations SavoirIA. La formation et la leçon de l'étudiant sont indiquées plus bas.
 - Réponds TOUJOURS en français correct, avec les accents.
 - Ne donne jamais la solution complète d'un exercice noté.
 - Termine TOUJOURS par une phrase complète, jamais au milieu d'une idée.`;
@@ -25,6 +24,8 @@ export interface HistoryMsg { role: 'user' | 'assistant'; content: string; at: s
 export async function tutorReply(opts: {
   question: string;
   week: number | null;
+  /** Formation de l'élève ('cs50x' par défaut) : le tuteur reçoit le contexte de cette formation et de cette leçon. */
+  formation?: string;
   history: HistoryMsg[];
   channel: 'sms' | 'whatsapp';
   maxChars: number;
@@ -32,15 +33,7 @@ export async function tutorReply(opts: {
   const key = process.env.GEMINI_API_KEY || process.env.EMINI_API_KEY;
   if (!key) throw new Error('GEMINI_API_KEY manquante');
 
-  let context = '';
-  const mod = opts.week !== null ? CS50_MODULES.find((m: any) => m?.id === opts.week) : null;
-  if (mod) {
-    context = `\nSemaine ${mod.id} : ${mod.title}. Sujets : ${mod.topics?.join(', ')}.`;
-    try {
-      const s = await prisma.videoSummary.findUnique({ where: { lessonId: mod.id } });
-      if (s) context += `\nRésumé du cours (référence) : ${String(s.overview).slice(0, 1500)}`;
-    } catch {}
-  }
+  const context = await contexteLecon(opts.formation ?? 'cs50x', opts.week);
 
   const contents: { role: 'user' | 'model'; parts: { text: string }[] }[] = [];
   for (const m of [...opts.history.slice(-6), { role: 'user', content: opts.question } as HistoryMsg]) {

@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { uploadBlob } from '@/lib/blob';
 import { faceList } from '@/lib/identity';
+import { formationDuCours, refusSiPasInscrit } from '@/lib/acces-formation';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,6 +14,8 @@ export async function POST(req: Request) {
   if (!userId) return NextResponse.json({ error: 'Non connecté' }, { status: 401 });
   const form = await req.formData().catch(() => null);
   const course = String(form?.get('course') || '');
+  // Réservé aux élèves dont l'inscription à cette formation est validée.
+  { const refus = await refusSiPasInscrit(session?.user?.id, formationDuCours(course)); if (refus) return refus; }
   const photo = form?.get('photo');
   if (!(photo instanceof Blob) || photo.size < 3000 || photo.size > 1_500_000) return NextResponse.json({ error: 'Photo invalide' }, { status: 400 });
   const project = await prisma.finalProject.findUnique({ where: { userId_courseSlug: { userId, courseSlug: course } } });

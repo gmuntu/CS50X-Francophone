@@ -7,6 +7,7 @@ import { BrandMark, BrandName } from '@/components/brand-logo';
 import { useSession, signOut } from 'next-auth/react';
 import { clearOfflineData, verifierChangementEleve } from '@/lib/offline';
 import { usePathname } from 'next/navigation';
+import MenuFormation from '@/components/formations/menu-formation';
 
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -25,17 +26,6 @@ export default function Header() {
     { label: 'Accueil', href: '/', icon: BookOpen },
     { label: 'Formations', href: '/formations', icon: GraduationCap },
     { label: 'Hors ligne', href: '/hors-ligne', icon: CloudDownload, offline: true },
-  ];
-
-  // Sous-menu propre à CS50x : visible seulement dans les pages de cette formation.
-  const inCs50 = ['/cs50x', '/courses', '/tuteur', '/salle-etude', '/agora'].some((p) => pathname === p || pathname?.startsWith(p + '/'));
-  const cs50Items = [
-    { label: '📖 Le programme', href: '/cs50x' },
-    { label: '🎓 Salle de cours', href: '/tuteur' },
-    // Adresse /agora conservée : les liens existants continuent de marcher.
-    { label: '🙋🏿 Demande au prof', href: '/agora' },
-    { label: '📚 Salle d’étude', href: '/salle-etude' },
-    { label: '🧩 Problèmes', href: '/courses/cs50x/problemes' },
   ];
 
   return (
@@ -178,19 +168,8 @@ export default function Header() {
           </nav>
         )}
       </div>
-      {inCs50 && (
-        <div className="border-t border-border/60 bg-blue-50/70 dark:bg-blue-950/20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-1 overflow-x-auto py-1.5 text-xs font-bold">
-            <span className="mr-2 shrink-0 text-blue-800 dark:text-blue-200">CS50x Francophone</span>
-            {cs50Items.map((it) => (
-              <Link key={it.href} href={it.href}
-                className={`shrink-0 rounded-lg px-3 py-1.5 ${pathname === it.href || pathname?.startsWith(it.href + '/') ? 'bg-card text-blue-700 dark:text-blue-300 shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>
-                {it.label}
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Menu de la formation ouverte : le même pour toutes les formations */}
+      <MenuFormation />
     </header>
   );
 }

@@ -1,13 +1,12 @@
-import { auth } from '@/auth';
-import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import TuteurClient from './_components/tuteur-client';
+import { exigerFormation } from '@/lib/acces-formation';
 
 export const dynamic = 'force-dynamic';
 
 export default async function TuteurPage() {
-  const session = await auth();
-  if (!session?.user) redirect('/auth/login');
+  // Inscription validée à CS50x obligatoire (sinon : page qui explique comment l'obtenir).
+  const session = await exigerFormation('cs50x');
 
   // Charge le contenu pédagogique de tous les modules (leçons)
   let lessons: any[] = [];

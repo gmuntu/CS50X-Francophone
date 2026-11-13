@@ -4,6 +4,7 @@ import { quotaIA } from '@/lib/quota';
 import { prisma } from '@/lib/prisma';
 import { geminiJson } from '@/lib/gemini-json';
 import { projectText } from '@/lib/courses/final-project';
+import { formationDuCours, refusSiPasInscrit } from '@/lib/acces-formation';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -13,9 +14,11 @@ export async function POST(req: Request) {
   const session = await auth();
   const userId = session?.user?.id;
   if (!userId) return NextResponse.json({ error: 'Non connecté' }, { status: 401 });
-    { const bloque = await quotaIA(session!.user as any, 'defense'); if (bloque) return bloque; }
   const body = await req.json().catch(() => ({}));
   const course = String(body?.course || '');
+  // Réservé aux élèves inscrits à cette formation ; vérifié avant de compter dans le plafond du jour.
+  { const refus = await refusSiPasInscrit(userId, formationDuCours(course)); if (refus) return refus; }
+  { const bloque = await quotaIA(session!.user as any, 'defense'); if (bloque) return bloque; }
   const transcript = (Array.isArray(body?.transcript) ? body.transcript : [])
     .filter((l: any) => (l?.who === 'eleve' || l?.who === 'socrate') && typeof l?.text === 'string')
     .map((l: any) => ({ who: l.who, text: String(l.text).slice(0, 4000) }))

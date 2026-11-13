@@ -8,15 +8,18 @@ import { adresseIP } from '@/lib/securite';
 import { sendEmail } from '@/lib/email';
 import { LEGAL } from '@/lib/legal';
 import { compteDepuisDossier, courrielDeConfirmation, menageDossiersExpires, mettreDeCote, MOT_DE_PASSE_LONGUEUR_MAX, type DossierInscription } from '@/lib/inscription-confirmation';
-import { conventionPossible, FORMATION_PAR_DEFAUT, formationOuverte, prixInscription } from '@/lib/formations';
+import { FORMATION_PAR_DEFAUT, formationOuverte, prixInscription } from '@/lib/formations';
+import { bourseActive, reglagesFormations } from '@/lib/reglages-formations';
 import { AGE_MINIMUM_ECOLE, AGE_MINIMUM_EN_LIGNE, erreurDateNaissance, erreurTelephone, lireDateNaissance, salutationCourriel, telephonePropre } from '@/lib/controle-inscription';
 
 // Poste d'école sans Internet : aucun email ne peut partir, l'inscription crée donc le compte tout de suite.
 const HORS_LIGNE = process.env.SAVOIRIA_LOCAL === '1';
 
-/** Âge minimum appliqué par ce serveur : le formulaire le lit ici, pour afficher la même règle que lui. */
+/** Règles appliquées par ce serveur (âge minimum, bourses) : le formulaire les lit ici, pour afficher les mêmes que lui. */
 export async function GET() {
-  return NextResponse.json({ ageMinimum: HORS_LIGNE ? AGE_MINIMUM_ECOLE : AGE_MINIMUM_EN_LIGNE });
+  // Formations pour lesquelles la bourse universitaire est proposée (réglage de l'admin) : le formulaire l'affiche ou non.
+  const bourses = (await reglagesFormations()).filter((r) => r.bourseUniversitaire).map((r) => r.formation);
+  return NextResponse.json({ ageMinimum: HORS_LIGNE ? AGE_MINIMUM_ECOLE : AGE_MINIMUM_EN_LIGNE, bourses });
 }
 
 export async function POST(request: Request) {
@@ -118,7 +121,7 @@ export async function POST(request: Request) {
       if (!errorField) errorField = 'formation';
     }
     const resolvedType = studentType === 'UNIVERSITAIRE' ? 'UNIVERSITAIRE' : 'LIBRE';
-    if (resolvedType === 'UNIVERSITAIRE' && formationChoisie && !conventionPossible(formationChoisie.id)) {
+    if (resolvedType === 'UNIVERSITAIRE' && formationChoisie && !(await bourseActive(formationChoisie.id))) {
       causes.push("Bourse universitaire non disponible : elle n'est pas proposée pour cette formation. Inscrivez-vous comme candidat libre.");
       if (!errorField) errorField = 'studentType';
     }

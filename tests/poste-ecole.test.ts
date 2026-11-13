@@ -7,6 +7,8 @@ const { fausseBase } = vi.hoisted(() => ({
   fausseBase: {
     posteEcole: { findUnique: vi.fn(), update: vi.fn() },
     user: { findMany: vi.fn() },
+    // Inscriptions : aucune (comptes d'avant les formations multiples, rattachés à CS50x).
+    inscriptionFormation: { findMany: vi.fn(async () => []) },
     quiz: { findUnique: vi.fn() },
     quizAttempt: { createMany: vi.fn(), findMany: vi.fn() },
     courseProgress: { findUnique: vi.fn(), upsert: vi.fn(), findMany: vi.fn() },
