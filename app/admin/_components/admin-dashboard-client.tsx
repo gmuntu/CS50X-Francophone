@@ -146,6 +146,19 @@ export default function AdminDashboardClient({ stats, recentSubmissions, role }:
 
         {!isInstructor && (
           <Link
+            href="/admin/inscriptions"
+            className="mb-6 flex items-center justify-between bg-card border-2 border-blue-600 rounded-xl p-5 hover:border-primary transition"
+          >
+            <div>
+              <p className="font-bold text-foreground">Inscriptions par formation</p>
+              <p className="text-sm text-muted-foreground">Valider chaque formation demandée par un élève, filtrer par formation, régler la bourse universitaire</p>
+            </div>
+            <ArrowRight className="w-5 h-5 text-muted-foreground" />
+          </Link>
+        )}
+
+        {!isInstructor && (
+          <Link
             href="/admin/testeurs"
             className="mb-6 flex items-center justify-between bg-card border border-border rounded-xl p-5 hover:border-primary transition"
           >

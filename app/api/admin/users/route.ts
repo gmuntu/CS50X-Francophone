@@ -418,8 +418,11 @@ export async function PUT(request: NextRequest) {
       },
     });
 
-    // Transition : l'inscription unique de l'élève suit son compte (validation, paiement).
-    await refleterCompteSurInscription(userId).catch((e) => console.error('Inscription non mise à jour :', e));
+    // L'inscription unique de l'élève suit son compte, seulement si le statut ou le paiement a été changé ici
+    // (modifier un nom ou un téléphone ne doit pas écraser une validation faite par formation).
+    if ([status, studentType, paymentStatus, paymentMethod, paymentAmount].some((v) => v !== undefined)) {
+      await refleterCompteSurInscription(userId).catch((e) => console.error('Inscription non mise à jour :', e));
+    }
 
     return NextResponse.json({ success: true, user: JSON.parse(JSON.stringify(updated)) });
   } catch (error: any) {

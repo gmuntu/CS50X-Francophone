@@ -15,7 +15,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import GoogleAuthModal from '@/components/google-auth-modal';
 import { AGE_MINIMUM_ECOLE, AGE_MINIMUM_EN_LIGNE, erreurDateNaissance, erreurTelephone } from '@/lib/controle-inscription';
-import { conventionPossible, FORMATION_PAR_DEFAUT, FORMATIONS_OUVERTES, formationOuverte, libellePrix } from '@/lib/formations';
+import { FORMATION_PAR_DEFAUT, FORMATIONS_OUVERTES, formationOuverte, libellePrix } from '@/lib/formations';
 
 // Poste d'école hors ligne : l'âge minimum y est plus bas qu'en ligne (l'élève est encadré).
 const POSTE_ECOLE = process.env.NEXT_PUBLIC_SAVOIRIA_LOCAL === '1';
@@ -94,23 +94,28 @@ export default function SignupPage() {
 
   // Âge minimum : c'est le serveur qui décide (14 ans en ligne, 10 ans sur un poste d'école) ; on affiche sa règle.
   const [ageMinimum, setAgeMinimum] = useState<number>(POSTE_ECOLE ? AGE_MINIMUM_ECOLE : AGE_MINIMUM_EN_LIGNE);
+  // Formations où la bourse universitaire est proposée : réglage de l'admin, lu auprès du serveur (catalogue en attendant).
+  const [bourses, setBourses] = useState<string[]>(() => FORMATIONS_OUVERTES.filter((f) => f.bourseUniversitaire).map((f) => f.id));
   useEffect(() => {
     fetch('/api/signup')
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d?.ageMinimum === AGE_MINIMUM_ECOLE || d?.ageMinimum === AGE_MINIMUM_EN_LIGNE) setAgeMinimum(d.ageMinimum); })
+      .then((d) => {
+        if (d?.ageMinimum === AGE_MINIMUM_ECOLE || d?.ageMinimum === AGE_MINIMUM_EN_LIGNE) setAgeMinimum(d.ageMinimum);
+        if (Array.isArray(d?.bourses)) setBourses(d.bourses.filter((x: unknown) => typeof x === 'string'));
+      })
       .catch(() => {});
   }, []);
 
   // Formation choisie : celle de l'adresse (/auth/signup?formation=…) si elle est ouverte, sinon CS50x.
   useEffect(() => {
     const demandee = formationOuverte(new URLSearchParams(window.location.search).get('formation'));
-    if (demandee) queueMicrotask(() => setFormData((prev) => ({ ...prev, formation: demandee.id, studentType: conventionPossible(demandee.id) ? prev.studentType : 'LIBRE' })));
+    if (demandee) queueMicrotask(() => setFormData((prev) => ({ ...prev, formation: demandee.id, studentType: 'LIBRE' })));
   }, []);
   const formation = formationOuverte(formData.formation) ?? FORMATIONS_OUVERTES[0];
-  const convention = conventionPossible(formation.id);
+  const convention = bourses.includes(formation.id);
   const prixLibre = libellePrix(formation.prixUsd);
   const choisirFormation = (id: string) =>
-    setFormData((prev) => ({ ...prev, formation: id, studentType: conventionPossible(id) ? prev.studentType : 'LIBRE' }));
+    setFormData((prev) => ({ ...prev, formation: id, studentType: bourses.includes(id) ? prev.studentType : 'LIBRE' }));
 
   useEffect(() => {
     fetch('/api/auth/providers-status')
