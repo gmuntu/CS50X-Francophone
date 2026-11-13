@@ -418,9 +418,12 @@ export async function PUT(request: NextRequest) {
       },
     });
 
-    // L'inscription unique de l'élève suit son compte, seulement si le statut ou le paiement a été changé ici
-    // (modifier un nom ou un téléphone ne doit pas écraser une validation faite par formation).
-    if ([status, studentType, paymentStatus, paymentMethod, paymentAmount].some((v) => v !== undefined)) {
+    // L'inscription unique de l'élève suit son compte, seulement si le statut, le type ou le paiement a VRAIMENT
+    // changé ici. La fenêtre « Modifier » renvoie tous les champs : corriger un nom ou un téléphone ne doit pas
+    // écraser une décision prise dans « Inscriptions par formation ».
+    const avant = existingUser as Record<string, unknown>;
+    const apres = updated as Record<string, unknown>;
+    if (['status', 'studentType', 'paymentStatus', 'paymentMethod', 'paymentAmount'].some((k) => k in apres && apres[k] !== avant[k])) {
       await refleterCompteSurInscription(userId).catch((e) => console.error('Inscription non mise à jour :', e));
     }
 
