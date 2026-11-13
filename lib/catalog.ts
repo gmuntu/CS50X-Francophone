@@ -17,6 +17,8 @@ export interface CatalogCourse {
   formation?: string;
   /** Prix en dollars pour un étudiant libre ; null ou absent = à convenir. */
   prixUsd?: number | null;
+  /** Bourse universitaire (convention avec un établissement partenaire) proposée à l'inscription. Réglage déplacé dans l'admin à l'étape 4. */
+  bourseUniversitaire?: boolean;
 }
 
 export interface Track {
@@ -32,7 +34,7 @@ export const TRACKS: Track[] = [
     title: "Fondamentaux de l'informatique",
     subtitle: 'Les bases solides pour tout métier du numérique.',
     courses: [
-      { slug: 'cs50x', title: 'CS50x Francophone', certificate: 'Harvard / CS50', note: '11 semaines · tuteur Socrate · hors ligne', status: 'disponible', href: '/cs50x', formation: 'cs50x', prixUsd: 500 },
+      { slug: 'cs50x', title: 'CS50x Francophone', certificate: 'Harvard / CS50', note: '11 semaines · tuteur Socrate · hors ligne', status: 'disponible', href: '/cs50x', formation: 'cs50x', prixUsd: 500, bourseUniversitaire: true },
       { slug: 'google-it-support', title: 'Support informatique', certificate: 'Google IT Support', note: '3 à 6 mois', status: 'bientot' },
       { slug: 'comptia-a-plus', title: 'CompTIA A+', certificate: 'CompTIA', note: '2 examens', status: 'bientot' },
       { slug: 'comptia-network-plus', title: 'CompTIA Network+', certificate: 'CompTIA', note: 'Réseaux', status: 'bientot' },
@@ -53,7 +55,7 @@ export const TRACKS: Track[] = [
     title: 'Données et intelligence artificielle',
     subtitle: "Analyser, visualiser et utiliser l'IA au travail.",
     courses: [
-      { slug: 'google-ai-essentials', title: "L'essentiel de l'IA", certificate: 'Google AI Essentials', note: '5 semaines · tuteur Socrate · hors ligne', status: 'disponible', href: '/formations/ia-essentiels', formation: 'ia-essentiels', prixUsd: 50 },
+      { slug: 'google-ai-essentials', title: "L'essentiel de l'IA", certificate: 'Google AI Essentials', note: '5 semaines · tuteur Socrate · hors ligne', status: 'disponible', href: '/formations/ia-essentiels', formation: 'ia-essentiels', prixUsd: 50, bourseUniversitaire: false },
       { slug: 'google-data-analytics', title: 'Analyse de données', certificate: 'Google Data Analytics', note: '3 à 6 mois', status: 'bientot' },
       { slug: 'google-cloud-data', title: 'Données dans le cloud', certificate: 'Google Cloud', note: 'Intermédiaire', status: 'bientot' },
       { slug: 'power-bi', title: 'Power BI', certificate: 'Microsoft (PL-300)', note: 'Tableaux de bord', status: 'bientot' },

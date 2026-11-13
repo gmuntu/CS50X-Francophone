@@ -119,7 +119,7 @@ export async function POST(request: Request) {
     }
     const resolvedType = studentType === 'UNIVERSITAIRE' ? 'UNIVERSITAIRE' : 'LIBRE';
     if (resolvedType === 'UNIVERSITAIRE' && formationChoisie && !conventionPossible(formationChoisie.id)) {
-      causes.push("Convention non disponible : les conventions avec les établissements partenaires ne couvrent pas encore cette formation. Inscrivez-vous comme candidat libre.");
+      causes.push("Bourse universitaire non disponible : elle n'est pas proposée pour cette formation. Inscrivez-vous comme candidat libre.");
       if (!errorField) errorField = 'studentType';
     }
     let resolvedUniversity = university ? String(university).trim() : null;

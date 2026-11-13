@@ -14,16 +14,16 @@ export interface FormationOuverte {
   href: string;
   /** Prix pour un étudiant libre, en dollars ; null = à convenir. */
   prixUsd: number | null;
+  /** Bourse universitaire (convention) proposée pour cette formation. */
+  bourseUniversitaire: boolean;
 }
 
 export const FORMATIONS_OUVERTES: FormationOuverte[] = ALL_COURSES
   .filter((c) => c.status === 'disponible' && c.formation && c.href)
-  .map((c) => ({ id: c.formation!, titre: c.title, certificat: c.certificate, note: c.note, href: c.href!, prixUsd: c.prixUsd ?? null }));
+  .map((c) => ({ id: c.formation!, titre: c.title, certificat: c.certificate, note: c.note, href: c.href!, prixUsd: c.prixUsd ?? null, bourseUniversitaire: c.bourseUniversitaire === true }));
 
 /** Formation des élèves inscrits avant les formations multiples, et choix par défaut du formulaire. */
 export const FORMATION_PAR_DEFAUT = 'cs50x';
-/** Seule formation couverte aujourd'hui par les conventions avec les établissements partenaires. */
-export const FORMATION_AVEC_CONVENTION = 'cs50x';
 
 export function formationOuverte(id: unknown): FormationOuverte | null {
   return typeof id === 'string' ? FORMATIONS_OUVERTES.find((f) => f.id === id) ?? null : null;
@@ -64,7 +64,7 @@ export function libellePrix(prix: number | null | undefined): string {
   return typeof prix === 'number' ? `${prix} USD` : 'Prix à convenir';
 }
 
-/** Le type d'étudiant « sous convention » n'existe que pour la formation couverte par les conventions. */
+/** La bourse universitaire (convention) est-elle proposée pour cette formation ? Réglage par formation, dans le catalogue. */
 export function conventionPossible(formationId: string): boolean {
-  return formationId === FORMATION_AVEC_CONVENTION;
+  return formationOuverte(formationId)?.bourseUniversitaire === true;
 }

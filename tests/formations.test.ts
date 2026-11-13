@@ -32,7 +32,7 @@ describe('Formations ouvertes et prix', () => {
     for (const v of ['google-it-support', 'aws', 'n-importe-quoi', '', null, undefined, 42, { id: 'cs50x' }]) expect(formationOuverte(v)).toBeNull();
   });
 
-  it('le prix est celui de la formation ; 0 sous convention ; la convention ne couvre que CS50x', () => {
+  it('le prix est celui de la formation ; 0 sous convention ; bourse activée par formation (CS50x seulement pour l’instant)', () => {
     const cs50x = formationOuverte('cs50x')!, ia = formationOuverte('ia-essentiels')!;
     expect(prixInscription(cs50x, 'LIBRE')).toBe(500);
     expect(prixInscription(ia, 'LIBRE')).toBe(50);
@@ -43,6 +43,8 @@ describe('Formations ouvertes et prix', () => {
     expect(prixInscription(cs50x, 'LIBRE', 'abc')).toBe(500);
     expect(conventionPossible('cs50x')).toBe(true);
     expect(conventionPossible('ia-essentiels')).toBe(false);
+    expect(conventionPossible('aws')).toBe(false);
+    expect(FORMATIONS_OUVERTES.filter((f) => f.bourseUniversitaire).map((f) => f.id)).toEqual(['cs50x']);
     expect(libellePrix(50)).toBe('50 USD');
     expect(libellePrix(null)).toBe('Prix à convenir');
   });
