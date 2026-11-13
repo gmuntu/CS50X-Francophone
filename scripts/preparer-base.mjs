@@ -13,14 +13,29 @@ if (!process.env.DATABASE_URL) {
   console.log('[base] Pas de DATABASE_URL : étape ignorée.');
   process.exit(0);
 }
+let pousse = false;
 for (let essai = 1; essai <= 3; essai++) {
   try {
     execSync('npx prisma db push --skip-generate', { stdio: 'inherit' });
-    process.exit(0);
+    pousse = true;
+    break;
   } catch {
     console.error(`[base] Essai ${essai} échoué (base en sommeil ?)`);
     if (essai < 3) execSync('sleep 5');
   }
 }
-console.error('[base] ERREUR : la base n\'a pas pu être mise à jour. Build arrêté pour éviter un site cassé.');
-process.exit(1);
+if (!pousse) {
+  console.error('[base] ERREUR : la base n\'a pas pu être mise à jour. Build arrêté pour éviter un site cassé.');
+  process.exit(1);
+}
+
+// Formations multiples : chaque élève est rattaché à sa formation, puis on vérifie que rien n'a été perdu.
+// N'écrit que dans la nouvelle table ; un écart arrête le build (l'ancien site reste en ligne, les comptes sont intacts).
+const { rattacherEtVerifier } = await import('./rattacher-inscriptions.mjs');
+try {
+  if (!(await rattacherEtVerifier())) process.exit(1);
+} catch (e) {
+  console.error('[inscriptions] ERREUR pendant le rattachement :', e?.message ?? e);
+  process.exit(1);
+}
+process.exit(0);

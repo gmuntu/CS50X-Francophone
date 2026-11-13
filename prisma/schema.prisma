@@ -86,6 +86,8 @@ model User {
   testerCodeId            String?
   testerCode              TesterCode?    @relation(fields: [testerCodeId], references: [id], onDelete: SetNull)
   accessExpiresAt         DateTime?
+  // Inscriptions de l'élève, une par formation (CS50x, L'essentiel de l'IA…)
+  inscriptions            InscriptionFormation[]
   @@index([institutionId])
 }
 
@@ -477,4 +479,27 @@ model Compteur {
   nombre    Int      @default(0)
   expireLe  DateTime
   @@index([expireLe])
+}
+
+// Inscription d'un élève à UNE formation : chaque formation a son statut de validation, son type d'étudiant et son paiement.
+// Table ajoutée sans rien retirer du compte : pendant la transition, les colonnes du compte (status, studentType,
+// payment…) restent la référence pour CS50x et sont recopiées ici à chaque déploiement (scripts/rattacher-inscriptions.mjs).
+model InscriptionFormation {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  formation       String    // identifiant de la formation dans le catalogue : 'cs50x', 'ia-essentiels'…
+  statut          String    @default("EN_ATTENTE") // EN_ATTENTE | VALIDEE | SUSPENDUE | REFUSEE
+  studentType     String    @default("LIBRE")
+  university      String?
+  paymentStatus   String    @default("PENDING")
+  paymentMethod   String?
+  paymentAmount   Float?    // null = prix à convenir
+  courseSessionId String?   // session (promotion) de cette formation, s'il y en a une
+  valideeLe       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([userId, formation])
+  @@index([formation, statut])
 }
