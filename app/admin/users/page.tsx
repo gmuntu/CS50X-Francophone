@@ -33,6 +33,8 @@ export default async function AdminUsersPage() {
         paymentMethod: true,
         paymentAmount: true,
         createdAt: true,
+        // Formations demandées par l'élève (une ligne par formation, avec son statut et son montant)
+        inscriptions: { orderBy: { createdAt: 'asc' }, select: { formation: true, statut: true, paymentAmount: true } },
       },
     });
   } catch (err: any) {

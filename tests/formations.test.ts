@@ -75,7 +75,12 @@ describe('Inscription à une formation', () => {
   it('un dossier déposé avant les formations multiples (sans formation) est inscrit à CS50x', () => {
     const ancien = dossier({ paymentAmount: 500 }); delete ancien.formation;
     expect(compteDepuisDossier(ancien).inscriptions.create.formation).toBe('cs50x');
-    expect(premiereInscription({ formation: 'inconnue', statutCompte: 'ACTIVE', studentType: 'LIBRE', paymentStatus: 'PAID' })).toMatchObject({ formation: 'cs50x', statut: 'VALIDEE' });
+    expect(premiereInscription({ statutCompte: 'ACTIVE', studentType: 'LIBRE', paymentStatus: 'PAID' })).toMatchObject({ formation: 'cs50x', statut: 'VALIDEE' });
+  });
+
+  it('une formation fermée entre le dépôt du dossier et la confirmation reste celle demandée (jamais CS50x au mauvais prix)', () => {
+    const ferme = compteDepuisDossier(dossier({ formation: 'formation-fermee', paymentAmount: 50 }));
+    expect(ferme.inscriptions.create).toMatchObject({ formation: 'formation-fermee', paymentAmount: 50, statut: 'EN_ATTENTE' });
   });
 
   it('ajouter une formation : en attente, au prix fixé par le serveur', async () => {

@@ -17,11 +17,16 @@ interface PremiereInscription {
   courseSessionId?: string | null;
 }
 
-/** Inscription créée en même temps que le compte : elle reprend ce qui est enregistré sur le compte. */
+/**
+ * Inscription créée en même temps que le compte : elle reprend ce qui est enregistré sur le compte.
+ * Sans formation (dossier d'avant les formations multiples, testeur, compte créé par l'admin) : CS50x.
+ * Une formation demandée est gardée telle quelle, même si elle a été fermée entre-temps : jamais remplacée
+ * par une autre (son prix ne correspondrait plus).
+ */
 export function premiereInscription(p: PremiereInscription) {
   const statut = statutDepuisCompte(p.statutCompte);
   return {
-    formation: formationOuverte(p.formation)?.id ?? FORMATION_PAR_DEFAUT,
+    formation: typeof p.formation === 'string' && p.formation ? p.formation : FORMATION_PAR_DEFAUT,
     statut,
     studentType: p.studentType,
     university: p.university ?? null,
