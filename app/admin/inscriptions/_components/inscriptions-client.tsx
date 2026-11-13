@@ -30,6 +30,17 @@ const ACTIONS: { statut: string; libelle: string }[] = [
 ];
 const date = (iso: string) => new Date(iso).toLocaleDateString('fr-FR', { timeZone: 'UTC' });
 
+/** Lit les inscriptions filtrées ; null (avec un message) si le chargement échoue. */
+async function lireInscriptions(f: string, s: string) {
+  const q = new URLSearchParams({ ...(f ? { formation: f } : {}), ...(s ? { statut: s } : {}) });
+  try {
+    const r = await fetch(`/api/admin/inscriptions?${q}`, { cache: 'no-store' });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) { toast.error(d?.error || 'Chargement impossible.'); return null; }
+    return d;
+  } catch { toast.error('Pas de connexion.'); return null; }
+}
+
 export default function InscriptionsClient() {
   const [formation, setFormation] = useState('');
   const [statut, setStatut] = useState('EN_ATTENTE');
@@ -38,16 +49,12 @@ export default function InscriptionsClient() {
   const [reglages, setReglages] = useState<Reglage[]>([]);
   const [occupe, setOccupe] = useState<string | null>(null);
 
-  const charger = useCallback(async (f: string, s: string) => {
-    const q = new URLSearchParams({ ...(f ? { formation: f } : {}), ...(s ? { statut: s } : {}) });
-    try {
-      const r = await fetch(`/api/admin/inscriptions?${q}`, { cache: 'no-store' });
-      const d = await r.json().catch(() => ({}));
-      if (!r.ok) { toast.error(d?.error || 'Chargement impossible.'); return; }
-      setLignes(d.inscriptions ?? []); setTotaux(d.totaux ?? []);
-    } catch { toast.error('Pas de connexion.'); }
+  const afficher = useCallback((d: { inscriptions?: Ligne[]; totaux?: { formation: string; statut: string; n: number }[] } | null) => {
+    if (!d) return;
+    setLignes(d.inscriptions ?? []); setTotaux(d.totaux ?? []);
   }, []);
-  useEffect(() => { void charger(formation, statut); }, [charger, formation, statut]);
+  const charger = useCallback((f: string, s: string) => lireInscriptions(f, s).then(afficher), [afficher]);
+  useEffect(() => { lireInscriptions(formation, statut).then(afficher); }, [afficher, formation, statut]);
   useEffect(() => {
     fetch('/api/admin/reglages-formations', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((d) => d && setReglages(d.reglages ?? [])).catch(() => {});
   }, []);
