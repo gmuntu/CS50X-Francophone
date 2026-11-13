@@ -33,6 +33,8 @@ export const MEMOIRE_MAX = 12;
 // Fin de parole : 1,5 s de silence après avoir parlé. Personne ne parle pendant 12 s : la conversation s'arrête.
 const SILENCE_FIN_MS = 1500;
 const SILENCE_TOTAL_MS = 12000;
+/** Une conversation suivie s'arrête d'elle-même après 10 minutes (élève parti sans cliquer « Terminer », salle bruyante). */
+export const CONVERSATION_MAX_MS = 10 * 60_000;
 
 /** Ajoute un échange à la mémoire de la conversation, en ne gardant que les plus récents. */
 export function memoriser(historique: Tour[], question: string, reponse: string): Tour[] {
@@ -112,6 +114,8 @@ export function creerConversation(o: OptionsConversation) {
   let tour = 0;                       // change à chaque nouvelle question ou interruption : une réponse coupée est ignorée
   let historique: Tour[] = [];
   let nonEntendus = 0;
+  let ouverture = false;              // le micro est en train de s'ouvrir : les clics sont ignorés
+  let debut = 0;                      // début de la conversation en cours
 
   const passer = (e: EtatConversation) => { etat = e; o.surEtat(e); };
   const finir = () => { active = false; passer('idle'); };
@@ -164,18 +168,23 @@ export function creerConversation(o: OptionsConversation) {
     if (monTour !== tour) return;     // interrompu : l'écoute a déjà repris, ou la conversation est terminée
     nonEntendus = question ? 0 : nonEntendus + 1;
     // Conversation suivie : Socrate écoute à nouveau. Deux fois de suite sans rien comprendre : on s'arrête.
-    if (o.suivi && active && reponse && nonEntendus < 2) void ecouter(); else finir();
+    if (o.suivi && active && reponse && nonEntendus < 2 && Date.now() - debut < CONVERSATION_MAX_MS) void ecouter(); else finir();
   };
 
   const ecouter = async () => {
+    // Un seul micro à la fois : un double clic ne doit jamais ouvrir un second enregistrement que plus rien ne fermerait.
+    if (ouverture || enregistreur) return;
+    ouverture = true;
     let flux: MediaStream;
     try {
       flux = await navigator.mediaDevices.getUserMedia({ audio: o.suivi ? { echoCancellation: true, noiseSuppression: true, channelCount: 1 } : true });
     } catch {
+      ouverture = false;
       finir();
       o.surReponse("Impossible d'accéder au micro de cet ordinateur.");
       return;
     }
+    ouverture = false;
     if (!active) { flux.getTracks().forEach((t) => t.stop()); return; }   // terminé pendant l'ouverture du micro
     const r = new MediaRecorder(flux);
     const morceaux: Blob[] = [];
@@ -208,10 +217,10 @@ export function creerConversation(o: OptionsConversation) {
 
   /** Le bouton principal : commencer, envoyer ce qu'on vient de dire, ou (conversation suivie) interrompre Socrate. */
   const basculer = () => {
-    if (etat === 'thinking') return;
+    if (ouverture || etat === 'thinking') return;
     if (etat === 'speaking') { if (o.suivi) { couper(); void ecouter(); } return; }
     if (etat === 'listening') { if (enregistreur && enregistreur.state !== 'inactive') enregistreur.stop(); return; }
-    active = true; nonEntendus = 0;
+    active = true; nonEntendus = 0; debut = Date.now();
     if (o.suivi) historique = [];     // chaque conversation repart de zéro, comme en ligne
     void ecouter();
   };
