@@ -220,6 +220,19 @@ export default function AdminDashboardClient({ stats, recentSubmissions, role }:
 
         {!isInstructor && (
           <Link
+            href="/admin/moteur-ia"
+            className="mb-6 flex items-center justify-between bg-card border border-border rounded-xl p-5 hover:border-primary transition"
+          >
+            <div>
+              <p className="font-bold text-foreground">Moteur de Socrate</p>
+              <p className="text-sm text-muted-foreground">Choisir Auto, Gemini ou Gemma local (ordinateur SavoirIA)</p>
+            </div>
+            <ArrowRight className="w-5 h-5 text-muted-foreground" />
+          </Link>
+        )}
+
+        {!isInstructor && (
+          <Link
             href="/admin/partners"
             className="mb-6 flex items-center justify-between bg-card border border-border rounded-xl p-5 hover:border-primary transition"
           >

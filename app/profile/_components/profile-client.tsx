@@ -6,6 +6,7 @@ import Footer from '@/components/footer';
 import { User, Mail, Shield, Save, Loader2, Phone } from 'lucide-react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
+import ChoixMoteur from '@/components/moteur-ia/choix-moteur';
 
 interface Props {
   user: { id: string; name: string; email: string; image: string | null; role: string };
@@ -114,6 +115,12 @@ export default function ProfileClient({ user, phone: initialPhone, dialCode: ini
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               Sauvegarder
             </button>
+
+            {/* Réglages rarement utiles : repliés par défaut. */}
+            <details className="border-t border-border pt-4">
+              <summary className="text-xs font-bold text-muted-foreground cursor-pointer">Réglages avancés</summary>
+              <div className="mt-3"><ChoixMoteur /></div>
+            </details>
           </div>
         </motion.div>
       </main>

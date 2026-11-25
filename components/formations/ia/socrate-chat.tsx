@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Send } from 'lucide-react';
 import { prechaufferTuteur } from '@/lib/socrate-local';
+import { envoyerTuteur, messageErreurTuteur } from '@/lib/choix-moteur';
+import BadgeMoteur from '@/components/moteur-ia/badge-moteur';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
 
@@ -22,11 +24,12 @@ export default function SocrateChat({ course, week, starter }: { course: string;
     setInput('');
     setLoading(true);
     try {
-      const res = await fetch('/api/tutor', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: next, course, week }),
-      });
+      const res = await envoyerTuteur({ messages: next, course, week });
+      if (!res.ok) {
+        // Mode « Gemini » forcé sans Gemini : message clair, pas de changement de moteur.
+        const msg = await messageErreurTuteur(res);
+        if (msg?.startsWith('Gemini indisponible')) { setMessages([...next, { role: 'assistant', content: `⚠️ ${msg}` }]); return; }
+      }
       if (!res.ok || !res.body) throw new Error();
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
@@ -57,7 +60,10 @@ export default function SocrateChat({ course, week, starter }: { course: string;
 
   return (
     <div className="rounded-2xl border border-border bg-card p-4 sm:p-5">
-      <p className="font-bold text-foreground mb-3">💬 Poser une question à Socrate</p>
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <p className="font-bold text-foreground">💬 Poser une question à Socrate</p>
+        <BadgeMoteur />
+      </div>
       <div className="max-h-80 overflow-y-auto space-y-2 mb-3">
         {messages.map((m, i) => (
           <p key={i} className={`rounded-xl px-3 py-2 text-sm whitespace-pre-wrap ${m.role === 'user' ? 'bg-blue-600 text-white ml-8' : 'bg-muted mr-8'}`}>

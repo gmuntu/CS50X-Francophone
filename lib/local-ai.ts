@@ -275,6 +275,8 @@ export function activerIALocale() {
   if (g.__savoiriaLocal) return;
   g.__savoiriaLocal = true;
   const original: typeof fetch = g.fetch.bind(g);
+  // Le vrai fetch reste disponible pour les relais vers le site en ligne (lib/relais-poste-ia.ts).
+  g.__savoiriaFetchOriginal = original;
   g.fetch = async (entree: any, init?: RequestInit) => {
     const url = typeof entree === 'string' ? entree : entree instanceof URL ? entree.href : entree?.url ?? '';
     const corpsTexte = typeof init?.body === 'string' ? init.body : '';

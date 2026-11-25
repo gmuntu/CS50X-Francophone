@@ -1,3 +1,5 @@
+import { envoyerTuteur, lireMode, messageErreurTuteur } from '@/lib/choix-moteur';
+
 // Socrate hors ligne : dialogue avec le petit serveur installé sur les ordinateurs SavoirIA
 // (savoiria-voix.sh). Whisper (oreilles) -> Gemma (cerveau) -> Piper (voix), sans Internet.
 
@@ -53,12 +55,23 @@ export function pcm16VersWav(pcmB64: string, taux = 16000): string {
  * pour que la première question soit rapide. Ne fait rien en ligne.
  */
 export function prechaufferTuteur(corps: { moduleId?: number; course?: string; week?: number; voix?: boolean; bureau?: boolean }): () => void {
-  if (!ORDINATEUR_LOCAL) return () => {};
+  // Gemini forcé : Gemma ne servira pas, on ne le fait pas travailler pour rien.
+  if (!ORDINATEUR_LOCAL || lireMode() === 'gemini') return () => {};
   // Petit délai : un élève qui ne fait que passer sur la page ne lance rien.
   const t = setTimeout(() => {
     fetch('/api/tutor/prechauffer', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corps) }).catch(() => {});
   }, 1500);
   return () => clearTimeout(t);
+}
+
+/** Voix de Socrate pour une phrase (/api/speech), ou '' si elle ne répond pas. */
+async function voixDe(texte: string): Promise<string> {
+  try {
+    const s = await fetch('/api/speech', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: texte }) });
+    return String((await s.json().catch(() => ({})))?.audioContent ?? '');
+  } catch {
+    return '';
+  }
 }
 
 /**
@@ -90,11 +103,8 @@ export async function demanderSocrateSite(
 
   // Court : la route ajoute déjà le résumé de la semaine (attente plus courte sur le poste).
   const contexte = (corps.contexte ?? '').slice(0, 800);
-  const r = await fetch('/api/tutor', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    signal: corps.signal,
-    body: JSON.stringify(corps.bureau ? {
+  // Même conversation quel que soit le moteur choisi (Auto / Gemini / Gemma) : voir lib/choix-moteur.ts.
+  const r = await envoyerTuteur(corps.bureau ? {
       // La consigne et le contenu de la leçon sont ajoutés par le serveur ; ici, seulement la conversation.
       moduleId: corps.moduleId,
       voix: true,
@@ -102,12 +112,16 @@ export async function demanderSocrateSite(
       messages: [...(corps.historique ?? []), { role: 'user', content: question }],
     } : {
       moduleId: corps.moduleId,
-      voix: true, // contexte court sur le poste : réponse orale de 2 à 4 phrases
+      voix: true, // contexte court sur le poste : réponse orale de 2 ou 3 phrases
       messages: [{ role: 'user', content: contexte
-        ? `(Question posée à voix haute : réponds en 2 à 4 phrases courtes, sans code ni liste.)\nContexte : ${contexte}\n\nQuestion : ${question}`
-        : `(Question posée à voix haute : réponds en 2 à 4 phrases courtes, sans code ni liste.)\n${question}` }],
-    }),
-  });
+        ? `(Question posée à voix haute : réponds en 2 ou 3 phrases courtes, sans code ni liste.)\nContexte : ${contexte}\n\nQuestion : ${question}`
+        : `(Question posée à voix haute : réponds en 2 ou 3 phrases courtes, sans code ni liste.)\n${question}` }],
+    }, corps.signal);
+  if (!r.ok) {
+    // Mode « Gemini » forcé sans Gemini : Socrate le dit à voix haute plutôt que de changer de moteur.
+    const msg = await messageErreurTuteur(r);
+    if (msg?.startsWith('Gemini indisponible')) { surPhrase(msg, await voixDe(msg)); return; }
+  }
   if (!r.ok || !r.body) throw new Error('Socrate indisponible');
 
   // Chaque phrase complète est lue dès qu'elle arrive, dans l'ordre. La voix travaille à côté :
@@ -117,12 +131,7 @@ export async function demanderSocrateSite(
   const direPhrase = async (phrase: string) => {
     const texte = phrase.replace(/[*_#`>]/g, '').trim();
     if (!texte) return;
-    let audio = '';
-    try {
-      const s = await fetch('/api/speech', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: texte }) });
-      audio = String((await s.json().catch(() => ({})))?.audioContent ?? '');
-    } catch {}
-    surPhrase(texte, audio);
+    surPhrase(texte, await voixDe(texte));
   };
   const lecteur = r.body.getReader();
   const dec = new TextDecoder();

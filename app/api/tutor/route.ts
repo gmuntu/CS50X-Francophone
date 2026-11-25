@@ -8,6 +8,69 @@ import { IA_SLUG } from '@/lib/courses/ia-essentiels';
 import { systemeTuteur } from '@/lib/tuteur-contexte';
 import { contenuSemaine } from '@/lib/approfondir/contenus';
 import { contexteTuteur } from '@/lib/approfondir/types';
+import {
+  ENTETE_MOTEUR, ENTETES_FLUX, JETONS_VOIX_GEMMA, fluxGemini, modeleGemma, moteurValide,
+  type MessageTuteur, type Moteur,
+} from '@/lib/gemini-tuteur';
+import { DELAI_GEMINI_FORCE_MS, echecRecent, relaisIAPossible, relaisTuteur } from '@/lib/relais-poste-ia';
+
+const LOCAL = () => process.env.SAVOIRIA_LOCAL === '1';
+
+const jsonErreur = (error: string, status: number) => new Response(JSON.stringify({ error }), {
+  status, headers: { 'Content-Type': 'application/json' },
+});
+
+/**
+ * Réponse selon le moteur choisi.
+ * - Site en ligne : Auto et Gemini = Gemini, comme d'habitude.
+ * - Ordinateur d'école (aucune clé Gemini) : Gemini passe par le site en ligne avec la clé de poste.
+ *   En Auto, si le site en ligne ne donne pas son premier mot en 5 s (ou erreur, ou pas d'Internet),
+ *   Gemma répond sans rien demander. En Gemini forcé, pas de repli : un message clair.
+ * La même conversation (messages) est envoyée quel que soit le moteur.
+ */
+async function repondreAvecMoteur({ moteur, systeme, messages, modeleTexte, approfondir, voix, horsLigne }: {
+  moteur: Moteur; systeme: string; messages: MessageTuteur[]; modeleTexte: string; approfondir: boolean; voix: boolean; horsLigne: boolean;
+}): Promise<Response | null> {
+  if (!LOCAL()) {
+    const cle = process.env.GEMINI_API_KEY || process.env.EMINI_API_KEY;
+    // Auto sans clé Gemini : chemin historique (autre moteur éventuel).
+    if (!cle && moteur === 'auto') return null;
+    if (!cle) return jsonErreur('Gemini indisponible : aucune clé configurée sur le serveur.', 503);
+    try {
+      return await fluxGemini({ systeme, messages, modele: modeleTexte, cle, entetes: { [ENTETE_MOTEUR]: 'gemini' } });
+    } catch {
+      return jsonErreur('Gemini indisponible : le service ne répond pas. Réessaie dans un instant.', 502);
+    }
+  }
+
+  // Gemma sur cet ordinateur (lib/local-ai.ts détourne l'appel « Gemini » vers Ollama).
+  // Réponse vocale : 2 à 3 phrases, donc peu de jetons.
+  const gemma = async () => {
+    try {
+      return await fluxGemini({
+        systeme, messages, modele: modeleTexte, cle: 'local',
+        maxTokens: voix ? JETONS_VOIX_GEMMA : 2048,
+        entetes: { [ENTETE_MOTEUR]: modeleGemma() },
+      });
+    } catch {
+      return jsonErreur("L'IA de cet ordinateur (Gemma) ne répond pas. Réessaie dans une minute.", 503);
+    }
+  };
+  const viaGemini = (r: Response) => new Response(r.body, { headers: { ...ENTETES_FLUX, [ENTETE_MOTEUR]: 'gemini' } });
+
+  if (moteur === 'gemma') return gemma();
+  if (moteur === 'gemini') {
+    if (horsLigne) return jsonErreur('Gemini indisponible : pas de connexion Internet.', 503);
+    const r = await relaisTuteur({ systeme, messages, approfondir }, DELAI_GEMINI_FORCE_MS);
+    return r.ok ? viaGemini(r.reponse) : jsonErreur(`Gemini indisponible : ${r.raison}`, r.status);
+  }
+  // Auto
+  if (!horsLigne && relaisIAPossible() && !echecRecent()) {
+    const r = await relaisTuteur({ systeme, messages, approfondir });
+    if (r.ok) return viaGemini(r.reponse);
+  }
+  return gemma();
+}
 
 
 export async function POST(request: NextRequest) {
@@ -21,6 +84,10 @@ export async function POST(request: NextRequest) {
     }
     const body = await request.json();
     const { moduleId, course, week } = body ?? {};
+    const moteur = body?.moteur;
+    if (moteur !== undefined && !moteurValide(moteur)) return jsonErreur('Moteur inconnu.', 400);
+    // Gemma n'existe que sur l'ordinateur SavoirIA d'une école.
+    if (moteur === 'gemma' && !LOCAL()) return jsonErreur("Gemma local n'est disponible que sur l'ordinateur SavoirIA.", 503);
     // Le tuteur d'une formation est réservé aux élèves dont l'inscription à cette formation est validée.
     { const refus = await refusSiPasInscrit((session.user as any).id, course === IA_SLUG || (typeof moduleId === 'number' && moduleId >= 1000 && moduleId < 3000) ? 'ia-essentiels' : 'cs50x'); if (refus) return refus; }
     { const bloque = await quotaIA(session.user as any, 'tutor'); if (bloque) return bloque; }
@@ -59,140 +126,16 @@ export async function POST(request: NextRequest) {
     const geminiKey = process.env.GEMINI_API_KEY || process.env.EMINI_API_KEY;
     const abacusKey = process.env.ABACUSAI_API_KEY;
 
+    // Choix du moteur (Auto / Gemini / Gemma) : seulement si le navigateur l'envoie.
+    // Sans ce champ (Salle d'étude…), le chemin historique ci-dessous ne change pas.
+    if (moteur !== undefined) {
+      const r = await repondreAvecMoteur({ moteur, systeme, messages, modeleTexte, approfondir, voix: body?.voix === true, horsLigne: body?.horsLigne === true });
+      if (r) return r;
+    }
+
     // 1. PRIORITÉ : GOOGLE GEMINI (avec clé API active)
     if (geminiKey) {
-      const rawContents: { role: 'user' | 'model'; parts: { text: string }[] }[] = [];
-      const inputList = Array.isArray(messages) ? messages : [];
-
-      for (const m of inputList) {
-        const text = String(m?.content ?? '').trim();
-        if (!text) continue;
-        const role: 'user' | 'model' = (m?.role === 'assistant' || m?.role === 'model') ? 'model' : 'user';
-        if (rawContents.length > 0 && rawContents[rawContents.length - 1].role === role) {
-          rawContents[rawContents.length - 1].parts[0].text += `\n${text}`;
-        } else {
-          rawContents.push({ role, parts: [{ text }] });
-        }
-      }
-
-      if (rawContents.length === 0 || rawContents[0].role !== 'user') {
-        rawContents.unshift({ role: 'user', parts: [{ text: 'Bonjour Socrate' }] });
-      }
-
-      const geminiPayload = {
-        systemInstruction: {
-          parts: [{ text: systeme }],
-        },
-        contents: rawContents,
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 2048,
-          // Réflexion courte : Socrate commence à répondre beaucoup plus vite.
-          thinkingConfig: { thinkingLevel: 'low' },
-        } as Record<string, unknown>,
-      };
-
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modeleTexte}:streamGenerateContent?alt=sse`;
-
-      const geminiRes = await fetch(geminiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': geminiKey },
-        body: JSON.stringify(geminiPayload),
-      });
-
-      if (!geminiRes.ok) {
-        const errText = await geminiRes.text();
-        console.error('Gemini streaming error:', geminiRes.status, errText);
-
-        // Fallback non-streaming avec generateContent (sans réglage de réflexion, au cas où il serait refusé)
-        delete (geminiPayload.generationConfig as Record<string, unknown>).thinkingConfig;
-        const fallbackUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modeleTexte}:generateContent`;
-        const fallbackRes = await fetch(fallbackUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': geminiKey },
-          body: JSON.stringify(geminiPayload),
-        });
-
-        if (fallbackRes.ok) {
-          const fallbackData = await fallbackRes.json();
-          const answerText = fallbackData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-          const stream = new ReadableStream({
-            start(controller) {
-              const encoder = new TextEncoder();
-              controller.enqueue(
-                encoder.encode(
-                  `data: ${JSON.stringify({ choices: [{ delta: { content: answerText } }] })}\n\n`
-                )
-              );
-              controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-              controller.close();
-            },
-          });
-          return new Response(stream, {
-            headers: {
-              'Content-Type': 'text/plain; charset=utf-8',
-              'Cache-Control': 'no-cache',
-              'Connection': 'keep-alive',
-            },
-          });
-        }
-        throw new Error(`Erreur du service Gemini (${geminiRes.status})`);
-      }
-
-      // Proxy du flux SSE Gemini vers le client au format universel attendu
-      const encoder = new TextEncoder();
-      const decoder = new TextDecoder();
-      const reader = geminiRes.body?.getReader();
-
-      const clientStream = new ReadableStream({
-        async start(controller) {
-          if (!reader) {
-            controller.close();
-            return;
-          }
-          let buffer = '';
-          try {
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) break;
-              buffer += decoder.decode(value, { stream: true });
-              const lines = buffer.split('\n');
-              buffer = lines.pop() || '';
-
-              for (const line of lines) {
-                if (line.startsWith('data: ')) {
-                  const jsonStr = line.slice(6).trim();
-                  if (!jsonStr) continue;
-                  try {
-                    const parsed = JSON.parse(jsonStr);
-                    const delta = parsed?.candidates?.[0]?.content?.parts?.[0]?.text;
-                    if (delta) {
-                      controller.enqueue(
-                        encoder.encode(
-                          `data: ${JSON.stringify({ choices: [{ delta: { content: delta } }] })}\n\n`
-                        )
-                      );
-                    }
-                  } catch {}
-                }
-              }
-            }
-            controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-          } catch (streamErr) {
-            console.error('Error forwarding Gemini stream:', streamErr);
-          } finally {
-            controller.close();
-          }
-        },
-      });
-
-      return new Response(clientStream, {
-        headers: {
-          'Content-Type': 'text/plain; charset=utf-8',
-          'Cache-Control': 'no-cache',
-          'Connection': 'keep-alive',
-        },
-      });
+      return await fluxGemini({ systeme, messages, modele: modeleTexte, cle: geminiKey });
     }
 
     // 2. ALTERNATIVE : ABACUS.AI (si configuré)
