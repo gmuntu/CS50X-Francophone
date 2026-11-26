@@ -84,6 +84,8 @@ export async function demanderSocrateSite(
     audio: string; contexte?: string; moduleId?: number;
     /** « Demande au prof » : même Socrate qu'en ligne sur /agora, avec la mémoire de la conversation. */
     bureau?: boolean;
+    /** Salle d'étude : explication ouverte (pas de méthode socratique) ; « expliquer » = l'élève explique. */
+    salleEtude?: { mode?: 'expliquer' };
     historique?: { role: 'user' | 'assistant'; content: string }[];
     signal?: AbortSignal;
   },
@@ -104,7 +106,13 @@ export async function demanderSocrateSite(
   // Court : la route ajoute déjà le résumé de la semaine (attente plus courte sur le poste).
   const contexte = (corps.contexte ?? '').slice(0, 800);
   // Même conversation quel que soit le moteur choisi (Auto / Gemini / Gemma) : voir lib/choix-moteur.ts.
-  const r = await envoyerTuteur(corps.bureau ? {
+  const r = await envoyerTuteur(corps.salleEtude ? {
+      // Le document (court) part comme donnée « approfondir » : le serveur applique la consigne d'explication.
+      moduleId: corps.moduleId,
+      voix: true,
+      approfondir: { contexte: contexte || '(pas de document)', ...(corps.salleEtude.mode ? { mode: corps.salleEtude.mode } : {}) },
+      messages: [...(corps.historique ?? []), { role: 'user', content: `(Question posée à voix haute : réponds en 2 ou 3 phrases courtes, sans code ni liste.)\n${question}` }],
+    } : corps.bureau ? {
       // La consigne et le contenu de la leçon sont ajoutés par le serveur ; ici, seulement la conversation.
       moduleId: corps.moduleId,
       voix: true,
