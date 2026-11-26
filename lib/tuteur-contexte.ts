@@ -11,8 +11,8 @@ const LOCAL = process.env.SAVOIRIA_LOCAL === '1';
 // Sur un ordinateur d'école, Gemma lit le texte envoyé à environ 60 jetons par seconde :
 // des notes plus courtes divisent l'attente avant la réponse. Le Tuteur vocal (2 à 4 phrases)
 // n'a besoin que du résumé de la semaine.
-const NOTES_MAX = LOCAL ? 1500 : 6000;
-const IA_MAX = LOCAL ? 3000 : 12000;
+const notesMax = (local: boolean) => (local ? 1500 : 6000);
+const iaMax = (local: boolean) => (local ? 3000 : 12000);
 const IA_MAX_VOIX = 1200;
 
 const SYSTEM_PROMPT = `Tu es Socrate, un tuteur socratique expert en informatique et programmation, spécialisé dans le cours CS50 de Harvard pour les étudiants francophones.
@@ -27,14 +27,20 @@ Règles :
 - Adapte ton niveau au contexte de la question et du module actuel`;
 
 /** Consigne complète du tuteur pour une leçon (CS50x) ou une semaine de « L'essentiel de l'IA ». */
-export async function systemeTuteur({ moduleId, course, week, voix, bureau }: {
+export async function systemeTuteur({ moduleId, course, week, voix, bureau, local }: {
   moduleId?: unknown; course?: unknown; week?: unknown; voix?: boolean;
   /** Vrai pour « Demande au prof » (/agora) : même Socrate qu'en ligne. */
   bureau?: boolean;
+  /**
+   * Consigne d'ordinateur d'école. Par défaut : SAVOIRIA_LOCAL. Le site en ligne passe `true` quand il
+   * répond à la place d'un poste (/api/poste/tuteur), pour reproduire exactement la consigne du poste.
+   */
+  local?: boolean;
 }): Promise<string> {
   const isIa = course === IA_SLUG;
+  const enLocal = local ?? LOCAL;
   // Contexte court pour la voix, seulement sur un ordinateur d'école (en ligne, rien ne change).
-  const court = LOCAL && voix === true;
+  const court = enLocal && voix === true;
   const mod = CS50_MODULES?.find?.((m: any) => m?.id === moduleId);
 
   // « Demande au prof » sur un ordinateur SavoirIA : même Socrate qu'en ligne sur /agora
@@ -52,7 +58,7 @@ export async function systemeTuteur({ moduleId, course, week, voix, bureau }: {
     ? `\nModule actuel : ${mod.title}\nSujets : ${mod.topics?.join?.(', ')}\nDescription : ${mod.description}`
     : '';
 
-  if (isIa) moduleContext = `\n\n--- COURS DE LA SEMAINE ---\n${iaWeekContext(Number(week) || 1).slice(0, court ? IA_MAX_VOIX : IA_MAX)}`;
+  if (isIa) moduleContext = `\n\n--- COURS DE LA SEMAINE ---\n${iaWeekContext(Number(week) || 1).slice(0, court ? IA_MAX_VOIX : iaMax(enLocal))}`;
 
   // Intégration du matériel pédagogique du module
   try {
@@ -67,7 +73,7 @@ export async function systemeTuteur({ moduleId, course, week, voix, bureau }: {
       }
       const source = readCourseSource(moduleId);
       if (source && !court) {
-        moduleContext += `\n\n--- NOTES DE COURS SOURCE ---\n${source.slice(0, NOTES_MAX)}`;
+        moduleContext += `\n\n--- NOTES DE COURS SOURCE ---\n${source.slice(0, notesMax(enLocal))}`;
       }
       moduleContext += `\n\nAppuie tes relances socratiques sur ce matériel pédagogique.`;
     }

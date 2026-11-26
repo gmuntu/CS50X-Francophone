@@ -9,6 +9,8 @@ const PAR_JOUR = 100; // analyses par ordinateur d'école et par jour (coût Gem
 
 /** Un ordinateur d'école vérifie qu'il peut relayer une analyse (Internet + poste actif). */
 export async function GET(req: Request) {
+  // Route du site en ligne : un ordinateur d'école ne la sert pas.
+  if (process.env.SAVOIRIA_LOCAL === '1') return erreur('Indisponible sur un ordinateur d’école', 404);
   const poste = await posteDeLaRequete(req);
   if (!poste) return erreur('Poste inconnu ou désactivé', 401);
   return process.env.GEMINI_API_KEY ? Response.json({ ok: true }) : erreur('Service indisponible', 503);
@@ -16,6 +18,7 @@ export async function GET(req: Request) {
 
 /** Analyse relayée par un ordinateur d'école (l'élève y est déjà connecté). */
 export async function POST(req: Request) {
+  if (process.env.SAVOIRIA_LOCAL === '1') return erreur('Indisponible sur un ordinateur d’école', 404);
   const poste = await posteDeLaRequete(req);
   if (!poste) return erreur('Poste inconnu ou désactivé', 401);
   return analyserFormulaire(req, async () =>

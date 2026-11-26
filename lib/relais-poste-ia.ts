@@ -2,7 +2,7 @@
 // Pour que Socrate réponde avec Gemini, il relaie la question vers le site en ligne, identifié par
 // sa clé de poste (en-tête, jamais dans l'adresse). Même principe que lib/approfondir/relais-poste.ts.
 import { ENTETE_POSTE } from '@/lib/poste-ecole';
-import type { MessageTuteur } from '@/lib/gemini-tuteur';
+import type { ParametresTuteur } from '@/lib/tuteur-consigne';
 
 const SERVEUR = () => (process.env.SAVOIRIA_SERVEUR || 'https://www.savoiria.online').trim().replace(/\/$/, '');
 const CLE = () => (process.env.POSTE_CLE || '').trim();
@@ -15,11 +15,8 @@ export const DELAI_PREMIER_MOT_MS = 5_000;
 /** Mode « Gemini » forcé : pas de repli, on attend un peu plus avant d'abandonner. */
 export const DELAI_GEMINI_FORCE_MS = 20_000;
 
-/** Bornes de ce que le poste envoie (le site en ligne les revérifie). */
-export const CONSIGNE_MAX = 20_000;
-export const MESSAGES_MAX = 30;
-// Un message peut contenir le document étudié (Approfondir le sujet) : 4 000 + 6 000 caractères.
-export const MESSAGE_MAX = 12_000;
+/** Au-delà de 20 s sans nouveau morceau, le relais s'arrête et la réponse se termine proprement. */
+export const SILENCE_MAX_MS = 20_000;
 
 /**
  * Vrai fetch : sur l'ordinateur d'école, lib/local-ai.ts remplace globalThis.fetch (il ne détourne que
@@ -55,24 +52,18 @@ function contientTexte(lignes: string[]): boolean {
  * de texte arrive avant `delaiMs` ; la réponse renvoyée contient alors tout le flux (déjà lu + suite).
  */
 export async function relaisTuteur(
-  corps: { systeme: string; messages: MessageTuteur[]; approfondir?: boolean },
+  corps: { parametres: ParametresTuteur; messages: { role: string; content: string }[] },
   delaiMs = DELAI_PREMIER_MOT_MS,
 ): Promise<ResultatRelais> {
   if (!relaisIAPossible()) return echec('cet ordinateur n’a pas de clé de poste.');
   const arret = new AbortController();
   const minuteur = setTimeout(() => arret.abort(), delaiMs);
   try {
+    // Seulement le contexte (leçon, semaine, voix…) et la conversation : le site en ligne refait la consigne.
     const r = await vraiFetch()(`${SERVEUR()}/api/poste/tuteur`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', [ENTETE_POSTE]: CLE() },
-      body: JSON.stringify({
-        systeme: String(corps.systeme ?? '').slice(0, CONSIGNE_MAX),
-        messages: (Array.isArray(corps.messages) ? corps.messages : []).slice(-MESSAGES_MAX).map((m) => ({
-          role: m?.role === 'assistant' || m?.role === 'model' ? 'assistant' : 'user',
-          content: String(m?.content ?? '').slice(0, MESSAGE_MAX),
-        })),
-        approfondir: corps.approfondir === true,
-      }),
+      body: JSON.stringify({ ...corps.parametres, messages: corps.messages }),
       cache: 'no-store',
       signal: arret.signal,
     });
@@ -100,10 +91,19 @@ export async function relaisTuteur(
     const flux = new ReadableStream<Uint8Array>({
       start(ctrl) { for (const m of dejaLus) ctrl.enqueue(m); },
       async pull(ctrl) {
+        // Site en ligne muet trop longtemps : on coupe et on termine proprement la réponse de l'élève.
+        let silence: ReturnType<typeof setTimeout> | undefined;
+        const muet = new Promise<'muet'>((ok) => { silence = setTimeout(() => ok('muet'), SILENCE_MAX_MS); });
         try {
-          const { value, done } = await lecteur.read();
-          if (done) ctrl.close(); else ctrl.enqueue(value);
-        } catch { ctrl.close(); }
+          const m = await Promise.race([lecteur.read(), muet]);
+          if (m === 'muet') {
+            arret.abort();
+            lecteur.cancel().catch(() => {});
+            ctrl.enqueue(new TextEncoder().encode('data: [DONE]\n\n'));
+            ctrl.close();
+          } else if (m.done) ctrl.close();
+          else ctrl.enqueue(m.value);
+        } catch { ctrl.close(); } finally { clearTimeout(silence); }
       },
       cancel() { lecteur.cancel().catch(() => {}); arret.abort(); }, // l'élève a quitté la page
     });

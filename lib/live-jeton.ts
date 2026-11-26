@@ -30,6 +30,31 @@ export async function pickLiveModel(key: string): Promise<string | null> {
   return model;
 }
 
+/**
+ * Corps de la demande de jeton : usage unique, 15 minutes au plus, verrouillé sur le modèle choisi ici
+ * et sur la réponse en audio (format REST v1alpha de /auth_tokens : bidiGenerateContentSetup + fieldMask,
+ * ce que produit le SDK Google à partir de « liveConnectConstraints »). Le navigateur ne peut donc pas
+ * s'en servir avec un autre modèle.
+ * La consigne (systemInstruction) n'est volontairement PAS verrouillée : hooks/useGeminiLive.ts envoie la
+ * sienne, avec le contenu de la leçon, dans son propre message « setup » ; la verrouiller ici (vide)
+ * casserait le tuteur vocal. Le fieldMask limite donc le verrou aux champs donnés ici (le modèle est
+ * toujours verrouillé). Aucun outil n'est déclaré, ni ici ni dans le setup du navigateur.
+ */
+export function corpsJetonLive(model: string, now = Date.now(), verrouille = true) {
+  return {
+    uses: 1,
+    expireTime: new Date(now + 15 * 60_000).toISOString(),
+    newSessionExpireTime: new Date(now + 2 * 60_000).toISOString(),
+    ...(verrouille ? {
+      bidiGenerateContentSetup: {
+        model: `models/${model}`,
+        generationConfig: { responseModalities: ['AUDIO'] },
+      },
+      fieldMask: 'generationConfig.responseModalities',
+    } : {}),
+  };
+}
+
 /** Crée un jeton Live à usage unique. Réponse prête à renvoyer au navigateur (jeton + modèle, ou erreur). */
 export async function reponseJetonLive(key: string): Promise<Response> {
   const model = await pickLiveModel(key).catch(() => null);
@@ -37,16 +62,18 @@ export async function reponseJetonLive(key: string): Promise<Response> {
     return Response.json({ error: 'Aucun modèle Live disponible pour cette clé Gemini' }, { status: 502 });
   }
   const now = Date.now();
+  const demander = (verrouille: boolean) => fetch('https://generativelanguage.googleapis.com/v1alpha/auth_tokens', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+    body: JSON.stringify(corpsJetonLive(model, now, verrouille)),
+  });
   try {
-    const res = await fetch('https://generativelanguage.googleapis.com/v1alpha/auth_tokens', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-      body: JSON.stringify({
-        uses: 1,
-        expireTime: new Date(now + 30 * 60_000).toISOString(),
-        newSessionExpireTime: new Date(now + 2 * 60_000).toISOString(),
-      }),
-    });
+    let res = await demander(true);
+    // Verrou refusé par Google (format changé) : on ne casse pas le tuteur vocal, on le signale dans les journaux.
+    if (res.status === 400) {
+      console.warn('live-token : verrou refusé par Google, jeton NON verrouillé', (await res.text().catch(() => '')).slice(0, 300));
+      res = await demander(false);
+    }
     const data = await res.json().catch(() => ({}));
     if (!res.ok || !data?.name) {
       console.error('live-token error', res.status, JSON.stringify(data).slice(0, 300));

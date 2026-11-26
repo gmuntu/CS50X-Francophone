@@ -1,12 +1,18 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { quotaIA } from '@/lib/quota';
+import { depasse, quotaIA } from '@/lib/quota';
 import { reponseJetonLive } from '@/lib/live-jeton';
 import { liveDisponible, relaisJetonLive } from '@/lib/relais-poste-ia';
 
 export const dynamic = 'force-dynamic';
 
 const LOCAL = () => process.env.SAVOIRIA_LOCAL === '1';
+
+/** Conversations Gemini Live par élève et par jour sur un ordinateur d'école. Réglable : POSTE_ELEVE_LIVE_PAR_JOUR. */
+const limiteEleveLive = () => {
+  const n = Number.parseInt(process.env.POSTE_ELEVE_LIVE_PAR_JOUR ?? '', 10);
+  return Number.isFinite(n) && n > 0 ? n : 10;
+};
 
 /**
  * BÊTA — Jeton éphémère pour Gemini Live.
@@ -21,6 +27,11 @@ export async function POST() {
     { const bloque = await quotaIA(session.user as any, 'live'); if (bloque) return bloque; }
 
   if (LOCAL()) {
+    // Limite personnelle atteinte : erreur, et le tuteur vocal continue en tour par tour sur l'ordinateur.
+    const id = String((session.user as any).id ?? '');
+    if (await depasse(`ia:live-poste-eleve:${id}:${new Date().toISOString().slice(0, 10)}`, limiteEleveLive(), 24 * 3600_000)) {
+      return NextResponse.json({ error: 'Limite du jour atteinte pour la conversation en direct.' }, { status: 429 });
+    }
     const r = await relaisJetonLive();
     return r.ok ? NextResponse.json({ token: r.token, model: r.model }) : NextResponse.json({ error: r.raison }, { status: r.status });
   }
