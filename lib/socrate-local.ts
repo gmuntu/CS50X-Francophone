@@ -137,6 +137,7 @@ export async function demanderSocrateSite(
   const dec = new TextDecoder();
   let reste = '';
   let texte = '';
+  let premier = true;
   for (;;) {
     const { value, done } = await lecteur.read();
     if (done) break;
@@ -147,8 +148,11 @@ export async function demanderSocrateSite(
       if (!l.startsWith('data: ') || l.includes('[DONE]')) continue;
       try { texte += JSON.parse(l.slice(6))?.choices?.[0]?.delta?.content ?? ''; } catch {}
     }
-    const fin = texte.search(/[.!?…](\s|$)(?![\s\S]*[.!?…](\s|$))/);
-    if (fin >= 0) { const phrases = texte.slice(0, fin + 1); texte = texte.slice(fin + 1); dire(phrases); }
+    let fin = texte.search(/[.!?…](\s|$)(?![\s\S]*[.!?…](\s|$))/);
+    // Première prise de parole : sans attendre la fin de la phrase, on dit déjà le premier morceau
+    // (jusqu'à une virgule, après 30 caractères au moins). La voix démarre ~2 s plus tôt.
+    if (fin < 0 && premier) { const m = /^[\s\S]{30,}?[,;:](?=\s)/.exec(texte); if (m) fin = m[0].length - 1; }
+    if (fin >= 0) { premier = false; const phrases = texte.slice(0, fin + 1); texte = texte.slice(fin + 1); dire(phrases); }
   }
   dire(texte);
   await suite;
