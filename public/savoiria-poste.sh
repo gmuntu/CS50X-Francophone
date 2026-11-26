@@ -75,7 +75,7 @@ mkdir -p /etc/systemd/system/ollama.service.d
 cat > /etc/systemd/system/ollama.service.d/savoiria.conf <<EOF
 [Service]
 Environment="OLLAMA_ORIGINS=$SITE,https://savoiria.online,http://localhost:3000"
-Environment="OLLAMA_KEEP_ALIVE=30m"
+Environment="OLLAMA_KEEP_ALIVE=-1"
 EOF
 systemctl daemon-reload
 systemctl enable --now ollama
