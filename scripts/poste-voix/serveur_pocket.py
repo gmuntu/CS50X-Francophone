@@ -26,7 +26,9 @@ modele = TTSModel.load_model(language="french", quantize=os.environ.get("VOIX_RA
 ETATS = {k: modele.get_state_for_audio_prompt(v) for k, v in VOIX.items()}
 os.makedirs(CACHE, mode=0o700, exist_ok=True)
 ATTENTE_PREPA = 600  # une préparation qui attend plus de 10 min abandonne (elle reprendra plus tard)
-FILS = torch.get_num_threads()  # tous les cœurs pour un élève, un seul pour la préparation
+# 4 fils au plus pour un élève (tous les cœurs : ~2 fois plus lent sur les processeurs à petits et grands cœurs,
+# et Gemma calcule en même temps) ; un seul pour la préparation. Réglable : VOIX_THREADS.
+FILS = int(os.environ.get("VOIX_THREADS") or min(4, torch.get_num_threads()))
 GEMMA_MAX = 300  # sans nouvelle du site, la pause « Gemma occupé » se lève d'elle-même après 5 min
 
 # Un seul calcul à la fois. Les demandes des élèves passent avant la préparation à l'avance.

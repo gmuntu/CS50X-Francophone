@@ -16,7 +16,7 @@ const FIN = `Si une question sort du cours, réponds brièvement puis ramène l'
  * Réponse orale sur l'ordinateur d'école : plus courte qu'en ligne (la voix de synthèse lit lentement).
  * Ajoutée seulement aux variantes locales vocales : DEBUT et FIN restent partagés avec Gemini Live.
  */
-export const REPONSE_VOCALE_COURTE = `Ici, réponds en 2 ou 3 phrases au maximum, jamais plus : un indice, puis une seule question.`;
+export const REPONSE_VOCALE_COURTE = `Ici, réponds en 2 ou 3 phrases au maximum, jamais plus : un indice, puis une seule question. Ta toute première phrase est très courte (5 à 8 mots), pour que la voix démarre vite.`;
 
 /** En ligne : Socrate dispose du transcript complet et horodaté de la vidéo. */
 export const CONSIGNE_SOCRATE_VOCAL = `${DEBUT}
