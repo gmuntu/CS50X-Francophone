@@ -8,7 +8,7 @@
 
 import { spawn } from 'node:child_process';
 import { mkdtemp, readFile, writeFile, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { availableParallelism, tmpdir } from 'node:os';
 import path from 'node:path';
 import { texteVoixLocale } from '@/lib/voix-texte';
 
@@ -39,6 +39,10 @@ const DELAI_GEMMA = 120_000;
 // Gemma reste en mémoire en permanence : sinon la première question après 30 min d'attente
 // coûte 1 à 2 minutes de chargement. Sur un ordinateur d'école, il ne sert qu'à SavoirIA.
 const GARDER = -1;
+// Nombre de fils de calcul de Gemma. Tous les fils (12 sur un Core 5 120U) font tomber Gemma à ~1 mot/s :
+// les petits cœurs et l'hyperthreading se gênent. La moitié (6 au plus) donne ~11 mots/s.
+// Même valeur pour TOUS les appels, sinon Ollama recharge le modèle (≈ 10 s). Réglable : GEMMA_THREADS.
+export const FILS_GEMMA = Number(process.env.GEMMA_THREADS) || Math.max(2, Math.min(6, Math.floor(availableParallelism() / 2)));
 
 function executer(cmd: string, args: string[], entree?: string, delaiMs = 180_000): Promise<string> {
   return unAUn(() => new Promise<string>((ok, ko) => {
@@ -71,6 +75,7 @@ function optionsOllama(corps: any) {
   return {
     temperature: g.temperature ?? 0.7,
     num_predict: Math.min(g.maxOutputTokens ?? 1024, 2048),
+    num_thread: FILS_GEMMA,
   };
 }
 
@@ -294,6 +299,6 @@ export function activerIALocale() {
   // Charge Gemma dès le démarrage, pour que la première question d'un élève ne l'attende pas.
   original(`${OLLAMA}/api/generate`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: MODELE, keep_alive: GARDER }),
+    body: JSON.stringify({ model: MODELE, keep_alive: GARDER, options: { num_thread: FILS_GEMMA } }),
   }).catch(() => {});
 }

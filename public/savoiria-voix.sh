@@ -112,11 +112,12 @@ while true; do
 
   echo "Socrate réfléchit…"
   reponse=\$(python3 - "\$MODELE" "\$consigne" "\$question" <<'PY'
-import json, sys, urllib.request
+import json, os, sys, urllib.request
 modele, consigne, question = sys.argv[1:4]
+fils = int(os.environ.get("GEMMA_THREADS") or max(2, min(6, (os.cpu_count() or 4) // 2)))
 corps = json.dumps({"model": modele, "system": consigne, "prompt": question,
-                    "stream": False, "think": False,
-                    "options": {"num_predict": 160}}).encode()
+                    "stream": False, "think": False, "keep_alive": -1,
+                    "options": {"num_predict": 160, "num_thread": fils}}).encode()
 try:
     req = urllib.request.Request("http://localhost:11434/api/generate", data=corps,
                                  headers={"Content-Type": "application/json"})
@@ -168,6 +169,8 @@ VOIX = f"{DOSSIER}/voix/socrate.onnx"
 PAGE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "index.html")
 PORT = int(os.environ.get("PORT", "8765"))
 OLLAMA = "http://127.0.0.1:11434/api/generate"
+# Même nombre de fils que le site (lib/local-ai.ts) : sinon Ollama recharge le modèle à chaque changement.
+FILS = int(os.environ.get("GEMMA_THREADS") or max(2, min(6, (os.cpu_count() or 4) // 2)))
 
 # Sites autorisés à parler au Socrate local (le site SavoirIA et les tests locaux)
 ORIGINES = {
@@ -217,7 +220,7 @@ def parler(texte: str) -> str:
 def prechauffer():
     """Charge le cerveau en mémoire pour que la 1re réponse soit aussi rapide que les autres."""
     try:
-        corps = json.dumps({"model": MODELE, "prompt": "", "keep_alive": "30m"}).encode()
+        corps = json.dumps({"model": MODELE, "prompt": "", "keep_alive": -1, "options": {"num_thread": FILS}}).encode()
         req = urllib.request.Request(OLLAMA, data=corps, headers={"Content-Type": "application/json"})
         urllib.request.urlopen(req, timeout=300).read()
     except Exception:
@@ -229,8 +232,8 @@ def penser_en_flux(question: str, contexte: str = ""):
     consigne = CONSIGNE + (f"\nContexte de la leçon en cours : {contexte[:1500]}" if contexte else "")
     corps = json.dumps({
         "model": MODELE, "system": consigne, "prompt": question,
-        "stream": True, "think": False, "keep_alive": "30m",
-        "options": {"num_predict": 180},
+        "stream": True, "think": False, "keep_alive": -1,
+        "options": {"num_predict": 180, "num_thread": FILS},
     }).encode()
     req = urllib.request.Request(OLLAMA, data=corps, headers={"Content-Type": "application/json"})
     tampon = ""
