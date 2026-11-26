@@ -9,6 +9,22 @@ import { useGeminiLive } from '@/hooks/useGeminiLive';
 const BILINGUE = "(Réponds en français ; donne le terme anglais de CS50 entre parenthèses quand c'est utile, ex. « boucle (loop) » ; si l'élève demande l'anglais, explique en anglais puis reviens au français ; guide par des questions.) ";
 import { detecterMode, demanderSocrateLocal, demanderSocrateSite, prechaufferTuteur, ORDINATEUR_LOCAL, type ModeSocrate } from '@/lib/socrate-local';
 import { creerConversation, type Conversation, type EtatConversation } from '@/lib/conversation-locale';
+import { lireMode, noterMoteur } from '@/lib/choix-moteur';
+import BadgeMoteur from '@/components/moteur-ia/badge-moteur';
+
+/**
+ * Ordinateur d'école, mode Auto ou Gemini : Gemini Live est-il possible ? (jeton demandé au site en ligne
+ * avec la clé de poste, voir /api/live-token). Réponse attendue 5 s au plus ; sinon Socrate local.
+ */
+async function liveSurLePoste(): Promise<boolean> {
+  if (lireMode() === 'gemma' || (typeof navigator !== 'undefined' && navigator.onLine === false)) return false;
+  try {
+    const r = await fetch('/api/live-token', { cache: 'no-store', signal: AbortSignal.timeout(6000) });
+    return r.ok;
+  } catch {
+    return false;
+  }
+}
 
 interface Props {
   moduleId: number;
@@ -54,16 +70,30 @@ export default function VoiceTutor({ moduleId, onActive, context: given, systemP
   const { status, error, start, stop } = useGeminiLive(context, systemPrompt);
 
   // Socrate hors ligne : 'en-ligne' (Gemini Live), 'local' (ordinateur SavoirIA), 'pause'
-  const [mode, setMode] = useState<ModeSocrate>('en-ligne');
+  // Sur l'ordinateur SavoirIA : tour par tour sur l'ordinateur (Whisper + IA + voix locale) par défaut ;
+  // Gemini Live seulement en mode Auto ou Gemini, avec Internet et un jeton obtenu à temps.
+  const [mode, setMode] = useState<ModeSocrate>(ORDINATEUR_LOCAL ? 'local' : 'en-ligne');
   useEffect(() => {
     let actif = true;
-    // Sur l'ordinateur SavoirIA, la conversation vocale passe toujours par Gemma + Whisper + Piper.
-    const verifier = async () => { const m = ORDINATEUR_LOCAL ? 'local' : await detecterMode(); if (actif) setMode(m); };
+    if (ORDINATEUR_LOCAL) {
+      // Vérifié à l'ouverture seulement : on ne coupe pas une conversation en cours.
+      liveSurLePoste().then((ok) => { if (actif) setMode(ok ? 'en-ligne' : 'local'); });
+      const horsLigne = () => setMode('local');
+      window.addEventListener('offline', horsLigne);
+      return () => { actif = false; window.removeEventListener('offline', horsLigne); };
+    }
+    const verifier = async () => { const m = await detecterMode(); if (actif) setMode(m); };
     verifier();
     window.addEventListener('online', verifier);
     window.addEventListener('offline', verifier);
     return () => { actif = false; window.removeEventListener('online', verifier); window.removeEventListener('offline', verifier); };
   }, []);
+  // Poste : Live en panne (pas de jeton en 5 s, connexion coupée…) -> tour par tour local, sans rien demander.
+  // L'erreur reste affichée par le hook jusqu'au prochain essai de Live, qui n'a plus lieu : on reste en local.
+  const liveEchoue = ORDINATEUR_LOCAL && mode === 'en-ligne' && status === 'error';
+  useEffect(() => {
+    if (ORDINATEUR_LOCAL && mode === 'en-ligne' && status === 'listening') noterMoteur('gemini-live');
+  }, [status, mode]);
   const active = status === 'connecting' || status === 'listening' || status === 'speaking';
 
   useEffect(() => { if (active) onActive?.(); }, [active, onActive]);
@@ -80,7 +110,7 @@ export default function VoiceTutor({ moduleId, onActive, context: given, systemP
     : status === 'error' ? 'bg-amber-600 hover:bg-amber-700'
     : 'bg-primary hover:bg-primary/90';
 
-  if (mode !== 'en-ligne') return <SocrateLocal mode={mode} context={context} moduleId={moduleId} onActive={onActive} bureau={!systemPrompt} />;
+  if (mode !== 'en-ligne' || liveEchoue) return <SocrateLocal mode={liveEchoue ? 'local' : mode} context={context} moduleId={moduleId} onActive={onActive} bureau={!systemPrompt} liveEchoue={liveEchoue} />;
 
   return (
     <div className="flex flex-col gap-2 p-4 rounded-2xl border border-border/80 bg-card">
@@ -99,6 +129,7 @@ export default function VoiceTutor({ moduleId, onActive, context: given, systemP
             Terminer
           </button>
         )}
+        {ORDINATEUR_LOCAL && <BadgeMoteur className="ml-auto" />}
       </div>
       <p className="text-xs text-muted-foreground">
         {error ?? hint ?? 'Conversation vocale en direct. Parlez naturellement, vous pouvez interrompre Socrate.'}
@@ -110,7 +141,7 @@ export default function VoiceTutor({ moduleId, onActive, context: given, systemP
 // ---------------------------------------------------------------------------
 // Socrate vocal sur l'ordinateur SavoirIA (sans Internet) : appuyer pour parler,
 // appuyer encore pour envoyer ; Socrate répond phrase par phrase, à voix haute.
-function SocrateLocal({ mode, context, moduleId, onActive, bureau }: { mode: ModeSocrate; context: string; moduleId: number; onActive?: () => void; bureau?: boolean }) {
+function SocrateLocal({ mode, context, moduleId, onActive, bureau, liveEchoue }: { mode: ModeSocrate; context: string; moduleId: number; onActive?: () => void; bureau?: boolean; liveEchoue?: boolean }) {
   // « Demande au prof » sur un ordinateur SavoirIA : conversation suivie, comme en ligne sur /agora.
   const suivi = !!bureau && ORDINATEUR_LOCAL;
   const [etat, setEtat] = useState<EtatConversation>('idle');
@@ -162,7 +193,11 @@ function SocrateLocal({ mode, context, moduleId, onActive, bureau }: { mode: Mod
   const couleur = etat === 'listening' ? 'bg-rose-600 animate-pulse' : etat === 'speaking' ? 'bg-[#7c3aed]' : etat === 'thinking' ? 'bg-slate-400' : 'bg-primary hover:bg-primary/90';
   return (
     <div className="flex flex-col gap-2 p-4 rounded-2xl border border-amber-200 bg-card">
-      <span className="self-start text-[10px] font-bold text-amber-700 bg-amber-500/15 px-2 py-0.5 rounded-full">✈ Socrate local · sans Internet</span>
+      <div className="flex items-center gap-2">
+        <span className="self-start text-[10px] font-bold text-amber-700 bg-amber-500/15 px-2 py-0.5 rounded-full">✈ Socrate local · sans Internet</span>
+        {ORDINATEUR_LOCAL && <BadgeMoteur className="ml-auto" />}
+      </div>
+      {liveEchoue && <p className="text-xs text-muted-foreground">La conversation en direct (Gemini Live) n’a pas répondu : Socrate continue sur cet ordinateur. Appuie pour parler.</p>}
       <div className="flex items-center gap-3">
         <button type="button" onClick={basculer} aria-pressed={etat !== 'idle'} className={`px-5 py-3 rounded-xl text-sm font-bold text-white flex items-center gap-2 transition-all ${couleur}`}>
           {etat === 'thinking' ? <Loader2 className="w-4 h-4 animate-spin" /> : etat === 'speaking' ? <Volume2 className="w-4 h-4" /> : <Mic className="w-4 h-4" />}

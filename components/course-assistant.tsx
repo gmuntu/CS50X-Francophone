@@ -18,6 +18,8 @@ import Link from 'next/link';
 import { enregistrementVersPcm16 as toPcm16 } from '@/lib/audio-pcm';
 import { sanitizeForVoice } from '@/lib/voix-texte';
 import { formulesLisibles } from '@/lib/formules';
+import { envoyerTuteur, messageErreurTuteur } from '@/lib/choix-moteur';
+import BadgeMoteur from '@/components/moteur-ia/badge-moteur';
 
 type DayType = 'MONDAY' | 'WEDNESDAY' | 'FRIDAY';
 
@@ -620,11 +622,16 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
     }
     setLoading(true);
     try {
-      const res = await fetch('/api/tutor', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: newMessages, moduleId }),
-      });
+      // Même conversation quel que soit le moteur choisi (Auto / Gemini / Gemma).
+      const res = await envoyerTuteur({ messages: newMessages, moduleId });
+      if (!res?.ok) {
+        // Mode « Gemini » forcé sans Gemini : on le dit clairement, sans changer de moteur.
+        const msg = await messageErreurTuteur(res);
+        if (msg?.startsWith('Gemini indisponible')) {
+          setMessages([...newMessages, { role: 'assistant', content: `⚠️ ${msg}` }]);
+          return;
+        }
+      }
       if (!res?.ok || !res?.body) throw new Error('Erreur du serveur');
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
@@ -856,6 +863,7 @@ export default function CourseAssistant({ moduleConfig, audioScripts, quizzes }:
               <Landmark className="w-3.5 h-3.5" />
             </div>
             <span className="text-xs sm:text-sm font-bold text-foreground">Questions au tuteur</span>
+            <BadgeMoteur />
           </div>
           {mode === 'en-ligne' && (
             <span className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">

@@ -12,6 +12,12 @@ Réponds en 2 à 4 phrases maximum, puis laisse l'étudiant parler.`;
 
 const FIN = `Si une question sort du cours, réponds brièvement puis ramène l'étudiant à la leçon.`;
 
+/**
+ * Réponse orale sur l'ordinateur d'école : plus courte qu'en ligne (la voix de synthèse lit lentement).
+ * Ajoutée seulement aux variantes locales vocales : DEBUT et FIN restent partagés avec Gemini Live.
+ */
+export const REPONSE_VOCALE_COURTE = `Ici, réponds en 2 ou 3 phrases au maximum, jamais plus : un indice, puis une seule question.`;
+
 /** En ligne : Socrate dispose du transcript complet et horodaté de la vidéo. */
 export const CONSIGNE_SOCRATE_VOCAL = `${DEBUT}
 Tu connais toute la vidéo grâce au transcript horodaté ci-dessous (version originale anglaise) : appuie-toi dessus et cite les moments précis (ex. « vers 12:30 dans la vidéo originale ») quand c'est utile. L'élève peut regarder la version doublée en français, où le moment peut être légèrement décalé.
@@ -25,6 +31,7 @@ ${FIN}`;
 export const CONSIGNE_SOCRATE_VOCAL_LOCAL = `${DEBUT}
 Tu connais la vidéo grâce au résumé et à la chronologie horodatée ci-dessous (version originale anglaise) : appuie-toi dessus et cite les moments précis (ex. « vers 12:30 dans la vidéo originale ») quand c'est utile. L'élève peut regarder la version doublée en français, où le moment peut être légèrement décalé.
 Ta réponse est lue à voix haute : pas de code, pas de liste, pas de symbole ni de mise en forme.
+${REPONSE_VOCALE_COURTE}
 ${FIN}`;
 
 /**
