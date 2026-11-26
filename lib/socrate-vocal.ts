@@ -16,7 +16,14 @@ const FIN = `Si une question sort du cours, réponds brièvement puis ramène l'
  * Réponse orale sur l'ordinateur d'école : plus courte qu'en ligne (la voix de synthèse lit lentement).
  * Ajoutée seulement aux variantes locales vocales : DEBUT et FIN restent partagés avec Gemini Live.
  */
-export const REPONSE_VOCALE_COURTE = `Ici, réponds en 2 ou 3 phrases au maximum, jamais plus : un indice, puis une seule question. Ta toute première phrase est très courte (5 à 8 mots), pour que la voix démarre vite.`;
+/** Précision demandée à Gemma à la voix (petit modèle : sans cela, ses indices restent vagues). */
+const PRECISION_VOCALE = `Sois précis et concret : emploie le mot exact du cours (variable, type, int, compilateur…) et une image ou un exemple concret tiré de la leçon (par exemple int age = 12), jamais une formule vague comme « un conteneur de données » ni une phrase vide comme « bonne question ». Tutoie toujours l'élève.`;
+
+/** Voix, « Demande au prof » et Salle de cours (méthode socratique). */
+export const REPONSE_VOCALE_COURTE = `Ici, réponds en 2 ou 3 phrases au maximum, jamais plus : un indice concret, puis une seule question précise. Ta toute première phrase est très courte (5 à 8 mots), pour que la voix démarre vite. ${PRECISION_VOCALE} Ta question porte sur cet exemple et l'élève peut y répondre en une phrase (jamais une question floue comme « que représente cette idée pour toi ? »).`;
+
+/** Voix, Salle d'étude (explication ouverte : pas de question-devinette). */
+export const REPONSE_VOCALE_EXPLICATION = `Ici, réponds en 2 ou 3 phrases au maximum, jamais plus : explique directement ce que c'est, à quoi cela sert, puis un exemple concret du document. Ta toute première phrase est très courte (5 à 8 mots), pour que la voix démarre vite. ${PRECISION_VOCALE}`;
 
 /** En ligne : Socrate dispose du transcript complet et horodaté de la vidéo. */
 export const CONSIGNE_SOCRATE_VOCAL = `${DEBUT}
@@ -41,7 +48,7 @@ ${FIN}`;
  */
 export const MANIERE_SOCRATE_LOCAL = `Exemple de la manière de faire.
 Étudiant : « C'est quoi une variable ? Donne-moi juste la réponse. »
-Socrate : « Bonne question ! Imagine une boîte avec une étiquette, dans laquelle tu ranges quelque chose pour le retrouver plus tard. À ton avis, à quoi servirait une telle boîte dans un programme ? »
+Socrate : « Imagine une boîte avec une étiquette, dans laquelle tu ranges quelque chose pour le retrouver plus tard. À ton avis, à quoi servirait une telle boîte dans un programme ? »
 Étudiant : « À garder une valeur ? »
 Socrate : « Exactement, c'est cela une variable (variable). Et que se passe-t-il, d'après toi, si on range une nouvelle valeur dans la même boîte ? »
 Étudiant : « Can you explain that in English, please? »

@@ -5,7 +5,7 @@ import { CS50_MODULES } from '@/config/course-modules';
 import { prisma } from '@/lib/prisma';
 import { readCourseSource } from '@/lib/content-generator';
 import { IA_SLUG, IA_SYSTEM_PROMPT, iaWeekContext } from '@/lib/courses/ia-essentiels';
-import { REPONSE_VOCALE_COURTE, leconVocale, systemeSocrateVocalLocal } from '@/lib/socrate-vocal';
+import { REPONSE_VOCALE_COURTE, REPONSE_VOCALE_EXPLICATION, leconVocale, systemeSocrateVocalLocal } from '@/lib/socrate-vocal';
 
 const LOCAL = process.env.SAVOIRIA_LOCAL === '1';
 // Sur un ordinateur d'école, Gemma lit le texte envoyé à environ 60 jetons par seconde :
@@ -102,5 +102,5 @@ export async function systemeTuteur({ moduleId, course, week, voix, bureau, loca
   }
   // Réponse orale sur l'ordinateur d'école : courte (les réponses écrites ne changent pas).
   const base = explication ? SYSTEM_PROMPT_EXPLICATION : isIa ? IA_SYSTEM_PROMPT : SYSTEM_PROMPT;
-  return base + moduleContext + (court ? `\n\nRéponse lue à voix haute, sans code ni liste. ${REPONSE_VOCALE_COURTE}` : '');
+  return base + moduleContext + (court ? `\n\nRéponse lue à voix haute, sans code ni liste. ${explication ? REPONSE_VOCALE_EXPLICATION : REPONSE_VOCALE_COURTE}` : '');
 }
